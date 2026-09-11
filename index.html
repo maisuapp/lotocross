@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LotoCross Japão - Analisador e Cruzador de Loterias</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f1f5f9; }
+    .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .ball { display: inline-flex; align-items: center; justify-content: center; width: 2.1rem; height: 2.1rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; box-shadow: inset -2px -2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2); }
+    .ball-hit { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); border: 2px solid #a7f3d0; transform: scale(1.08); }
+    .ball-bonus { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; box-shadow: 0 0 12px rgba(139, 92, 246, 0.6); border: 2px solid #ddd6fe; transform: scale(1.08); }
+    .ball-miss { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+    .ball-draw { background: #334155; color: #f8fafc; border: 1px solid #475569; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+  <header class="sticky top-0 z-50 glass-panel border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-dice-d20 text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+            LotoCross <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Japão 🇯🇵</span>
+          </h1>
+          <p class="text-xs text-slate-400">Cruzamento de Apostas, Insights & Probabilidades</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="btn-sync" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow-lg shadow-emerald-600/20">
+          <i class="fa-solid fa-arrows-rotate"></i> <span>Sincronizar Lottolyzer</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
+    <!-- Métricas -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-panel rounded-xl p-4">
+        <span class="text-xs text-slate-400">Total Investido</span>
+        <div class="text-2xl font-bold text-white mt-1" id="kpi-invested">¥13.400</div>
+      </div>
+      <div class="glass-panel rounded-xl p-4">
+        <span class="text-xs text-slate-400">Total Ganho</span>
+        <div class="text-2xl font-bold text-emerald-400 mt-1" id="kpi-won">¥1.300</div>
+      </div>
+      <div class="glass-panel rounded-xl p-4">
+        <span class="text-xs text-slate-400">Saldo Líquido</span>
+        <div class="text-2xl font-bold text-rose-400 mt-1" id="kpi-balance">-¥12.100</div>
+      </div>
+      <div class="glass-panel rounded-xl p-4">
+        <span class="text-xs text-slate-400">Maior Acerto</span>
+        <div class="text-2xl font-bold text-amber-400 mt-1">3 acertos</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">Lotto 6 (5等 - ¥1.000)</div>
+      </div>
+    </div>
+
+    <!-- Tabela de Cruzamento -->
+    <div class="glass-panel rounded-2xl p-6 shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-white text-base">Concursos & Cruzamento de Acertos</h3>
+        <div class="flex gap-2">
+          <button class="filter-tab px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white" data-type="ALL">Todas</button>
+          <button class="filter-tab px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400" data-type="ロト７">Lotto 7</button>
+          <button class="filter-tab px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400" data-type="ロト６">Lotto 6</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800 pb-2">
+              <th class="py-2 px-3">Concurso</th>
+              <th class="py-2 px-3">Data</th>
+              <th class="py-2 px-3">Sua Aposta</th>
+              <th class="py-2 px-3">Resultado Oficial</th>
+              <th class="py-2 px-3 text-center">Acertos</th>
+              <th class="py-2 px-3 text-right">Prêmio</th>
+            </tr>
+          </thead>
+          <tbody id="cross-table-body" class="divide-y divide-slate-800/60"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Gráficos de Frequência e Distribuição -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="glass-panel rounded-2xl p-5 shadow-xl">
+        <h3 class="font-bold text-white text-sm mb-3">Termômetro das Suas Dezenas (Lotto 7)</h3>
+        <div class="h-60"><canvas id="chart-freq"></canvas></div>
+      </div>
+      <div class="glass-panel rounded-2xl p-5 shadow-xl">
+        <h3 class="font-bold text-white text-sm mb-3">Distribuição de Acertos por Concurso</h3>
+        <div class="h-60"><canvas id="chart-hits"></canvas></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const APP_BETS = {
+      'ロト７': [4, 9, 13, 15, 22, 26, 34],
+      'ロト６': [2, 6, 21, 24, 31, 38],
+      'ミニロト': [2, 11, 19, 21, 28]
+    };
+
+    // Dados importados da sua planilha
+    const DRAWS = [
+      { round: '第693回', date: '2026-09-04', type: 'ロト７', main: [16,17,22,23,25,33,35], bonus: [13,31], prize: '-', amount: 0 },
+      { round: '第2135回', date: '2026-09-07', type: 'ロト６', main: [7,13,32,34,37,39,41], bonus: [], prize: '-', amount: 0 },
+      { round: '第2134回', date: '2026-09-03', type: 'ロト６', main: [5,9,10,19,26,35], bonus: [18], prize: '-', amount: 0 },
+      { round: '第2109回', date: '2026-06-08', type: 'ロト６', main: [6,11,19,31,38,41], bonus: [3], prize: '５等', amount: 1000 },
+      { round: '第680回', date: '2026-06-05', type: 'ロト７', main: [9,10,22,26,27,31,36], bonus: [20,29], prize: '-', amount: 0 }
+    ];
+
+    function renderTable() {
+      const tbody = document.getElementById('cross-table-body');
+      tbody.innerHTML = DRAWS.map(item => {
+        const bet = APP_BETS[item.type] || [];
+        const mainSet = new Set(item.main);
+        const bonusSet = new Set(item.bonus);
+        const mainHits = bet.filter(n => mainSet.has(n));
+        const bonusHits = bet.filter(n => bonusSet.has(n));
+
+        const userBalls = bet.map(n => {
+          let cls = 'ball-miss';
+          if (mainSet.has(n)) cls = 'ball-hit';
+          else if (bonusSet.has(n)) cls = 'ball-bonus';
+          return `<span class="ball ${cls}">${String(n).padStart(2, '0')}</span>`;
+        }).join(' ');
+
+        const drawnBalls = item.main.map(n => {
+          const hit = bet.includes(n);
+          return `<span class="ball ${hit ? 'ball-hit' : 'ball-draw'}">${String(n).padStart(2, '0')}</span>`;
+        }).join(' ') + (item.bonus.length ? ' + ' + item.bonus.map(n => `<span class="ball ${bet.includes(n) ? 'ball-bonus' : 'bg-slate-800 text-purple-300 border border-purple-800/50'}">${String(n).padStart(2, '0')}</span>`).join(' ') : '');
+
+        return `<tr class="hover:bg-slate-800/40">
+          <td class="py-3 px-3 font-bold text-white">${item.round}<br><span class="text-[10px] text-slate-400">${item.type}</span></td>
+          <td class="py-3 px-3 text-slate-300 font-mono">${item.date}</td>
+          <td class="py-3 px-3">${userBalls}</td>
+          <td class="py-3 px-3">${drawnBalls}</td>
+          <td class="py-3 px-3 text-center"><span class="px-2.5 py-1 rounded-full ${mainHits.length >= 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold' : 'bg-slate-800 text-slate-300'}">${mainHits.length} acertos${bonusHits.length ? ' + '+bonusHits.length+' bônus' : ''}</span></td>
+          <td class="py-3 px-3 text-right ${item.amount > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}">${item.amount > 0 ? item.prize + ' (¥' + item.amount.toLocaleString() + ')' : '¥0'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Gráficos interativos
+    window.onload = () => {
+      renderTable();
+      new Chart(document.getElementById('chart-freq'), {
+        type: 'bar',
+        data: {
+          labels: APP_BETS['ロト７'].map(n => 'Dez ' + String(n).padStart(2, '0')),
+          datasets: [{ data: [3, 5, 2, 4, 6, 4, 2], backgroundColor: '#10b981', borderRadius: 4 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      new Chart(document.getElementById('chart-hits'), {
+        type: 'doughnut',
+        data: {
+          labels: ['0 Acertos', '1 Acerto', '2 Acertos', '3 Acertos (Premiado)'],
+          datasets: [{ data: [14, 15, 6, 1], backgroundColor: ['#334155', '#3b82f6', '#8b5cf6', '#10b981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    };
+  </script>
+</body>
+</html>
