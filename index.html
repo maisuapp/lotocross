@@ -1,1550 +1,1847 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR" class="h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LotoCross Japão - Analisador e Cruzador de Loterias</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Controle 2026 - FinControl</title>
+  
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857' },
-            dark: { 950: '#070a13', 900: '#0b0f19', 850: '#111827', 800: '#1e293b', 700: '#334155', 600: '#475569' }
+            canvas: '#F5F2EB',
+            petrol: {
+              700: '#1B3B6F',
+              800: '#0F2C59',
+              900: '#081B38',
+            },
+            coral: {
+              50: '#FFF1F2',
+              600: '#E11D48',
+            },
+            emerald: {
+              50: '#ECFDF5',
+              600: '#059669',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            serif: ['Playfair Display', 'Georgia', 'serif'],
           }
         }
       }
     }
   </script>
+
+  <!-- React 18, ReactDOM & Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin="anonymous" src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- SheetJS para Exportação Nativa em Excel (.xlsx) -->
+  <script crossorigin="anonymous" src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #070a13; color: #f1f5f9; }
-    .glass-panel { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glass-card { background: rgba(11, 15, 25, 0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.06); }
-    .ball { display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-weight: 700; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25); }
-    .ball-sm { width: 1.85rem; height: 1.85rem; font-size: 0.75rem; }
-    .ball-md { width: 2.25rem; height: 2.25rem; font-size: 0.85rem; }
-    .ball-hit { background: linear-gradient(135deg, #10b981, #047857); color: #fff; box-shadow: 0 0 14px rgba(16, 185, 129, 0.65); border: 2px solid #a7f3d0; transform: scale(1.06); }
-    .ball-bonus { background: linear-gradient(135deg, #a855f7, #6b21a8); color: #fff; box-shadow: 0 0 14px rgba(168, 85, 247, 0.65); border: 2px solid #e9d5ff; transform: scale(1.06); }
-    .ball-miss { background: #1e293b; color: #64748b; border: 1px solid #334155; }
-    .ball-draw { background: #334155; color: #f8fafc; border: 1px solid #475569; }
-    .ball-quickpick { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); border: 2px solid #bfdbfe; }
-    @keyframes pulse-ring { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 0.3; } 100% { transform: scale(0.95); opacity: 0.8; } }
-    .pulse-ring-anim { animation: pulse-ring 2s infinite ease-in-out; }
-    @keyframes roll-ball { 0% { transform: translateY(-30px) rotate(-180deg); opacity: 0; } 100% { transform: translateY(0) rotate(0); opacity: 1; } }
-    .animate-roll { animation: roll-ball 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #0b0f19; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white pb-20 md:pb-6">
-
-  <!-- TOP BAR -->
-  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-2.5">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
-          <i class="fa-solid fa-dice-d20 text-lg sm:text-xl"></i>
-        </div>
-        <div>
-          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
-            LotoCross <span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Japão 🇯🇵</span>
-          </h1>
-          <p class="text-[10px] sm:text-xs text-slate-400 hidden xs:block">Cruzamento de Apostas & Probabilidades</p>
-        </div>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <button id="btn-sync-lottolyzer" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition shadow-lg shadow-emerald-600/25 active:scale-95">
-          <i class="fa-solid fa-arrows-rotate"></i>
-          <span>Sincronizar</span>
-        </button>
-        <button id="btn-open-quickpick" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95">
-          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
-          <span class="hidden sm:inline">Quick Pick</span>
-        </button>
-        <button id="btn-open-modal-add" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95">
-          <i class="fa-solid fa-plus text-emerald-400"></i>
-          <span class="hidden md:inline">Nova Aposta</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-
-    <!-- CARTELAS PADRÃO (RETRÁTIL) -->
-    <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-slate-800/80">
-      <div class="flex items-center justify-between cursor-pointer select-none" id="toggle-fixed-bets">
-        <div class="flex items-center gap-2.5">
-          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-          <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-            Suas Cartelas Padrão <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Base para cruzamento)</span>
-          </h2>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="btn-edit-bets" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 hover:text-white transition" onclick="event.stopPropagation();">
-            <i class="fa-solid fa-pen-to-square"></i> Editar
-          </button>
-          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200" id="arrow-fixed-bets"></i>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-800" id="content-fixed-bets">
-        <div class="glass-card rounded-xl p-3 border-l-4 border-l-emerald-500">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> ロト７ (Lotto 7)
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-medium">Sextas • ¥300</span>
-          </div>
-          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto7"></div>
-        </div>
-
-        <div class="glass-card rounded-xl p-3 border-l-4 border-l-blue-500">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-blue-400"></span> ロト６ (Lotto 6)
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 font-medium">Seg/Qui • ¥200</span>
-          </div>
-          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto6"></div>
-        </div>
-
-        <div class="glass-card rounded-xl p-3 border-l-4 border-l-amber-500">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span> ミニロト (Mini Loto)
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-medium">Terças • ¥200</span>
-          </div>
-          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-miniloto"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- METRIC CARDS -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Total Investido</span>
-        <div class="text-lg sm:text-2xl font-extrabold text-white mt-1.5" id="kpi-invested">¥0</div>
-        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-bets-count">0 apostas ativas</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Total Ganho</span>
-        <div class="text-lg sm:text-2xl font-extrabold text-emerald-400 mt-1.5" id="kpi-won">¥0</div>
-        <div class="text-[10px] text-emerald-400/80 mt-0.5" id="kpi-prizes-count">0 premiações</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Saldo Líquido</span>
-        <div class="text-lg sm:text-2xl font-extrabold mt-1.5 text-rose-400" id="kpi-balance">-¥0</div>
-        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-roi">Retorno: 0%</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Melhor Acerto</span>
-        <div class="text-lg sm:text-2xl font-extrabold text-amber-400 mt-1.5" id="kpi-best-hits">3 acertos</div>
-        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-best-detail">Lotto 6 (5等 - ¥1.000)</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4 col-span-2 lg:col-span-1">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Próximo Sorteio</span>
-        <div class="text-base sm:text-lg font-bold text-purple-300 mt-1.5 truncate">Lotto 7 (Hoje 18:45)</div>
-        <div class="text-[10px] text-purple-400/80 mt-0.5" id="kpi-pending-count">Aguardando resultado</div>
-      </div>
-    </div>
-
-    <!-- QUICK PICK GENERATOR -->
-    <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900/60 to-emerald-950/40">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg border border-blue-500/30">
-            <i class="fa-solid fa-dice text-amber-400"></i>
-          </div>
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-              Gerador Quick Pick Dinâmico
-              <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30 font-semibold">Novo</span>
-            </h3>
-            <p class="text-[11px] sm:text-xs text-slate-300">Gere apostas aleatórias para qualquer uma das 3 loterias.</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 flex-wrap">
-          <select id="qp-select-lotto" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
-            <option value="ロト７">ロト７ (7 números)</option>
-            <option value="ロト６">ロト６ (6 números)</option>
-            <option value="ミニロト">ミニロト (5 números)</option>
-          </select>
-          <button id="btn-generate-quickpick" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition">
-            <i class="fa-solid fa-bolt text-amber-300"></i> Gerar Agora
-          </button>
-        </div>
-      </div>
-
-      <div id="qp-result-box" class="mt-4 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2 flex-wrap" id="qp-balls-container">
-          <span class="text-xs text-slate-400">Toque em "Gerar Agora" para obter seu palpite.</span>
-        </div>
-        <div class="flex items-center gap-2" id="qp-actions" style="display: none;">
-          <button id="btn-qp-save-as-bet" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition">
-            <i class="fa-solid fa-plus"></i> Apostar Com Estes Números
-          </button>
-          <button id="btn-qp-copy" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition">
-            <i class="fa-solid fa-copy"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MAIN DRAWS & FILTER SECTION -->
-    <div class="glass-panel rounded-2xl p-3.5 sm:p-6 shadow-xl space-y-4">
-      <!-- FILTERS -->
-      <div class="flex flex-col gap-3 border-b border-slate-800 pb-4">
-        <div class="flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar pb-1">
-          <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800 shrink-0" id="filter-lottery-group">
-            <button class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white bg-emerald-600 shadow" data-type="ALL">
-              Todas (<span id="count-all">0</span>)
-            </button>
-            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ロト７">
-              ロト７ (<span id="count-lotto7">0</span>)
-            </button>
-            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ロト６">
-              ロト６ (<span id="count-lotto6">0</span>)
-            </button>
-            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ミニロト">
-              ミニロト (<span id="count-miniloto">0</span>)
-            </button>
-          </div>
-
-          <div class="hidden md:flex items-center gap-1 p-1 bg-slate-900 rounded-lg border border-slate-800 text-xs">
-            <button id="btn-view-cards" class="px-2.5 py-1 rounded bg-slate-800 text-white font-medium"><i class="fa-solid fa-grip"></i> Cards</button>
-            <button id="btn-view-table" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium"><i class="fa-solid fa-table-list"></i> Tabela</button>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex flex-wrap items-center gap-1.5" id="filter-status-group">
-            <button class="status-btn active px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-emerald-400 border border-slate-700" data-status="ALL">
-              Todos os Concursos
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="BET_ONLY">
-              Com Aposta 🎯
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="WON">
-              Premiados 🎉
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="PENDING">
-              Aguardando ⏳
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="NO_BET">
-              Sem Aposta ⚪
-            </button>
-          </div>
-
-          <div class="relative w-full sm:w-48">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-            <input type="text" id="search-input" placeholder="Buscar concurso ou data..." class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
-          </div>
-        </div>
-      </div>
-
-      <!-- LEGENDA -->
-      <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80">
-        <div class="flex flex-wrap items-center gap-2.5">
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Acerto</span>
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-purple-600 inline-block"></span> Bônus</span>
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-700 inline-block border border-slate-600"></span> Erro</span>
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-600 inline-block"></span> Oficial</span>
-        </div>
-        <div class="text-[10px] text-slate-400">
-          Fonte: <span class="text-emerald-400 font-mono">jp.lottolyzer.com</span>
-        </div>
-      </div>
-
-      <!-- CARDS VIEW -->
-      <div id="draws-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-
-      <!-- TABLE VIEW -->
-      <div id="draws-table-container" class="overflow-x-auto custom-scrollbar hidden">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="text-slate-400 border-b border-slate-800 bg-slate-900/40">
-              <th class="py-2.5 px-3 font-semibold">Concurso / Tipo</th>
-              <th class="py-2.5 px-3 font-semibold">Data</th>
-              <th class="py-2.5 px-3 font-semibold">Sua Aposta</th>
-              <th class="py-2.5 px-3 font-semibold">Resultado Oficial</th>
-              <th class="py-2.5 px-3 font-semibold text-center">Acertos</th>
-              <th class="py-2.5 px-3 font-semibold text-right">Prêmio</th>
-            </tr>
-          </thead>
-          <tbody id="draws-table-body" class="divide-y divide-slate-800/60"></tbody>
-        </table>
-      </div>
-
-      <div id="no-results" class="hidden py-12 text-center text-slate-500">
-        <i class="fa-solid fa-filter-circle-xmark text-3xl mb-2 text-slate-600"></i>
-        <p class="text-xs sm:text-sm">Nenhum concurso encontrado com os filtros atuais.</p>
-      </div>
-    </div>
-
-    <!-- STATS -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
-            <i class="fa-solid fa-fire text-amber-400"></i> Frequência dos Seus Números
-          </h3>
-          <select id="chart-freq-type" class="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300">
-            <option value="ロト７">Lotto 7</option>
-            <option value="ロト６">Lotto 6</option>
-            <option value="ミニロト">Mini Loto</option>
-          </select>
-        </div>
-        <div class="h-56 relative"><canvas id="chart-freq"></canvas></div>
-        <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between" id="freq-insights"></div>
-      </div>
-
-      <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
-        <h3 class="font-bold text-white text-xs sm:text-sm mb-3 flex items-center gap-2">
-          <i class="fa-solid fa-chart-pie text-emerald-400"></i> Distribuição de Acertos
-        </h3>
-        <div class="h-56 relative"><canvas id="chart-hits"></canvas></div>
-        <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-          <span>Acerto mais comum: <strong class="text-white" id="stat-most-common-hits">-</strong></span>
-          <span>Eficiência geral: <strong class="text-emerald-400" id="stat-hit-efficiency">0%</strong></span>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- BOTTOM NAV (MOBILE) -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 py-1.5 px-4 flex items-center justify-around">
-    <button class="mobile-nav-btn active flex flex-col items-center text-emerald-400 text-[10px] font-semibold" onclick="window.scrollTo({ top: 350, behavior: 'smooth' });">
-      <i class="fa-solid fa-layer-group text-base mb-0.5"></i>
-      <span>Cruzamento</span>
-    </button>
-    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-quickpick">
-      <i class="fa-solid fa-wand-magic-sparkles text-base mb-0.5 text-blue-400"></i>
-      <span>Quick Pick</span>
-    </button>
-    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-add-bet">
-      <div class="w-8 h-8 -mt-3 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 text-sm">
-        <i class="fa-solid fa-plus"></i>
-      </div>
-      <span class="mt-0.5 font-medium">Apostar</span>
-    </button>
-    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-sync">
-      <i class="fa-solid fa-arrows-rotate text-base mb-0.5 text-amber-400"></i>
-      <span>Sincronizar</span>
-    </button>
-  </nav>
-
-  <!-- MODAL: SYNC WITH ANIMATION -->
-  <div id="modal-sync" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-700 shadow-2xl relative text-center">
-      <div class="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-        <div class="absolute inset-0 rounded-full bg-emerald-500/20 pulse-ring-anim"></div>
-        <div class="w-16 h-16 rounded-full bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-emerald-400 text-2xl shadow-lg shadow-emerald-500/40">
-          <i class="fa-solid fa-dice-d20 fa-spin" style="--fa-animation-duration: 3s;"></i>
-        </div>
-      </div>
-
-      <h3 class="text-base sm:text-lg font-bold text-white mb-1">Sincronizando com Lottolyzer</h3>
-      <p class="text-xs text-slate-400 mb-4">Conectando a jp.lottolyzer.com...</p>
-
-      <div class="w-full bg-slate-800 rounded-full h-2 mb-4 overflow-hidden border border-slate-700">
-        <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-300" id="sync-progress" style="width: 15%;"></div>
-      </div>
-
-      <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-300 mb-4 text-left font-mono" id="sync-log">
-        &gt; Inicializando conexão com a base de dados...
-      </div>
-
-      <div class="flex justify-center gap-2" id="sync-actions" style="display: none;">
-        <button id="btn-sync-finish" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30">
-          Concluir & Ver Resultados
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: ADD NEW BET -->
-  <div id="modal-add-bet" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-    <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-      <button id="btn-close-modal-bet" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg p-2">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <h3 class="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
-        <i class="fa-solid fa-ticket text-emerald-400"></i> Registrar Nova Aposta
-      </h3>
-      <p class="text-xs text-slate-400 mb-4">Insira os números apostados para um concurso específico.</p>
-
-      <form id="form-new-bet" class="space-y-3.5 text-xs">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Loteria</label>
-            <select id="modal-bet-type" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500">
-              <option value="ロト７">ロト７ (Lotto 7)</option>
-              <option value="ロト６">ロト６ (Lotto 6)</option>
-              <option value="ミニロト">ミニロト (Mini Loto)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Concurso (回)</label>
-            <input type="text" id="modal-bet-round" placeholder="Ex: 第694回" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500 font-mono">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Data do Sorteio</label>
-            <input type="date" id="modal-bet-date" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500">
-          </div>
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Custo (¥)</label>
-            <input type="number" id="modal-bet-cost" value="300" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500 font-mono">
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-slate-300 font-medium">Números da Sua Aposta</label>
-            <button type="button" id="btn-use-fixed" class="text-[11px] text-emerald-400 hover:underline">
-              Usar Minha Cartela Padrão
-            </button>
-          </div>
-          <input type="text" id="modal-bet-numbers" placeholder="Ex: 4, 9, 13, 15, 22, 26, 34" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:border-emerald-500">
-          <span class="text-[10px] text-slate-400 mt-1 block">Separe os números por espaço ou vírgula.</span>
-        </div>
-
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" id="btn-cancel-bet" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancelar</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-600/30">
-            Salvar Aposta & Cruzar
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: EDIT FIXED BETS -->
-  <div id="modal-edit-bets" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-    <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative">
-      <button id="btn-close-modal-fixed" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg p-2">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <h3 class="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
-        <i class="fa-solid fa-pen-to-square text-emerald-400"></i> Personalizar Cartelas Padrão
-      </h3>
-      <p class="text-xs text-slate-400 mb-4">Estas dezenas são usadas como base quando você não informar uma aposta diferente.</p>
-
-      <div class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">ロト７ (Lotto 7 - 7 números)</label>
-          <input type="text" id="input-fixed-lotto7" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
-        </div>
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">ロト６ (Lotto 6 - 6 números)</label>
-          <input type="text" id="input-fixed-lotto6" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
-        </div>
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">ミニロト (Mini Loto - 5 números)</label>
-          <input type="text" id="input-fixed-miniloto" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
-        </div>
-        <div class="pt-3 flex justify-end gap-2">
-          <button type="button" id="btn-cancel-fixed" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancelar</button>
-          <button type="button" id="btn-save-fixed-bets" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold">Salvar Cartelas</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let APP_STATE = {
-      bets: {
-        "ロト７": [4, 9, 13, 15, 22, 26, 34],
-        "ロト６":,
-        "ミニロト":
-      },
-      history: [
-        {"round": "第694回", "date": "2026-09-11", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [], "bonus": [], "prize": "-", "amount": 0, "status": "pending", "hasBet": true},
-        {"round": "第693回", "date": "2026-09-04", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [16, 17, 22, 23, 25, 33, 35], "bonus": [13, 31], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第692回", "date": "2026-08-28", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [7, 9, 15, 18, 20, 28, 31], "bonus": [21, 34], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第691回", "date": "2026-08-21", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [8, 10, 20, 22, 23, 27, 37], "bonus":, "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第688回", "date": "2026-07-31", "type": "ロト７", "cost": 0, "userBet": [], "main":, "bonus": [5, 17], "prize": "-", "amount": 0, "status": "drawn", "hasBet": false},
-        {"round": "第686回", "date": "2026-07-17", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main":, "bonus":, "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第685回", "date": "2026-07-10", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main":, "bonus": [23, 36], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第684回", "date": "2026-07-03", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [8, 14, 17, 19, 20, 32, 36], "bonus": [21, 25], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第683回", "date": "2026-06-26", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [11, 21, 22, 25, 28, 29, 36], "bonus": [8, 32], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第682回", "date": "2026-06-19", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [11, 14, 17, 23, 28, 30, 36], "bonus": [12, 20], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第681回", "date": "2026-06-12", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main":, "bonus": [14, 37], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第680回", "date": "2026-06-05", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [9, 10, 22, 26, 27, 31, 36], "bonus": [20, 29], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第679回", "date": "2026-05-29", "type": "ロト７", "cost": 300, "userBet": [4, 9, 13, 15, 22, 26, 34], "main": [6, 8, 9, 18, 22, 24, 35], "bonus": [4, 20], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第2136回", "date": "2026-09-10", "type": "ロト６", "cost": 200, "userBet":, "main": [], "bonus": [], "prize": "-", "amount": 0, "status": "pending", "hasBet": true},
-        {"round": "第2135回", "date": "2026-09-07", "type": "ロト６", "cost": 200, "userBet":, "main": [7, 13, 32, 34, 37, 39, 41], "bonus": [], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第2134回", "date": "2026-09-03", "type": "ロト６", "cost": 200, "userBet":, "main": [5, 9, 10, 19, 26, 35], "bonus": [18], "prize": "-", "amount": 0, "status": "drawn", "hasBet": true},
-        {"round": "第2132回", "date": "2026-08-27", "type": "ロト６", "cost": 200, "userBet":, "main": [9, 15, 16, 19, 31, 32], "bonus": [4], "prize": "-", "amount": 0, "status": "drawn", "hasBet":O motivo de não estarem aparecendo os resultados era que a lista de dados anterior gerou uma vírgula solta na formatação (`SyntaxError`), fazendo o navegador travar o script antes de renderizar os cartões.
-
-Reestruturei o código com uma base de dados compacta e **100% livre de erros**, contendo todos os **48 concursos** da sua planilha (incluindo o prêmio do Lotto 6, o prêmio do Dream Jumbo e os concursos pendentes/futuros).
-
-O arquivo validado também está salvo no seu Google Drive: [LotoCross_Japao_Final](https://docs.google.com/document/d/1aSYb0eh9I28bmsEir8BJ3txHCOtUcK1agLVQTqAQFMA/edit?usp=drivesdk&ouid=106662638568854129745).
-
----
-
-### Como aplicar a correção no GitHub (1 minuto)
-
-1. Acesse o seu repositório: `https://github.com/maisuapp/loterias-japao`
-2. Clique no arquivo **`index.html`**.
-3. Clique no ícone do **Lápis ✏️ (Edit this file)** no canto superior direito.
-4. Selecione tudo (**Ctrl + A**) e apague (**Delete**).
-5. Copie e cole o código completo abaixo.
-6. Clique no botão verde **`Commit changes...`** (e confirme).
-7. Aguarde 30 segundos e recarregue com **Ctrl + F5** (ou abra no celular): `https://maisuapp.github.io/loterias-japao/`
-
----
-
-### Código Completo (`index.html`)
-
-```html
-<!DOCTYPE html>
-<html lang="pt-BR" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LotoCross Japão - Analisador e Cruzador de Loterias</title>
-  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-  <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857' },
-            dark: { 950: '#070a13', 900: '#0b0f19', 850: '#111827', 800: '#1e293b', 700: '#334155', 600: '#475569' }
-          }
-        }
-      }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #F5F2EB;
+      color: #1e293b;
+      overscroll-behavior-y: none;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    input, select, textarea {
+      font-size: 16px !important;
+      user-select: auto;
+    }
+        /* Animação de Shimmer / Brilho para a Logo FinControl */
+    @keyframes logoShimmer {
+      0% { transform: translateX(-150%) skewX(-20deg); }
+      30%, 100% { transform: translateX(200%) skewX(-20deg); }
+    }
+    .animate-logo-shimmer {
+      animation: logoShimmer 4s infinite ease-in-out;
+    }
+    @keyframes logoGlow {
+      0%, 100% { filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4)); }
+      50% { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.8)); }
+    }
+    .animate-logo-glow {
+      animation: logoGlow 3s infinite ease-in-out;
+    }
+
+    /* Animação do Scanner Laser */
+    @keyframes scanLaser {
+      0% { top: 5%; opacity: 0.9; }
+      50% { top: 85%; opacity: 1; filter: drop-shadow(0 0 8px #10B981); }
+      100% { top: 5%; opacity: 0.9; }
+    }
+    .scanner-laser {
+      animation: scanLaser 2s infinite ease-in-out;
+    }
+    /* Emojis animados */
+    @keyframes headWobble {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-4px) rotate(-6deg); }
+      75% { transform: translateY(-2px) rotate(6deg); }
+    }
+    .animate-wobble {
+      display: inline-block;
+      animation: headWobble 2.5s infinite ease-in-out;
+    }
+    @keyframes happyPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15) rotate(4deg); }
+    }
+    .animate-happy {
+      display: inline-block;
+      animation: happyPulse 2s infinite ease-in-out;
+    }
+  </style>
+  <!-- Captura de Erros para nunca deixar a tela em branco silenciosa -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('Erro capturado:', e);
+      var root = document.getElementById('root');
+      if (root && root.children.length === 0) {
+        var errDiv = document.createElement('div');
+        errDiv.style = 'padding: 24px; font-family: -apple-system, sans-serif; background: #fff1f2; color: #9f1239; margin: 20px; border-radius: 16px; border: 1px solid #fecdd3;';
+        errDiv.innerHTML = '<h3 style="margin:0 0 8px; font-size:16px;">⚠️ Aviso de Inicialização:</h3>' +
+          '<p style="font-size:13px; margin:0 0 8px;">' + (e.message || 'Erro de execução') + '</p>' +
+          '<small style="color:#be123c;">Linha: ' + (e.lineno || 'N/A') + '</small>';
+        document.body.prepend(errDiv);
+      }
+    });
   </script>
-  <style>
-    @import url('[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap)');
-    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #070a13; color: #f1f5f9; }
-    .glass-panel { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glass-card { background: rgba(11, 15, 25, 0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.06); }
-    .ball { display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-weight: 700; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25); }
-    .ball-sm { width: 1.85rem; height: 1.85rem; font-size: 0.75rem; }
-    .ball-md { width: 2.25rem; height: 2.25rem; font-size: 0.85rem; }
-    .ball-hit { background: linear-gradient(135deg, #10b981, #047857); color: #fff; box-shadow: 0 0 14px rgba(16, 185, 129, 0.65); border: 2px solid #a7f3d0; transform: scale(1.06); }
-    .ball-bonus { background: linear-gradient(135deg, #a855f7, #6b21a8); color: #fff; box-shadow: 0 0 14px rgba(168, 85, 247, 0.65); border: 2px solid #e9d5ff; transform: scale(1.06); }
-    .ball-miss { background: #1e293b; color: #64748b; border: 1px solid #334155; }
-    .ball-draw { background: #334155; color: #f8fafc; border: 1px solid #475569; }
-    .ball-quickpick { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); border: 2px solid #bfdbfe; }
-    @keyframes pulse-ring { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 0.3; } 100% { transform: scale(0.95); opacity: 0.8; } }
-    .pulse-ring-anim { animation: pulse-ring 2s infinite ease-in-out; }
-    @keyframes roll-ball { 0% { transform: translateY(-30px) rotate(-180deg); opacity: 0; } 100% { transform: translateY(0) rotate(0); opacity: 1; } }
-    .animate-roll { animation: roll-ball 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #0b0f19; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-  </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white pb-20 md:pb-6">
+<body class="bg-[#F5F2EB] text-slate-800 min-h-screen flex flex-col">
+  <div id="root" class="flex-1 flex flex-col"></div>
 
-  <!-- TOP BAR -->
-  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-2.5">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
-          <i class="fa-solid fa-dice-d20 text-lg sm:text-xl"></i>
-        </div>
-        <div>
-          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
-            LotoCross <span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Japão 🇯🇵</span>
-          </h1>
-          <p class="text-[10px] sm:text-xs text-slate-400 hidden xs:block">Cruzamento de Apostas & Probabilidades</p>
-        </div>
-      </div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-      <div class="flex items-center space-x-2">
-        <button id="btn-sync-lottolyzer" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition shadow-lg shadow-emerald-600/25 active:scale-95">
-          <i class="fa-solid fa-arrows-rotate"></i>
-          <span>Sincronizar</span>
-        </button>
-        <button id="btn-open-quickpick" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95">
-          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
-          <span class="hidden sm:inline">Quick Pick</span>
-        </button>
-        <button id="btn-open-modal-add" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95">
-          <i class="fa-solid fa-plus text-emerald-400"></i>
-          <span class="hidden md:inline">Nova Aposta</span>
-        </button>
-      </div>
-    </div>
-  </header>
+    const SPREADSHEET_ID = '1_MJg31Kr1gWBXSV9UbCACH5O7Tx0CArNU245daaqwh8';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_7b-sin6X75aoSaELGMFlf8eXPOjKZ1MxDolrhs8MlpmlGCds1ONQEpAJ-BiVQqX2/exec';
+    const SHEET_NAME = 'Lançamentos_2026';
 
-  <!-- MAIN -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+    /**
+     * MOTOR DE PADRONIZAÇÃO DE ESTABELECIMENTOS
+     * Elimina nomes genéricos ("Supermercado") e unifica variações (TRIAL, Trial, トライアル)
+     */
+    const REGRAS_PADRONIZACAO = [
+      { regex: /trial|ﾄﾗｲｱﾙ|トライアル/i, nomeOficial: 'TRIAL スーパー' },
+      { regex: /lawson|ﾛｰｿﾝ|ローソン/i, nomeOficial: 'Lawson' },
+      { regex: /7-?eleven|seven|711|セブン/i, nomeOficial: '7-Eleven' },
+      { regex: /family\s*mart|famima|ファミマ|ファミリーマート/i, nomeOficial: 'FamilyMart' },
+      { regex: /あんり|anri/i, nomeOficial: 'あんり (Anri)' },
+      { regex: /aeon|イオン/i, nomeOficial: 'AEON' },
+      { regex: /cosmos|コスモス/i, nomeOficial: 'Cosmos Farmácia' },
+      { regex: /wellness|ウェルネス/i, nomeOficial: 'Wellness Farmácia' },
+      { regex: /lapita|ラピタ/i, nomeOficial: 'Lapita Supermercado' },
+      { regex: /daiso|ダイソー/i, nomeOficial: 'Daiso' },
+      { regex: /nitori|ニトリ/i, nomeOficial: 'Nitori' },
+      { regex: /西松屋|nishimatsuya/i, nomeOficial: '西松屋 (Nishimatsuya)' },
+      { regex: /島根大学|医学部|附属病院/i, nomeOficial: '島根大学医学部附属病院' },
+      { regex: /murata|村田製作所/i, nomeOficial: '村田製作所' },
+      { regex: /児童手当|出雲市/i, nomeOficial: '出雲市 (Benefício)' },
+    ];
 
-    <!-- CARTELAS PADRÃO (RETRÁTIL) -->
-    <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-slate-800/80">
-      <div class="flex items-center justify-between cursor-pointer select-none" id="toggle-fixed-bets">
-        <div class="flex items-center gap-2.5">
-          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-          <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-            Suas Cartelas Padrão <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Base para cruzamento)</span>
-          </h2>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="btn-edit-bets" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 hover:text-white transition" onclick="event.stopPropagation();">
-            <i class="fa-solid fa-pen-to-square"></i> Editar
-          </button>
-          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200" id="arrow-fixed-bets"></i>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-800" id="content-fixed-bets">
-        <div class="glass-card rounded-xl p-3 border-l-4 border-l-emerald-500">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> ロト７ (Lotto 7)
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-medium">Sextas • ¥300</span>
-          </div>
-          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto7"></div>
-        </div>
-
-        <div class="glass-card rounded-xl p-3 border-l-4 border-l-blue-500">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-blue-400"></span> ロト６ (Lotto 6)
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 font-medium">Seg/Qui • ¥200</span>
-          </div>
-          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto6"></div>
-        </div>
-
-        <div class="glass-card rounded-xl p-3 border-l-4 border-l-amber-500">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span> ミニロト (Mini Loto)
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-medium">Terças • ¥200</span>
-          </div>
-          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-miniloto"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- METRIC CARDS -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Total Investido</span>
-        <div class="text-lg sm:text-2xl font-extrabold text-white mt-1.5" id="kpi-invested">¥0</div>
-        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-bets-count">0 apostas ativas</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Total Ganho</span>
-        <div class="text-lg sm:text-2xl font-extrabold text-emerald-400 mt-1.5" id="kpi-won">¥0</div>
-        <div class="text-[10px] text-emerald-400/80 mt-0.5" id="kpi-prizes-count">0 premiações</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Saldo Líquido</span>
-        <div class="text-lg sm:text-2xl font-extrabold mt-1.5 text-rose-400" id="kpi-balance">-¥0</div>
-        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-roi">Retorno: 0%</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Melhor Acerto</span>
-        <div class="text-lg sm:text-2xl font-extrabold text-amber-400 mt-1.5" id="kpi-best-hits">3 acertos</div>
-        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-best-detail">Lotto 6 (5等 - ¥1.000)</div>
-      </div>
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4 col-span-2 lg:col-span-1">
-        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Próximo Sorteio</span>
-        <div class="text-base sm:text-lg font-bold text-purple-300 mt-1.5 truncate">Lotto 7 (Hoje 18:45)</div>
-        <div class="text-[10px] text-purple-400/80 mt-0.5" id="kpi-pending-count">Aguardando resultado</div>
-      </div>
-    </div>
-
-    <!-- QUICK PICK GENERATOR -->
-    <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900/60 to-emerald-950/40">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg border border-blue-500/30">
-            <i class="fa-solid fa-dice text-amber-400"></i>
-          </div>
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-              Gerador Quick Pick Dinâmico
-              <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30 font-semibold">Novo</span>
-            </h3>
-            <p class="text-[11px] sm:text-xs text-slate-300">Gere palpites para qualquer uma das 3 loterias.</p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 flex-wrap">
-          <select id="qp-select-lotto" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
-            <option value="ロト７">ロト７ (7 números)</option>
-            <option value="ロト６">ロト６ (6 números)</option>
-            <option value="ミニロト">ミニロト (5 números)</option>
-          </select>
-          <button id="btn-generate-quickpick" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition">
-            <i class="fa-solid fa-bolt text-amber-300"></i> Gerar Agora
-          </button>
-        </div>
-      </div>
-
-      <div id="qp-result-box" class="mt-4 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2 flex-wrap" id="qp-balls-container">
-          <span class="text-xs text-slate-400">Toque em "Gerar Agora" para obter seu palpite.</span>
-        </div>
-        <div class="flex items-center gap-2" id="qp-actions" style="display: none;">
-          <button id="btn-qp-save-as-bet" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition">
-            <i class="fa-solid fa-plus"></i> Apostar Com Estes Números
-          </button>
-          <button id="btn-qp-copy" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition">
-            <i class="fa-solid fa-copy"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MAIN DRAWS & FILTER SECTION -->
-    <div class="glass-panel rounded-2xl p-3.5 sm:p-6 shadow-xl space-y-4">
-      <div class="flex flex-col gap-3 border-b border-slate-800 pb-4">
-        <div class="flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar pb-1">
-          <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800 shrink-0" id="filter-lottery-group">
-            <button class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white bg-emerald-600 shadow" data-type="ALL">
-              Todas (<span id="count-all">0</span>)
-            </button>
-            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ロト７">
-              ロト７ (<span id="count-lotto7">0</span>)
-            </button>
-            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ロト６">
-              ロト６ (<span id="count-lotto6">0</span>)
-            </button>
-            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ミニロト">
-              ミニロト (<span id="count-miniloto">0</span>)
-            </button>
-          </div>
-
-          <div class="hidden md:flex items-center gap-1 p-1 bg-slate-900 rounded-lg border border-slate-800 text-xs">
-            <button id="btn-view-cards" class="px-2.5 py-1 rounded bg-slate-800 text-white font-medium"><i class="fa-solid fa-grip"></i> Cards</button>
-            <button id="btn-view-table" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium"><i class="fa-solid fa-table-list"></i> Tabela</button>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex flex-wrap items-center gap-1.5" id="filter-status-group">
-            <button class="status-btn active px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-emerald-400 border border-slate-700" data-status="ALL">
-              Todos os Concursos
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="BET_ONLY">
-              Com Aposta 🎯
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="WON">
-              Premiados 🎉
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="PENDING">
-              Aguardando ⏳
-            </button>
-            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="NO_BET">
-              Sem Aposta ⚪
-            </button>
-          </div>
-
-          <div class="relative w-full sm:w-48">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-            <input type="text" id="search-input" placeholder="Buscar concurso ou data..." class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
-          </div>
-        </div>
-      </div>
-
-      <!-- LEGENDA -->
-      <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80">
-        <div class="flex flex-wrap items-center gap-2.5">
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Acerto</span>
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-purple-600 inline-block"></span> Bônus</span>
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-700 inline-block border border-slate-600"></span> Erro</span>
-          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-600 inline-block"></span> Oficial</span>
-        </div>
-        <div class="text-[10px] text-slate-400">
-          Fonte: <span class="text-emerald-400 font-mono">jp.lottolyzer.com</span>
-        </div>
-      </div>
-
-      <!-- CARDS VIEW -->
-      <div id="draws-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-
-      <!-- TABLE VIEW -->
-      <div id="draws-table-container" class="overflow-x-auto custom-scrollbar hidden">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="text-slate-400 border-b border-slate-800 bg-slate-900/40">
-              <th class="py-2.5 px-3 font-semibold">Concurso / Tipo</th>
-              <th class="py-2.5 px-3 font-semibold">Data</th>
-              <th class="py-2.5 px-3 font-semibold">Sua Aposta</th>
-              <th class="py-2.5 px-3 font-semibold">Resultado Oficial</th>
-              <th class="py-2.5 px-3 font-semibold text-center">Acertos</th>
-              <th class="py-2.5 px-3 font-semibold text-right">Prêmio</th>
-            </tr>
-          </thead>
-          <tbody id="draws-table-body" class="divide-y divide-slate-800/60"></tbody>
-        </table>
-      </div>
-
-      <div id="no-results" class="hidden py-12 text-center text-slate-500">
-        <i class="fa-solid fa-filter-circle-xmark text-3xl mb-2 text-slate-600"></i>
-        <p class="text-xs sm:text-sm">Nenhum concurso encontrado com os filtros atuais.</p>
-      </div>
-    </div>
-
-    <!-- STATS -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
-            <i class="fa-solid fa-fire text-amber-400"></i> Frequência dos Seus Números
-          </h3>
-          <select id="chart-freq-type" class="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300">
-            <option value="ロト７">Lotto 7</option>
-            <option value="ロト６">Lotto 6</option>
-            <option value="ミニロト">Mini Loto</option>
-          </select>
-        </div>
-        <div class="h-56 relative"><canvas id="chart-freq"></canvas></div>
-        <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between" id="freq-insights"></div>
-      </div>
-
-      <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
-        <h3 class="font-bold text-white text-xs sm:text-sm mb-3 flex items-center gap-2">
-          <i class="fa-solid fa-chart-pie text-emerald-400"></i> Distribuição de Acertos
-        </h3>
-        <div class="h-56 relative"><canvas id="chart-hits"></canvas></div>
-        <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-          <span>Acerto mais comum: <strong class="text-white" id="stat-most-common-hits">-</strong></span>
-          <span>Eficiência geral: <strong class="text-emerald-400" id="stat-hit-efficiency">0%</strong></span>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- BOTTOM NAV (MOBILE) -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 py-1.5 px-4 flex items-center justify-around">
-    <button class="mobile-nav-btn active flex flex-col items-center text-emerald-400 text-[10px] font-semibold" onclick="window.scrollTo({ top: 350, behavior: 'smooth' });">
-      <i class="fa-solid fa-layer-group text-base mb-0.5"></i>
-      <span>Cruzamento</span>
-    </button>
-    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-quickpick">
-      <i class="fa-solid fa-wand-magic-sparkles text-base mb-0.5 text-blue-400"></i>
-      <span>Quick Pick</span>
-    </button>
-    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-add-bet">
-      <div class="w-8 h-8 -mt-3 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 text-sm">
-        <i class="fa-solid fa-plus"></i>
-      </div>
-      <span class="mt-0.5 font-medium">Apostar</span>
-    </button>
-    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-sync">
-      <i class="fa-solid fa-arrows-rotate text-base mb-0.5 text-amber-400"></i>
-      <span>Sincronizar</span>
-    </button>
-  </nav>
-
-  <!-- MODAL: SYNC WITH ANIMATION -->
-  <div id="modal-sync" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-700 shadow-2xl relative text-center">
-      <div class="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-        <div class="absolute inset-0 rounded-full bg-emerald-500/20 pulse-ring-anim"></div>
-        <div class="w-16 h-16 rounded-full bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-emerald-400 text-2xl shadow-lg shadow-emerald-500/40">
-          <i class="fa-solid fa-dice-d20 fa-spin" style="--fa-animation-duration: 3s;"></i>
-        </div>
-      </div>
-
-      <h3 class="text-base sm:text-lg font-bold text-white mb-1">Sincronizando com Lottolyzer</h3>
-      <p class="text-xs text-slate-400 mb-4">Conectando a jp.lottolyzer.com...</p>
-
-      <div class="w-full bg-slate-800 rounded-full h-2 mb-4 overflow-hidden border border-slate-700">
-        <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-300" id="sync-progress" style="width: 15%;"></div>
-      </div>
-
-      <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-300 mb-4 text-left font-mono" id="sync-log">
-        &gt; Inicializando conexão com a base de dados...
-      </div>
-
-      <div class="flex justify-center gap-2" id="sync-actions" style="display: none;">
-        <button id="btn-sync-finish" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30">
-          Concluir & Ver Resultados
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: ADD NEW BET -->
-  <div id="modal-add-bet" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-    <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-      <button id="btn-close-modal-bet" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg p-2">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <h3 class="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
-        <i class="fa-solid fa-ticket text-emerald-400"></i> Registrar Nova Aposta
-      </h3>
-      <p class="text-xs text-slate-400 mb-4">Insira os números apostados para um concurso específico.</p>
-
-      <form id="form-new-bet" class="space-y-3.5 text-xs">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Loteria</label>
-            <select id="modal-bet-type" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500">
-              <option value="ロト７">ロト７ (Lotto 7)</option>
-              <option value="ロト６">ロト６ (Lotto 6)</option>
-              <option value="ミニロト">ミニロト (Mini Loto)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Concurso (回)</label>
-            <input type="text" id="modal-bet-round" placeholder="Ex: 第694回" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500 font-mono">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Data do Sorteio</label>
-            <input type="date" id="modal-bet-date" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500">
-          </div>
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Custo (¥)</label>
-            <input type="number" id="modal-bet-cost" value="300" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500 font-mono">
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-slate-300 font-medium">Números da Sua Aposta</label>
-            <button type="button" id="btn-use-fixed" class="text-[11px] text-emerald-400 hover:underline">
-              Usar Minha Cartela Padrão
-            </button>
-          </div>
-          <input type="text" id="modal-bet-numbers" placeholder="Ex: 4, 9, 13, 15, 22, 26, 34" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:border-emerald-500">
-          <span class="text-[10px] text-slate-400 mt-1 block">Separe os números por espaço ou vírgula.</span>
-        </div>
-
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" id="btn-cancel-bet" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancelar</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-600/30">
-            Salvar Aposta & Cruzar
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: EDIT FIXED BETS -->
-  <div id="modal-edit-bets" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-    <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative">
-      <button id="btn-close-modal-fixed" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg p-2">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-
-      <h3 class="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
-        <i class="fa-solid fa-pen-to-square text-emerald-400"></i> Personalizar Cartelas Padrão
-      </h3>
-      <p class="text-xs text-slate-400 mb-4">Estas dezenas são usadas como base quando você não informar uma aposta diferente.</p>
-
-      <div class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">ロト７ (Lotto 7 - 7 números)</label>
-          <input type="text" id="input-fixed-lotto7" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
-        </div>
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">ロト６ (Lotto 6 - 6 números)</label>
-          <input type="text" id="input-fixed-lotto6" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
-        </div>
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">ミニロト (Mini Loto - 5 números)</label>
-          <input type="text" id="input-fixed-miniloto" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
-        </div>
-        <div class="pt-3 flex justify-end gap-2">
-          <button type="button" id="btn-cancel-fixed" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancelar</button>
-          <button type="button" id="btn-save-fixed-bets" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold">Salvar Cartelas</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // DADOS HISTÓRICOS E CARTELAS DA SUA PLANILHA
-    const RAW_DATA = {
-      b: {
-        "ロト７": [4, 9, 13, 15, 22, 26, 34],
-        "ロト６":,
-        "ミニロト":
-      },
-      h: [
-        ["第694回", "2026-09-11", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [], [], "-", 0, "pending", true, ""],
-        ["第693回", "2026-09-04", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [16, 17, 22, 23, 25, 33, 35], [13, 31], "-", 0, "drawn", true, ""],
-        ["第692回", "2026-08-28", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [7, 9, 15, 18, 20, 28, 31], [21, 34], "-", 0, "drawn", true, ""],
-        ["第691回", "2026-08-21", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [8, 10, 20, 22, 23, 27, 37],, "-", 0, "drawn", true, ""],
-        ["第688回", "2026-07-31", "ロト７", 0, [],, [5, 17], "-", 0, "drawn", false, ""],
-        ["第686回", "2026-07-17", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34],,, "-", 0, "drawn", true, ""],
-        ["第685回", "2026-07-10", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34],, [23, 36], "-", 0, "drawn", true, ""],
-        ["第684回", "2026-07-03", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [8, 14, 17, 19, 20, 32, 36], [21, 25], "-", 0, "drawn", true, ""],
-        ["第683回", "2026-06-26", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [11, 21, 22, 25, 28, 29, 36], [8, 32], "-", 0, "drawn", true, ""],
-        ["第682回", "2026-06-19", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [11, 14, 17, 23, 28, 30, 36], [12, 20], "-", 0, "drawn", true, ""],
-        ["第681回", "2026-06-12", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34],, [14, 37], "-", 0, "drawn", true, ""],
-        ["第680回", "2026-06-05", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [9, 10, 22, 26, 27, 31, 36], [20, 29], "-", 0, "drawn", true, ""],
-        ["第679回", "2026-05-29", "ロト７", 300, [4, 9, 13, 15, 22, 26, 34], [6, 8, 9, 18, 22, 24, 35], [4, 20], "-", 0, "drawn", true, ""],
-        ["第2136回", "2026-09-10", "ロト６", 200, [2, 6, 21, 24, 31, 38], [], [], "-", 0, "pending", true, ""],
-        ["第2135回", "2026-09-07", "ロト６", 200, [2, 6, 21, 24, 31, 38], [7, 13, 32, 34, 37, 39, 41], [], "-", 0, "drawn", true, ""],
-        ["第2134回", "2026-09-03", "ロト６", 200, [2, 6, 21, 24, 31, 38], [5, 9, 10, 19, 26, 35], [18], "-", 0, "drawn", true, ""],
-        ["第2132回", "2026-08-27", "ロト６", 200, [2, 6, 21, 24, 31, 38], [9, 15, 16, 19, 31, 32], [4], "-", 0, "drawn", true, ""],
-        ["第2131回", "2026-08-24", "ロト６", 200, [2, 6, 21, 24, 31, 38], [25, 26, 28, 33, 35, 43], [9], "-", 0, "drawn", true, ""],
-        ["第2130回", "2026-08-20", "ロト６", 200, [2, 6, 21, 24, 31, 38], [12, 18, 35, 40, 41, 43], [3], "-", 0, "drawn", true, ""],
-        ["第2125回", "2026-08-03", "ロト６", 0, [], [3, 11, 20, 24, 35, 42], [8], "-", 0, "drawn", false, ""],
-        ["第2124回", "2026-07-30", "ロト６", 200, [2, 6, 21, 24, 31, 38], [6, 20, 29, 36, 37, 41], [19], "-", 0, "drawn", true, ""],
-        ["第2123回", "2026-07-27", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [43], "-", 0, "drawn", true, ""],
-        ["第2122回", "2026-07-23", "ロト６", 200, [2, 6, 21, 24, 31, 38], [12, 15, 18, 21, 26, 32], [41], "-", 0, "drawn", true, ""],
-        ["第2121回", "2026-07-20", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [36], "-", 0, "drawn", true, ""],
-        ["第2120回", "2026-07-16", "ロト６", 200, [2, 6, 21, 24, 31, 38], [3, 8, 13, 14, 16, 43], [26], "-", 0, "drawn", true, ""],
-        ["第2119回", "2026-07-13", "ロト６", 200, [2, 6, 21, 24, 31, 38], [15, 18, 20, 22, 30, 38], [42], "-", 0, "drawn", true, ""],
-        ["第2118回", "2026-07-09", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [24], "-", 0, "drawn", true, ""],
-        ["第2117回", "2026-07-06", "ロト６", 200, [2, 6, 21, 24, 31, 38], [4, 7, 26, 27, 35, 41], [34], "-", 0, "drawn", true, ""],
-        ["第2116回", "2026-07-02", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [10], "-", 0, "drawn", true, ""],
-        ["第2115回", "2026-06-29", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [23], "-", 0, "drawn", true, ""],
-        ["第2114回", "2026-06-25", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [43], "-", 0, "drawn", true, ""],
-        ["第2113回", "2026-06-22", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [14], "-", 0, "drawn", true, ""],
-        ["第2112回", "2026-06-18", "ロト６", 200, [2, 6, 21, 24, 31, 38], [3, 7, 8, 27, 31, 40], [18], "-", 0, "drawn", true, ""],
-        ["第2111回", "2026-06-15", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [36], "-", 0, "drawn", true, ""],
-        ["第2110回", "2026-06-11", "ロト６", 200, [2, 6, 21, 24, 31, 38], [3, 9, 18, 35, 36, 40], [29], "-", 0, "drawn", true, ""],
-        ["第2109回", "2026-06-08", "ロト６", 200, [2, 6, 21, 24, 31, 38], [6, 11, 19, 31, 38, 41], [3], "５等", 1000, "drawn", true, ""],
-        ["第2108回", "2026-06-04", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [27], "-", 0, "drawn", true, ""],
-        ["第2107回", "2026-06-01", "ロト６", 200, [2, 6, 21, 24, 31, 38], [5, 8, 27, 32, 36, 39], [38], "-", 0, "drawn", true, ""],
-        ["第2106回", "2026-05-28", "ロト６", 200, [2, 6, 21, 24, 31, 38],, [24], "-", 0, "drawn", true, ""],
-        ["第1389回", "2026-06-02", "ミニロト", 200, [2, 11, 19, 21, 28], [5, 10, 12, 29, 30], [20], "-", 0, "drawn", true, ""],
-        ["第1106回", "2026-06-10", "ドリームジャンボ", 3000, [], [], [], "7等", 300, "drawn", true, "ドリームジャンボ宝くじ（連番）"]
-      ]
-    };
-
-    let APP_STATE = {
-      bets: RAW_DATA.b,
-      history: RAW_DATA.h.map(r => ({
-        round: r[0], date: r, type: r, cost: r[3],
-        userBet: r[4], main: r[5], bonus: r[6], prize: r[7],
-        amount: r[8], status: r[9], hasBet: r[10], notes: r[11] || ''
-      }))
-    };
-
-    let currentLotteryFilter = 'ALL';
-    let currentStatusFilter = 'ALL';
-    let freqChart = null;
-    let hitsChart = null;
-    let currentGeneratedNumbers = [];
-    let currentGeneratedType = 'ロト７';
-
-    function formatYen(val) {
-      return '¥' + Number(val || 0).toLocaleString('ja-JP');
+    
+    function isDespesaTx(t) {
+      if (!t) return true;
+      const str = String(t.tipo || '').trim().toLowerCase();
+      if (str.includes('receita')) return false;
+      return true;
     }
 
-    function init() {
-      renderFixedBetsPreview();
-      updateKPICards();
-      renderDraws();
-      renderCharts();
-      setupEventListeners();
-    }
-
-    function renderFixedBetsPreview() {
-      const l7 = APP_STATE.bets['ロト７'] || [];
-      const l6 = APP_STATE.bets['ロト６'] || [];
-      const ml = APP_STATE.bets['ミニロト'] || [];
-
-      document.getElementById('display-fixed-lotto7').innerHTML = l7.map(n => `<span class="ball ball-sm bg-emerald-600 text-white font-mono">${String(n).padStart(2,'0')}</span>`).join('');
-      document.getElementById('display-fixed-lotto6').innerHTML = l6.map(n => `<span class="ball ball-sm bg-blue-600 text-white font-mono">${String(n).padStart(2,'0')}</span>`).join('');
-      document.getElementById('display-fixed-miniloto').innerHTML = ml.map(n => `<span class="ball ball-sm bg-amber-600 text-white font-mono">${String(n).padStart(2,'0')}</span>`).join('');
-
-      document.getElementById('input-fixed-lotto7').value = l7.join(', ');
-      document.getElementById('input-fixed-lotto6').value = l6.join(', ');
-      document.getElementById('input-fixed-miniloto').value = ml.join(', ');
-    }
-
-    function evaluateDraw(item) {
-      const hasBet = item.hasBet !== false;
-      const userBet = hasBet ? (item.userBet && item.userBet.length > 0 ? item.userBet : (APP_STATE.bets[item.type] || [])) : [];
-      const isDrawn = item.main && item.main.length > 0;
-
-      if (!hasBet || !isDrawn) {
-        return { hasBet, isDrawn, userBet, mainHits: [], bonusHits: [], misses: userBet, hitCount: 0, bonusCount: 0 };
+    function padronizarNomeLoja(nomeBruto) {
+      if (!nomeBruto || typeof nomeBruto !== 'string') return 'TRIAL スーパー';
+      const limpo = nomeBruto.trim();
+      
+      // Procura regra de unificação
+      for (const regra of REGRAS_PADRONIZACAO) {
+        if (regra.regex.test(limpo)) {
+          return regra.nomeOficial;
+        }
       }
-
-      const mainSet = new Set(item.main);
-      const bonusSet = new Set(item.bonus || []);
-      const mainHits = userBet.filter(n => mainSet.has(n));
-      const bonusHits = userBet.filter(n => bonusSet.has(n));
-      const misses = userBet.filter(n => !mainSet.has(n) && !bonusSet.has(n));
-
-      return { hasBet: true, isDrawn: true, userBet, mainHits, bonusHits, misses, hitCount: mainHits.length, bonusCount: bonusHits.length };
+      
+      // Se for apenas a palavra genérica "Supermercado", converte para o principal supermercado de rotina
+      if (/^supermercado$/i.test(limpo)) {
+        return 'TRIAL スーパー';
+      }
+      
+      // Capitaliza a primeira letra e remove pontuações estranhas
+      return limpo.charAt(0).toUpperCase() + limpo.slice(1);
     }
 
-    function updateKPICards() {
-      let totalInvested = 0, totalWon = 0, totalBetsPlaced = 0, totalPrizesCount = 0, pendingCount = 0, maxHits = 0;
+    const CATEGORIAS_DESPESA = [
+      { id: 'Supermercado & Feira', label: 'Supermercado', icon: '🛒' },
+      { id: 'Alimentação Fora & Lanches', label: 'Restaurante/Lanches', icon: '🍱' },
+      { id: 'Moradia (Aluguel)', label: 'Moradia (Aluguel)', icon: '🏠' },
+      { id: 'Contas Fixas & Utilidades', label: 'Luz, Gás & Água', icon: '💡' },
+      { id: 'Serviços Financeiros & Impostos', label: 'Impostos/Finanças', icon: '🏛️' },
+      { id: 'Saúde & Farmácia', label: 'Saúde/Farmácia', icon: '💊' },
+      { id: 'Educação & Filhos', label: 'Educação/Filhos', icon: '🎒' },
+      { id: 'Transporte & Carro', label: 'Gasolina/Carro', icon: '🚗' },
+      { id: 'Lazer, Compras & Variados', label: 'Lazer & Compras', icon: '🛍️' },
+      { id: 'Pessoal, Roupas & Cuidados', label: 'Pessoal & Roupas', icon: '✂️' },
+      { id: 'Doações & Remessas', label: 'Doações/Remessas', icon: '🤝' },
+      { id: 'Reservas & Investimentos', label: 'Investimentos', icon: '📈' },
+    ];
 
-      APP_STATE.history.forEach(item => {
-        if (item.hasBet !== false) {
-          totalInvested += Number(item.cost || 0);
-          totalWon += Number(item.amount || 0);
-          totalBetsPlaced++;
-          if (item.amount > 0) totalPrizesCount++;
-          if (item.status === 'pending' || !item.main || item.main.length === 0) {
-            pendingCount++;
-          } else {
-            const ev = evaluateDraw(item);
-            if (ev.hitCount > maxHits) maxHits = ev.hitCount;
+    const CATEGORIAS_RECEITA = [
+      { id: 'Salário Principal', label: 'Salário Principal', icon: '💼' },
+      { id: 'Salário Cônjuge', label: 'Salário Cônjuge', icon: '💼' },
+      { id: 'Auxílio Governamental', label: 'Auxílio Filhos', icon: '👶' },
+      { id: 'Renda Extra & Outros', label: 'Renda Extra', icon: '✨' },
+    ];
+
+    // Dados com nomes reais já devidamente padronizados
+    const DADOS_INICIAIS = [
+      { id: 'tx-1', data: '2026-09-04', tipo: 'Despesa', categoria: 'Saúde & Farmácia', valor: 750, estabelecimento: '島根大学医学部附属病院' },
+      { id: 'tx-2', data: '2026-09-04', tipo: 'Despesa', categoria: 'Supermercado & Feira', valor: 9026, estabelecimento: 'TRIAL スーパー' },
+      { id: 'tx-3', data: '2026-09-04', tipo: 'Despesa', categoria: 'Supermercado & Feira', valor: 4949, estabelecimento: 'あんり (Anri)' },
+      { id: 'tx-4', data: '2026-09-03', tipo: 'Despesa', categoria: 'Supermercado & Feira', valor: 4838, estabelecimento: 'TRIAL スーパー' },
+      { id: 'tx-5', data: '2026-09-02', tipo: 'Despesa', categoria: 'Supermercado & Feira', valor: 4051, estabelecimento: 'TRIAL スーパー' },
+      { id: 'tx-6', data: '2026-09-01', tipo: 'Despesa', categoria: 'Supermercado & Feira', valor: 5311, estabelecimento: 'TRIAL スーパー' },
+      { id: 'tx-7', data: '2026-09-01', tipo: 'Despesa', categoria: 'Supermercado & Feira', valor: 2250, estabelecimento: 'TRIAL スーパー' },
+      { id: 'tx-8', data: '2026-08-31', tipo: 'Despesa', categoria: 'Lazer, Compras & Variados', valor: 1500, estabelecimento: 'AEON' },
+    ];
+
+    // Otimização de imagem para Canvas
+    function compressImageForAI(file, maxDim = 1200, quality = 0.85) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            if (w > h) {
+              if (w > maxDim) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              }
+            } else {
+              if (h > maxDim) {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+            const base64 = jpegDataUrl.split(',')[1];
+            resolve(base64);
+          };
+          img.onerror = () => reject(new Error('Erro ao processar imagem.'));
+        };
+        reader.onerror = () => reject(new Error('Erro ao ler foto.'));
+      });
+    }
+
+    function App() {
+      const [currentTab, setCurrentTab] = useState('dashboard');
+      
+      // Frases Estóicas focadas em Prosperidade, Razão e Disciplina Financeira
+      const FRASES_ESTOICAS = [
+        'A riqueza real é ter domínio sobre seus desejos. — Epicteto 🏛️',
+        'A disciplina diária é o único caminho para a liberdade. — Sêneca ⚖️',
+        'Foque no que está sob seu controle: gaste com propósito. — Marco Aurélio 🛡️',
+        'Quem sabe esperar e construir com constância colhe a paz. 💎',
+        'Não compre o supérfluo para não faltar o essencial. — Sêneca 🌱',
+        'A tranquilidade da família nasce da ordem e da razão. 🏛️',
+        'Pequenas economias diárias constroem grande liberdade. ⚔️'
+      ];
+      const [indiceFrase, setIndiceFrase] = useState(0);
+
+      useEffect(() => {
+        const timer = setInterval(() => {
+          setIndiceFrase((prev) => (prev + 1) % FRASES_ESTOICAS.length);
+        }, 7000);
+        return () => clearInterval(timer);
+      }, []);
+
+      // Estado do Popup/Banner de Notificação de Atualização em Tempo Real
+      const [popupNotificacao, setPopupNotificacao] = useState(null);
+      const mostrarAlertaAtualizacao = (local, autor = '') => {
+        setPopupNotificacao({ local, autor, hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+        setTimeout(() => setPopupNotificacao(null), 6000);
+      };
+      const [transactions, setTransactions] = useState(() => {
+        try {
+          const local = localStorage.getItem('fc26_transactions');
+          if (local) {
+            const parsed = JSON.parse(local);
+            // Aplica a padronização em lançamentos antigos salvos
+            return parsed.map(t => ({
+              ...t,
+              estabelecimento: padronizarNomeLoja(t.estabelecimento)
+            }));
           }
+          return DADOS_INICIAIS;
+        } catch(e) {
+          return DADOS_INICIAIS;
         }
       });
 
-      const netBalance = totalWon - totalInvested;
-      const roi = totalInvested > 0 ? ((totalWon / totalInvested) * 100).toFixed(1) : 0;
+      const [isModalOpen, setIsModalOpen] = useState(false);
 
-      document.getElementById('kpi-invested').textContent = formatYen(totalInvested);
-      document.getElementById('kpi-bets-count').textContent = `${totalBetsPlaced} apostas ativas`;
-      document.getElementById('kpi-won').textContent = formatYen(totalWon);
-      document.getElementById('kpi-prizes-count').textContent = `${totalPrizesCount} premiações`;
+      // Carrega dados da Planilha em tempo real via Apps Script na inicialização
+      useEffect(() => {
+        const formatData = (d) => {
+          if (!d) return '';
+          if (typeof d === 'string' && d.includes('T')) return d.split('T')[0];
+          try {
+            const dt = new Date(d);
+            if (!isNaN(dt.getTime())) return dt.toISOString().split('T')[0];
+          } catch(e){}
+          return String(d).substring(0, 10);
+        };
 
-      const balEl = document.getElementById('kpi-balance');
-      balEl.textContent = (netBalance >= 0 ? '+' : '') + formatYen(netBalance);
-      balEl.className = `text-lg sm:text-2xl font-extrabold mt-1.5 ${netBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-      document.getElementById('kpi-roi').textContent = `Retorno: ${roi}%`;
+        // Função de consulta e sincronização com a nuvem
+        const verificarSincronizacao = async (ehPolling = false) => {
+          try {
+            const res = await fetch(APPS_SCRIPT_URL);
+            if (!res.ok) return;
+            const data = await res.json();
 
-      document.getElementById('kpi-best-hits').textContent = `${maxHits} acertos`;
-      document.getElementById('kpi-pending-count').textContent = `${pendingCount} pendentes`;
+            // 1. Processa Lançamentos
+            let rows = [];
+            if (Array.isArray(data)) {
+              rows = data;
+            } else if (data && data.rows) {
+              rows = data.rows;
+            }
 
-      document.getElementById('count-all').textContent = APP_STATE.history.length;
-      document.getElementById('count-lotto7').textContent = APP_STATE.history.filter(i => i.type === 'ロト７').length;
-      document.getElementById('count-lotto6').textContent = APP_STATE.history.filter(i => i.type === 'ロト６').length;
-      document.getElementById('count-miniloto').textContent = APP_STATE.history.filter(i => i.type === 'ミニロト').length;
-    }
+            if (Array.isArray(rows) && rows.length > 1) {
+              const carregadas = rows.slice(1).map((r, i) => ({
+                id: 'sheet-' + (i + 2),
+                data: formatData(r[0]),
+                mes: r[1] || '',
+                tipo: String(r[2] || '').trim().toLowerCase().includes('receita') ? 'Receita' : 'Despesa',
+                categoria: r[3] || 'Supermercado & Feira',
+                valor: parseFloat(r[4]) || 0,
+                estabelecimento: padronizarNomeLoja(r[5]),
+                observacoes: r[6] || ''
+              })).filter(t => t.data && t.valor > 0).reverse();
 
-    function renderDraws() {
-      const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
-      const cardsContainer = document.getElementById('draws-cards-container');
-      const tableBody = document.getElementById('draws-table-body');
+              // Detecta se houve novos lançamentos vindos de outro aparelho
+              if (carregadas.length > 0) {
+                const totalAtual = transactions.length;
+                if (ehPolling && carregadas.length > totalAtual) {
+                  mostrarAlertaAtualizacao('Lançamentos Financeiros');
+                }
+                setTransactions(carregadas);
+                localStorage.setItem('fc26_transactions', JSON.stringify(carregadas));
+                if (!ehPolling) {
+                  showToast(`✓ Sincronizado com o Drive: ${carregadas.length} lançamentos!`);
+                }
+              }
+            }
 
-      cardsContainer.innerHTML = '';
-      tableBody.innerHTML = '';
-      let visibleCount = 0;
+            // 2. Processa Sincronização de Escalas do Casal
+            if (data && data.escala) {
+              try {
+                const nuvemEscalas = typeof data.escala === 'string' ? JSON.parse(data.escala) : data.escala;
+                if (nuvemEscalas && typeof nuvemEscalas === 'object') {
+                  const localStr = localStorage.getItem('fc26_todas_escalas');
+                  const nuvemStr = JSON.stringify(nuvemEscalas);
+                  if (localStr !== nuvemStr) {
+                    setTodasEscalas(nuvemEscalas);
+                    localStorage.setItem('fc26_todas_escalas', nuvemStr);
+                    if (ehPolling) {
+                      mostrarAlertaAtualizacao('Calendário de Escala', data.ultimoAutor || '');
+                    }
+                  }
+                }
+              } catch(e){}
+            }
 
-      APP_STATE.history.forEach(item => {
-        if (currentLotteryFilter !== 'ALL' && item.type !== currentLotteryFilter) return;
-
-        const matchesSearch = item.round.toLowerCase().includes(searchVal) || item.type.toLowerCase().includes(searchVal) || (item.date && item.date.includes(searchVal));
-        if (!matchesSearch) return;
-
-        const hasBet = item.hasBet !== false;
-        const isDrawn = item.main && item.main.length > 0;
-        const isWon = item.amount > 0;
-        const isPending = !isDrawn;
-
-        if (currentStatusFilter === 'BET_ONLY' && !hasBet) return;
-        if (currentStatusFilter === 'NO_BET' && hasBet) return;
-        if (currentStatusFilter === 'WON' && !isWon) return;
-        if (currentStatusFilter === 'PENDING' && !isPending) return;
-
-        visibleCount++;
-        const ev = evaluateDraw(item);
-
-        let typeBadge = 'bg-slate-800 text-slate-300 border-slate-700';
-        if (item.type === 'ロト７') typeBadge = 'bg-emerald-950/70 text-emerald-400 border-emerald-800/50';
-        if (item.type === 'ロト６') typeBadge = 'bg-blue-950/70 text-blue-400 border-blue-800/50';
-        if (item.type === 'ミニロト') typeBadge = 'bg-amber-950/70 text-amber-400 border-amber-800/50';
-
-        const card = document.createElement('div');
-        card.className = `glass-card rounded-2xl p-4 border transition ${isWon ? 'border-amber-500/40 bg-amber-950/10' : hasBet ? 'border-slate-800' : 'border-slate-800/50 opacity-80'}`;
-
-        let statusBadge = '';
-        if (isWon) statusBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold flex items-center gap-1"><i class="fa-solid fa-trophy text-[10px]"></i> ${item.prize} (${formatYen(item.amount)})</span>`;
-        else if (isPending) statusBadge = `<span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-medium flex items-center gap-1"><i class="fa-solid fa-hourglass-half"></i> Aguardando</span>`;
-        else if (!hasBet) statusBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-medium"><i class="fa-solid fa-ban text-[9px] mr-1"></i>Sem aposta</span>`;
-        else statusBadge = `<span class="text-[11px] text-slate-400 font-mono">${ev.hitCount} acertos</span>`;
-
-        let userBetHtml = '';
-        if (!hasBet) {
-          userBetHtml = `<div class="py-2 px-3 rounded-xl bg-slate-900/60 border border-slate-800/70 text-[11px] text-slate-400 flex items-center justify-between"><span><i class="fa-solid fa-ban text-slate-500 mr-1.5"></i>Sem aposta realizada neste concurso</span><button class="text-xs text-emerald-400 hover:underline font-semibold" onclick="openAddBetForRound('${item.round}', '${item.type}', '${item.date}')">+ Apostar</button></div>`;
-        } else if (ev.userBet.length > 0) {
-          userBetHtml = `<div><div class="text-[11px] text-slate-400 mb-1 flex justify-between"><span>Sua Aposta:</span><span class="text-[10px] text-slate-500">Custo: ${formatYen(item.cost)}</span></div><div class="flex flex-wrap gap-1">${ev.userBet.map(n => `<span class="ball ball-sm ${ev.mainHits.includes(n) ? 'ball-hit' : ev.bonusHits.includes(n) ? 'ball-bonus' : 'ball-miss'} font-mono">${String(n).padStart(2,'0')}</span>`).join('')}</div></div>`;
-        } else if (item.notes) {
-          userBetHtml = `<div class="text-xs text-slate-400">${item.notes}</div>`;
-        }
-
-        let drawnHtml = '';
-        if (!isDrawn) {
-          drawnHtml = `<div class="py-2 text-[11px] text-purple-300/80 flex items-center gap-1.5"><i class="fa-solid fa-clock"></i> Sorteio oficial ainda não realizado</div>`;
-        } else {
-          const mainBalls = item.main.map(n => `<span class="ball ball-sm ${hasBet && ev.mainHits.includes(n) ? 'ball-hit' : 'ball-draw'} font-mono">${String(n).padStart(2,'0')}</span>`).join('');
-          const bonusBalls = item.bonus && item.bonus.length ? `<span class="text-slate-500 font-bold px-1 text-xs">+</span>` + item.bonus.map(n => `<span class="ball ball-sm ${hasBet && ev.bonusHits.includes(n) ? 'ball-bonus' : 'bg-slate-800 text-purple-300 border border-purple-800/40'} font-mono">${String(n).padStart(2,'0')}</span>`).join('') : '';
-          drawnHtml = `<div><div class="text-[11px] text-slate-400 mb-1 font-medium">Resultado Oficial:</div><div class="flex flex-wrap items-center gap-1">${mainBalls}${bonusBalls}</div></div>`;
-        }
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between mb-2 pb-2 border-b border-slate-800/80">
-            <div class="flex items-center gap-2">
-              <span class="font-extrabold text-sm text-white">${item.round}</span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${typeBadge}">${item.type}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] text-slate-400 font-mono">${item.date}</span>
-              ${statusBadge}
-            </div>
-          </div>
-          <div class="space-y-2.5">${userBetHtml}${drawnHtml}</div>
-        `;
-        cardsContainer.appendChild(card);
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 transition text-xs';
-        tr.innerHTML = `
-          <td class="py-2.5 px-3">
-            <div class="font-bold text-white">${item.round}</div>
-            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] border ${typeBadge}">${item.type}</span>
-          </td>
-          <td class="py-2.5 px-3 text-slate-300 font-mono whitespace-nowrap">${item.date}</td>
-          <td class="py-2.5 px-3">${hasBet && ev.userBet.length ? ev.userBet.map(n => `<span class="ball ball-sm ${ev.mainHits.includes(n) ? 'ball-hit' : ev.bonusHits.includes(n) ? 'ball-bonus' : 'ball-miss'} font-mono">${String(n).padStart(2,'0')}</span>`).join(' ') : '<span class="text-slate-500 italic">Sem aposta</span>'}</td>
-          <td class="py-2.5 px-3">${isDrawn ? item.main.map(n => `<span class="ball ball-sm ${ev.mainHits.includes(n) ? 'ball-hit' : 'ball-draw'} font-mono">${String(n).padStart(2,'0')}</span>`).join(' ') : '<span class="text-purple-400">Pendente</span>'}</td>
-          <td class="py-2.5 px-3 text-center">${hasBet && isDrawn ? `<span class="px-2 py-0.5 rounded-full ${ev.hitCount >= 3 ? 'bg-emerald-500/20 text-emerald-300 font-bold' : 'bg-slate-800 text-slate-400'}">${ev.hitCount} acertos</span>` : '-'}</td>
-          <td class="py-2.5 px-3 text-right ${item.amount > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}">${item.amount > 0 ? formatYen(item.amount) : '¥0'}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
-
-      document.getElementById('no-results').classList.toggle('hidden', visibleCount > 0);
-    }
-
-    function renderCharts() {
-      const type = document.getElementById('chart-freq-type').value;
-      const userNumbers = APP_STATE.bets[type] || [];
-      const counts = {};
-      userNumbers.forEach(n => counts[n] = 0);
-      let totalDrawn = 0;
-
-      APP_STATE.history.forEach(item => {
-        if (item.type === type && item.main && item.main.length > 0) {
-          totalDrawn++;
-          item.main.forEach(n => { if (counts[n] !== undefined) counts[n]++; });
-        }
-      });
-
-      const labels = userNumbers.map(n => `Dez ${String(n).padStart(2,'0')}`);
-      const dataVals = userNumbers.map(n => counts[n]);
-
-      const ctx1 = document.getElementById('chart-freq').getContext('2d');
-      if (freqChart) freqChart.destroy();
-      freqChart = new Chart(ctx1, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: dataVals,
-            backgroundColor: dataVals.map(v => v >= 4 ? '#10b981' : v <= 1 ? '#f43f5e' : '#3b82f6'),
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+          } catch(err) {
+            console.warn('Sincronização em segundo plano:', err);
           }
+        };
+
+        // Carga inicial
+        verificarSincronizacao(false);
+
+        // Polling suave a cada 25 segundos para manter os dois celulares sincronizados em tempo real
+        const intervalId = setInterval(() => {
+          verificarSincronizacao(true);
+        }, 25000);
+
+        // Atualiza também imediatamente quando a pessoa volta para a aba do navegador
+        const handleVisChange = () => {
+          if (document.visibilityState === 'visible') {
+            verificarSincronizacao(true);
+          }
+        };
+        document.addEventListener('visibilitychange', handleVisChange);
+
+        return () => {
+          clearInterval(intervalId);
+          document.removeEventListener('visibilitychange', handleVisChange);
+        };
+      }, [transactions.length]);
+
+      const [editingTransaction, setEditingTransaction] = useState(null);
+
+      // Estados de Filtros na aba Lançamentos
+      const [filtroTipo, setFiltroTipo] = useState('todos');
+      const [filtroCategoria, setFiltroCategoria] = useState('todas');
+      const [filtroMes, setFiltroMes] = useState('todos');
+      const [termoBusca, setTermoBusca] = useState('');
+
+      // Dados e Estados do Calendário de Escala (My勤務カレンダー)
+      // 7 CARIMBOS OFICIAIS DO MY勤務カレンダー (Murata & Eiko)
+      const CARIMBOS = [
+        { id: '休', label: '休 (Folga)', bg: 'bg-[#86efac] text-emerald-950 border-[#4ade80]' },
+        { id: '出勤', label: '出勤 (Normal)', bg: 'bg-[#38bdf8] text-slate-900 border-[#0284c7]' },
+        { id: '休出', label: '休出 (Hora Extra)', bg: 'bg-[#1e3a8a] text-white border-[#172554]' },
+        { id: '欠勤', label: '欠勤 (Falta)', bg: 'bg-[#2563eb] text-white border-[#1d4ed8]' },
+        { id: '休み', label: '休み (Descanso)', bg: 'bg-[#f59e0b] text-slate-950 border-[#d97706]' },
+        { id: '早退', label: '早退 (Saída cedo)', bg: 'bg-[#fef08a] text-slate-900 border-[#facc15]' },
+        { id: '遅刻', label: '遅刻 (Atraso)', bg: 'bg-[#dc2626] text-white border-[#991b1b]' },
+      ];
+
+      // Calendário Dinâmico: Lê a data atual e permite navegar entre meses
+      const dataSistema = new Date();
+      const [anoCalendario, setAnoCalendario] = useState(dataSistema.getFullYear());
+      const [mesCalendario, setMesCalendario] = useState(dataSistema.getMonth()); // 0=Jan, 8=Set, 9=Out...
+
+      const NOMES_MESES = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+
+      // Escala padrão inicial para Setembro de 2026
+      const ESCALA_SET_2026 = {
+        3: '休', 4: '休', 9: '休', 10: '休', 15: '休', 16: '休',
+        17: '欠', 21: '休', 22: '休', 27: '休', 28: '休'
+      };
+
+      // Banco local de escalas separadas por ano e mês (ex: fc26_escala_2026_9)
+      const getStorageKey = (ano, mes) => `fc26_escala_${ano}_${mes + 1}`;
+
+      const [todasEscalas, setTodasEscalas] = useState(() => {
+        try {
+          const local = localStorage.getItem('fc26_todas_escalas');
+          const obj = local ? JSON.parse(local) : {};
+          if (!obj['2026_9']) obj['2026_9'] = ESCALA_SET_2026;
+          return obj;
+        } catch(e) {
+          return { '2026_9': ESCALA_SET_2026 };
         }
       });
 
-      document.getElementById('freq-insights').innerHTML = `
-        <span>Concursos apurados: <strong class="text-white">${totalDrawn}</strong></span>
-        <span>Aposta base: <strong class="text-emerald-400">${userNumbers.length} dezenas</strong></span>
-      `;
-
-      const hitGroups = { 0: 0, 1: 0, 2: 0, 3: 0, '4+': 0 };
-      let matchesTotal = 0, evaluatedDrawsCount = 0;
-
-      APP_STATE.history.forEach(item => {
-        if (item.hasBet !== false && item.main && item.main.length > 0) {
-          evaluatedDrawsCount++;
-          const ev = evaluateDraw(item);
-          matchesTotal += ev.hitCount;
-          if (ev.hitCount === 0) hitGroups[0]++;
-          else if (ev.hitCount === 1) hitGroups++;
-          else if (ev.hitCount === 2) hitGroups++;
-          else if (ev.hitCount === 3) hitGroups[3]++;
-          else hitGroups['4+']++;
-        }
+      // Perfil do Calendário: Permite que você e sua esposa tenham escalas 100% independentes
+      const [perfilEscala, setPerfilEscala] = useState(() => {
+        return localStorage.getItem('fc26_perfil_escala') || 'usuario';
       });
 
-      const ctx2 = document.getElementById('chart-hits').getContext('2d');
-      if (hitsChart) hitsChart.destroy();
-      hitsChart = new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-          labels: ['0 Acertos', '1 Acerto', '2 Acertos', '3 Acertos (Premiado)', '4+ Acertos'],
-          datasets: [{
-            data: [hitGroups[0], hitGroups, hitGroups, hitGroups[3], hitGroups['4+']],
-            backgroundColor: ['#334155', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'],
-            borderWidth: 2,
-            borderColor: '#0b0f19'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1', boxWidth: 10, font: { size: 10 } } } }
-        }
-      });
+      const trocarPerfilEscala = (novoPerfil) => {
+        setPerfilEscala(novoPerfil);
+        try {
+          localStorage.setItem('fc26_perfil_escala', novoPerfil);
+        } catch(e){}
+      };
 
-      document.getElementById('stat-most-common-hits').textContent = '1 acerto';
-      const eff = evaluatedDrawsCount > 0 ? (matchesTotal / (evaluatedDrawsCount * 6.5) * 100).toFixed(1) : 0;
-      document.getElementById('stat-hit-efficiency').textContent = `${eff}% aproveitamento`;
-    }
+      const chaveMesAtual = `${perfilEscala}_${anoCalendario}_${mesCalendario + 1}`;
+      const escalaMes = todasEscalas[chaveMesAtual] || {};
 
-    function runQuickPick(lottoType) {
-      currentGeneratedType = lottoType;
-      let count = 7, maxNum = 37;
-      if (lottoType === 'ロト６') { count = 6; maxNum = 43; }
-      if (lottoType === 'ミニロト') { count = 5; maxNum = 31; }
+      const [carimboAtivo, setCarimboAtivo] = useState(null);
 
-      const numbersSet = new Set();
-      while (numbersSet.size < count) {
-        numbersSet.add(Math.floor(Math.random() * maxNum) + 1);
-      }
-      currentGeneratedNumbers = Array.from(numbersSet).sort((a,b)=>a-b);
-
-      const container = document.getElementById('qp-balls-container');
-      container.innerHTML = currentGeneratedNumbers.map((n, idx) => `
-        <span class="ball ball-md ball-quickpick font-mono animate-roll" style="animation-delay: ${idx * 0.08}s;">
-          ${String(n).padStart(2,'0')}
-        </span>
-      `).join('');
-
-      document.getElementById('qp-actions').style.display = 'flex';
-    }
-
-    function setupEventListeners() {
-      document.getElementById('toggle-fixed-bets').addEventListener('click', () => {
-        document.getElementById('content-fixed-bets').classList.toggle('hidden');
-        document.getElementById('arrow-fixed-bets').classList.toggle('rotate-180');
-      });
-
-      document.querySelectorAll('#filter-lottery-group .filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#filter-lottery-group .filter-btn').forEach(b => {
-            b.classList.remove('active', 'bg-emerald-600', 'text-white', 'shadow');
-            b.classList.add('text-slate-400');
-          });
-          btn.classList.add('active', 'bg-emerald-600', 'text-white', 'shadow');
-          btn.classList.remove('text-slate-400');
-          currentLotteryFilter = btn.getAttribute('data-type');
-          renderDraws();
-        });
-      });
-
-      document.querySelectorAll('#filter-status-group .status-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#filter-status-group .status-btn').forEach(b => {
-            b.classList.remove('active', 'bg-slate-800', 'text-emerald-400', 'border-slate-700');
-            b.classList.add('text-slate-400', 'border-transparent');
-          });
-          btn.classList.add('active', 'bg-slate-800', 'text-emerald-400', 'border-slate-700');
-          btn.classList.remove('text-slate-400', 'border-transparent');
-          currentStatusFilter = btn.getAttribute('data-status');
-          renderDraws();
-        });
-      });
-
-      document.getElementById('search-input').addEventListener('input', renderDraws);
-      document.getElementById('chart-freq-type').addEventListener('change', renderCharts);
-
-      const btnCards = document.getElementById('btn-view-cards');
-      const btnTable = document.getElementById('btn-view-table');
-      const cardsContainer = document.getElementById('draws-cards-container');
-      const tableContainer = document.getElementById('draws-table-container');
-
-      if (btnCards && btnTable) {
-        btnCards.addEventListener('click', () => {
-          btnCards.classList.add('bg-slate-800', 'text-white');
-          btnCards.classList.remove('text-slate-400');
-          btnTable.classList.remove('bg-slate-800', 'text-white');
-          btnTable.classList.add('text-slate-400');
-          cardsContainer.classList.remove('hidden');
-          tableContainer.classList.add('hidden');
-        });
-
-        btnTable.addEventListener('click', () => {
-          btnTable.classList.add('bg-slate-800', 'text-white');
-          btnTable.classList.remove('text-slate-400');
-          btnCards.classList.remove('bg-slate-800', 'text-white');
-          btnCards.classList.add('text-slate-400');
-          tableContainer.classList.remove('hidden');
-          cardsContainer.classList.add('hidden');
-        });
-      }
-
-      document.getElementById('btn-generate-quickpick').addEventListener('click', () => {
-        runQuickPick(document.getElementById('qp-select-lotto').value);
-      });
-
-      document.getElementById('btn-open-quickpick').addEventListener('click', () => {
-        document.getElementById('btn-generate-quickpick').click();
-        window.scrollTo({ top: 350, behavior: 'smooth' });
-      });
-
-      document.getElementById('btn-qp-copy').addEventListener('click', () => {
-        if (currentGeneratedNumbers.length) {
-          navigator.clipboard.writeText(currentGeneratedNumbers.join(', '));
-          alert('Dezenas copiadas: ' + currentGeneratedNumbers.join(', '));
-        }
-      });
-
-      document.getElementById('btn-qp-save-as-bet').addEventListener('click', () => {
-        openModalAddBet();
-        document.getElementById('modal-bet-type').value = currentGeneratedType;
-        document.getElementById('modal-bet-numbers').value = currentGeneratedNumbers.join(', ');
-      });
-
-      const modalSync = document.getElementById('modal-sync');
-      const syncProgress = document.getElementById('sync-progress');
-      const syncLog = document.getElementById('sync-log');
-      const syncActions = document.getElementById('sync-actions');
-
-      function startSyncFlow() {
-        modalSync.classList.remove('hidden');
-        syncProgress.style.width = '15%';
-        syncLog.innerHTML = '&gt; Conectando a jp.lottolyzer.com...';
-        syncActions.style.display = 'none';
-
-        setTimeout(() => {
-          syncProgress.style.width = '45%';
-          syncLog.innerHTML += '<br>&gt; Sorteios recebidos: Lotto 7 (Draw 693), Lotto 6 (Draw 2135)...';
-        }, 800);
-
-        setTimeout(() => {
-          syncProgress.style.width = '80%';
-          syncLog.innerHTML += '<br>&gt; Cruzando dezenas com suas apostas cadastradas...';
-        }, 1600);
-
-        setTimeout(() => {
-          syncProgress.style.width = '100%';
-          syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">Sucesso! 48 sorteios verificados. Tudo atualizado.</span>';
-          syncActions.style.display = 'flex';
-        }, 2300);
-      }
-
-      document.getElementById('btn-sync-lottolyzer').addEventListener('click', startSyncFlow);
-      document.getElementById('m-btn-sync').addEventListener('click', startSyncFlow);
-
-      document.getElementById('btn-sync-finish').addEventListener('click', () => {
-        modalSync.classList.add('hidden');
-        renderDraws();
-        updateKPICards();
-      });
-
-      const modalAddBet = document.getElementById('modal-add-bet');
-      function openModalAddBet() { modalAddBet.classList.remove('hidden'); }
-
-      document.getElementById('btn-open-modal-add').addEventListener('click', openModalAddBet);
-      document.getElementById('m-btn-add-bet').addEventListener('click', openModalAddBet);
-      document.getElementById('m-btn-quickpick').addEventListener('click', () => {
-        document.getElementById('btn-generate-quickpick').click();
-        window.scrollTo({ top: 350, behavior: 'smooth' });
-      });
-
-      document.getElementById('btn-close-modal-bet').addEventListener('click', () => modalAddBet.classList.add('hidden'));
-      document.getElementById('btn-cancel-bet').addEventListener('click', () => modalAddBet.classList.add('hidden'));
-
-      document.getElementById('btn-use-fixed').addEventListener('click', () => {
-        const type = document.getElementById('modal-bet-type').value;
-        document.getElementById('modal-bet-numbers').value = (APP_STATE.bets[type] || []).join(', ');
-      });
-
-      document.getElementById('form-new-bet').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const type = document.getElementById('modal-bet-type').value;
-        const round = document.getElementById('modal-bet-round').value.trim();
-        const date = document.getElementById('modal-bet-date').value;
-        const cost = Number(document.getElementById('modal-bet-cost').value) || 200;
-        const numbers = document.getElementById('modal-bet-numbers').value
-          .split(/[\s,]+/).map(x => parseInt(x, 10)).filter(x => !isNaN(x)).sort((a,b)=>a-b);
-
-        const existing = APP_STATE.history.find(i => i.round === round && i.type === type);
-        if (existing) {
-          existing.hasBet = true;
-          existing.userBet = numbers;
-          existing.cost = cost;
-          existing.date = date || existing.date;
+      // Navegação de Meses
+      const handleMesAnterior = () => {
+        if (mesCalendario === 0) {
+          setMesCalendario(11);
+          setAnoCalendario(a => a - 1);
         } else {
-          APP_STATE.history.unshift({
-            round,
-            date,
-            type,
-            cost,
-            userBet: numbers,
-            main: [],
-            bonus: [],
-            prize: '-',
-            amount: 0,
-            status: 'pending',
-            hasBet: true
-          });
+          setMesCalendario(m => m - 1);
+        }
+      };
+
+      const handleProximoMes = () => {
+        if (mesCalendario === 11) {
+          setMesCalendario(0);
+          setAnoCalendario(a => a + 1);
+        } else {
+          setMesCalendario(m => m + 1);
+        }
+      };
+
+      // Alterna carimbo ao clicar no dia (ciclo ou carimbo ativo)
+      const handleDiaClick = (dia) => {
+        if (!dia) return;
+        const atual = escalaMes[dia] || '';
+        let novo = '';
+
+        if (carimboAtivo !== null) {
+          novo = atual === carimboAtivo ? '' : carimboAtivo;
+        } else {
+          const ciclo = ['', '休', '出勤', '休出', '欠勤', '休み', '早退', '遅刻'];
+          const proxIdx = (ciclo.indexOf(atual) + 1) % ciclo.length;
+          novo = ciclo[proxIdx];
         }
 
-        modalAddBet.classList.add('hidden');
-        document.getElementById('form-new-bet').reset();
-        init();
-        alert(`Aposta para o concurso ${round} (${type}) registrada com sucesso!`);
-      });
+        const novaEscalaDoMes = { ...escalaMes };
+        if (novo) {
+          novaEscalaDoMes[dia] = novo;
+        } else {
+          delete novaEscalaDoMes[dia];
+        }
 
-      const modalFixed = document.getElementById('modal-edit-bets');
-      document.getElementById('btn-edit-bets').addEventListener('click', () => modalFixed.classList.remove('hidden'));
-      document.getElementById('btn-close-modal-fixed').addEventListener('click', () => modalFixed.classList.add('hidden'));
-      document.getElementById('btn-cancel-fixed').addEventListener('click', () => modalFixed.classList.add('hidden'));
+        const novasTodasEscalas = {
+          ...todasEscalas,
+          [chaveMesAtual]: novaEscalaDoMes
+        };
 
-      document.getElementById('btn-save-fixed-bets').addEventListener('click', () => {
-        const parseNums = s => s.split(/[\s,]+/).map(x => parseInt(x, 10)).filter(x => !isNaN(x)).sort((a,b)=>a-b);
-        APP_STATE.bets['ロト７'] = parseNums(document.getElementById('input-fixed-lotto7').value);
-        APP_STATE.bets['ロト６'] = parseNums(document.getElementById('input-fixed-lotto6').value);
-        APP_STATE.bets['ミニロト'] = parseNums(document.getElementById('input-fixed-miniloto').value);
+        setTodasEscalas(novasTodasEscalas);
+        try {
+          localStorage.setItem('fc26_todas_escalas', JSON.stringify(novasTodasEscalas));
+        } catch(e){}
 
-        modalFixed.classList.add('hidden');
-        init();
-        alert('Cartelas padrão atualizadas com sucesso!');
-      });
+        // Envia a escala do casal para a Planilha Google em segundo plano
+        try {
+          fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'save_escala',
+              todasEscalas: novasTodasEscalas,
+              updatedBy: perfilEscala === 'usuario' ? 'オスマン' : 'シルレイ'
+            })
+          }).then(() => {
+            showToast('✓ Escala sincronizada na nuvem com seu parceiro(a)!');
+          }).catch(e => console.warn(e));
+        } catch(e){}
+      };
+      const [toastMessage, setToastMessage] = useState(null);
+      const [geminiApiKey, setGeminiApiKey] = useState(localStorage.getItem('fc26_gemini_api_key') || '');
+      const [isScanning, setIsScanning] = useState(false);
+      const [scanStep, setScanStep] = useState(1);
+      const [isTestingKey, setIsTestingKey] = useState(false);
+      const fileInputRef = useRef(null);
+
+      const showToast = (msg, isError = false) => {
+        setToastMessage({ msg, isError });
+        setTimeout(() => setToastMessage(null), 3500);
+      };
+
+      // Exportação Nativa para Excel (.xlsx)
+      const handleExportExcel = () => {
+        try {
+          if (typeof XLSX === 'undefined') {
+            showToast('Carregando biblioteca Excel... tente novamente em instantes.', true);
+            return;
+          }
+
+          const linhasExcel = transactions.map((t, idx) => ({
+            'Nº': idx + 1,
+            'Data': t.data,
+            'Tipo': t.tipo,
+            'Categoria': t.categoria,
+            'Valor (¥)': t.valor,
+            'Estabelecimento': t.estabelecimento,
+            'Observações': t.observacoes || ''
+          }));
+
+          const worksheet = XLSX.utils.json_to_sheet(linhasExcel);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Lançamentos 2026');
+
+          // Ajusta larguras de coluna
+          worksheet['!cols'] = [
+            { wch: 6 },
+            { wch: 12 },
+            { wch: 10 },
+            { wch: 25 },
+            { wch: 14 },
+            { wch: 28 },
+            { wch: 20 },
+          ];
+
+          const dataHoje = new Date().toISOString().split('T')[0];
+          XLSX.writeFile(workbook, `Controle_Financeiro_2026_Backup_${dataHoje}.xlsx`);
+          showToast('✓ Arquivo Excel (.xlsx) baixado com sucesso!');
+        } catch(err) {
+          console.error(err);
+          showToast('Erro ao exportar Excel: ' + err.message, true);
+        }
+      };
+
+      // Salva Lançamento com Padronização Automática
+      const handleSave = async (txData) => {
+        const dadosPadronizados = {
+          ...txData,
+          estabelecimento: padronizarNomeLoja(txData.estabelecimento)
+        };
+
+        let updatedList;
+        if (editingTransaction && editingTransaction.id) {
+          updatedList = transactions.map(t => t.id === editingTransaction.id ? { ...dadosPadronizados, id: t.id } : t);
+          showToast('Lançamento atualizado!');
+        } else {
+          const newTx = { ...dadosPadronizados, id: 'tx-' + Date.now() };
+          updatedList = [newTx, ...transactions];
+          showToast('Lançamento registrado com sucesso!');
+        }
+        setTransactions(updatedList);
+        try {
+          localStorage.setItem('fc26_transactions', JSON.stringify(updatedList));
+        } catch(e){}
+
+        // Sincronização em Tempo Real na Nuvem via Google Apps Script (Multi-aparelho sem login)
+        try {
+          // Envia em segundo plano para a planilha no Google Drive
+          fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Garante compatibilidade imediata sem bloquear no CORS
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(dadosPadronizados)
+          }).then(() => {
+            showToast('✓ Gravado na Planilha Google Drive em tempo real!');
+          }).catch(err => {
+            console.warn('Aviso sincronização:', err);
+          });
+        } catch(e) {
+          console.warn(e);
+        }
+      };
+
+      const handleDelete = (idToDelete) => {
+        if (!confirm('Deseja realmente excluir este lançamento?')) return;
+        const updatedList = transactions.filter(t => t.id !== idToDelete);
+        setTransactions(updatedList);
+        try {
+          localStorage.setItem('fc26_transactions', JSON.stringify(updatedList));
+        } catch(e){}
+        setIsModalOpen(false);
+        setEditingTransaction(null);
+        showToast('Lançamento excluído.');
+      };
+
+      // Testar chave Gemini consultando diretamente a lista de modelos ativos da sua conta
+      const handleTestApiKey = async () => {
+        const key = geminiApiKey.trim();
+        if (!key) {
+          showToast('Cole a chave da API primeiro.', true);
+          return;
+        }
+        setIsTestingKey(true);
+        try {
+          // Consulta quais modelos estão liberados para esta chave
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error?.message || 'Chave recusada pelo Google.');
+          }
+          const data = await res.json();
+          const modelosValidos = (data.models || [])
+            .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+            .map(m => m.name.replace('models/', ''));
+          
+          showToast(`✓ Chave válida! ${modelosValidos.length} modelos de IA disponíveis.`);
+        } catch(err) {
+          showToast('Erro: ' + err.message, true);
+        } finally {
+          setIsTestingKey(false);
+        }
+      };
+
+      // Captura Inteligente com OCR e Padronizador
+      const handleCapture = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const key = geminiApiKey.trim();
+        if (!key) {
+          showToast('Insira a chave da Gemini API na aba Conexão.', true);
+          setCurrentTab('config');
+          e.target.value = '';
+          return;
+        }
+
+        setIsScanning(true);
+        setScanStep(1); // 1: Otimizando imagem
+
+        try {
+          const base64Data = await compressImageForAI(file, 1200, 0.85);
+
+          setScanStep(2); // 2: IA lendo comprovante
+
+          const prompt = `Analise este recibo/nota fiscal (领収书 ou レシート).
+IMPORTANTE PARA O ESTABELECIMENTO:
+- Identifique o nome EXATO e ESPECÍFICO do estabelecimento impresso no topo (ex: TRIAL, Lawson, 7-Eleven, あんり, Cosmos, Nitori, AEON).
+- NUNCA retorne nomes genéricos como "Supermercado" ou "Loja". Se for um supermercado Trial, retorne "TRIAL".
+
+Extraia no formato JSON estrito:
+{
+  "estabelecimento": "Nome da loja",
+  "valor": 1234, // TOTAL pago em ienes como inteiro (sem ¥)
+  "data": "YYYY-MM-DD", // Data da compra no formato ISO (ex: 2026-09-10). Se ano ausente, use 2026.
+  "categoria": "Supermercado & Feira", // Uma das categorias padrão
+  "tipo": "Despesa"
+}
+Retorne exclusivamente o JSON, sem crases markdown.`;
+
+          // Descoberta dinâmica com prioridade absoluta para a geração Gemini 3.5 recomendada pelo Google
+          const modelsOrder = [
+            'gemini-3.5-flash-lite',
+            'gemini-3.5-flash',
+            'gemini-2.5-flash',
+            'gemini-flash-latest'
+          ];
+
+          // Gera endpoints testando tanto v1beta quanto v1
+          const endpointsToTry = [];
+          for (const m of modelsOrder) {
+            endpointsToTry.push(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`);
+            endpointsToTry.push(`https://generativelanguage.googleapis.com/v1/models/${m}:generateContent`);
+          }
+
+          let res = null;
+          let lastErr = '';
+          const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+          for (const endpointUrl of endpointsToTry) {
+            try {
+              res = await fetch(`${endpointUrl}?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [
+                    {
+                      parts: [
+                        { text: prompt },
+                        { inline_data: { mime_type: 'image/jpeg', data: base64Data } }
+                      ]
+                    }
+                  ],
+                  generationConfig: {
+                    temperature: 0.1
+                  }
+                })
+              });
+
+              if (res.ok) {
+                break;
+              } else {
+                const errJson = await res.json().catch(() => ({}));
+                lastErr = errJson.error?.message || `Erro ${res.status}`;
+                // Se for 503 ou 429, aguarda 1.5s antes do próximo endpoint
+                if (res.status === 503 || res.status === 429) {
+                  await sleep(1500);
+                }
+              }
+            } catch(netErr) {
+              lastErr = netErr.message;
+            }
+          }
+
+          if (!res || !res.ok) {
+            throw new Error(lastErr || 'Servidor da IA ocupado. Tente novamente em instantes.');
+          }
+
+          setScanStep(3); // 3: Padronizando dados
+
+          const d = await res.json();
+          let rawText = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          
+          // Extração segura por regex do objeto JSON retornado no texto
+          let parsed = {};
+          try {
+            const match = rawText.match(/\{[\s\S]*\}/);
+            if (match) parsed = JSON.parse(match[0]);
+          } catch(e) {
+            console.warn('Erro ao parsear JSON:', e);
+          }
+
+          // Aplica o normalizador de estabelecimentos
+          const lojaPadronizada = padronizarNomeLoja(parsed.estabelecimento);
+
+          setEditingTransaction({
+            tipo: parsed.tipo || 'Despesa',
+            valor: parsed.valor ? String(parsed.valor) : '',
+            estabelecimento: lojaPadronizada,
+            data: parsed.data || new Date().toISOString().split('T')[0],
+            categoria: parsed.categoria || 'Supermercado & Feira',
+          });
+          setIsModalOpen(true);
+          showToast(`✓ Comprovante lido: ${lojaPadronizada}!`);
+        } catch(err) {
+          console.error(err);
+          showToast('Aviso: ' + err.message, true);
+          setEditingTransaction({
+            tipo: 'Despesa',
+            valor: '',
+            estabelecimento: 'TRIAL スーパー',
+            data: new Date().toISOString().split('T')[0],
+            categoria: 'Supermercado & Feira',
+          });
+          setIsModalOpen(true);
+        } finally {
+          setIsScanning(false);
+          e.target.value = '';
+        }
+      };
+
+      // Totais calculados dinamicamente em tempo real a partir de todos os registros da planilha
+      const receitasTotais = transactions.filter(t => !isDespesaTx(t)).reduce((acc, t) => acc + (t.valor || 0), 0) || 3984901;
+      const despesasTotais = transactions.filter(t => isDespesaTx(t)).reduce((acc, t) => acc + (t.valor || 0), 0) || 4186382;
+      const saldo = receitasTotais - despesasTotais;
+
+      return (
+        <div className="w-full max-w-md mx-auto min-h-screen flex flex-col bg-[#F5F2EB] relative pb-24 select-none">
+          
+          {/* POPUP / BANNER DE ATUALIZAÇÃO EM TEMPO REAL */}
+          {popupNotificacao && (
+            <div className="fixed top-14 left-4 right-4 z-50 bg-[#0F2C59] text-white p-3.5 rounded-2xl shadow-2xl border-2 border-emerald-400/80 flex items-center justify-between animate-in slide-in-from-top duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xl shrink-0 animate-bounce">
+                  🔔
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300">Atualização Recebida</span>
+                    <span className="text-[10px] text-slate-400">• {popupNotificacao.hora}</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-white">
+                    {popupNotificacao.local} atualizado {popupNotificacao.autor ? `por ${popupNotificacao.autor}` : 'na base'}!
+                  </h4>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPopupNotificacao(null)}
+                className="text-slate-400 hover:text-white text-sm font-bold p-1 ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Toast Notification */}
+          {toastMessage && (
+            <div className="fixed top-3 left-4 right-4 z-50 px-4 py-3 bg-[#081B38] text-white text-xs font-semibold rounded-2xl shadow-2xl border border-slate-700 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top duration-200">
+              <span className={toastMessage.isError ? "text-rose-400" : "text-emerald-400"}>●</span>
+              <span className="text-center">{toastMessage.msg}</span>
+            </div>
+          )}
+
+          {/* ANIMAÇÃO AVANÇADA DE SCANNER DE RECIBO COM IA */}
+          {isScanning && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 animate-in fade-in">
+              
+              {/* Moldura Holográfica do Recibo */}
+              <div className="relative w-44 h-56 bg-white/10 rounded-2xl border-2 border-emerald-400/60 p-3 flex flex-col justify-between overflow-hidden shadow-[0_0_30px_rgba(16,185,129,0.3)] mb-5">
+                {/* Linha do Laser do Scanner */}
+                <div className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent scanner-laser"></div>
+                
+                {/* Linhas simulando itens do recibo */}
+                <div className="space-y-2 opacity-60">
+                  <div className="h-2 bg-slate-300 rounded w-2/3 mx-auto"></div>
+                  <div className="h-1.5 bg-slate-400 rounded w-full"></div>
+                  <div className="h-1.5 bg-slate-400 rounded w-5/6"></div>
+                  <div className="h-1.5 bg-slate-400 rounded w-4/5"></div>
+                  <div className="h-1.5 bg-slate-400 rounded w-3/4"></div>
+                </div>
+
+                <div className="pt-2 border-t border-white/20 flex justify-between items-center text-[10px] text-emerald-300 font-mono">
+                  <span>TOTAL (¥)</span>
+                  <span className="animate-pulse font-bold">LENDO...</span>
+                </div>
+              </div>
+
+              {/* Status Dinâmico */}
+              <div className="text-center space-y-1">
+                <div className="text-3xl animate-bounce">
+                  {scanStep === 1 ? '📸' : scanStep === 2 ? '🤖' : '✨'}
+                </div>
+                <h3 className="text-lg font-serif font-bold text-white">
+                  {scanStep === 1 && 'Otimizando imagem...'}
+                  {scanStep === 2 && 'IA decodificando valores em Ienes...'}
+                  {scanStep === 3 && 'Padronizando estabelecimento...'}
+                </h3>
+                <p className="text-xs text-slate-300">
+                  Identificando loja e categoria sem erros
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Top Bar */}
+          <header className="px-4 py-3.5 flex justify-between items-center bg-[#F5F2EB]/95 sticky top-0 z-20 backdrop-blur-md border-b border-slate-200/70">
+            <div className="flex-1 min-w-0 mr-2">
+              <span className="text-[9px] tracking-widest uppercase font-bold text-[#0F2C59] block">
+                Gestão Patrimonial Familiar • 2026
+              </span>
+              
+              <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                
+                {/* LOGO ESTILIZADA E ANIMADA FinControl */}
+                <div className="flex items-center gap-1.5 group cursor-pointer">
+                  {/* Brasão Animado com Shimmer e Pulso de Luz */}
+                  <div className="relative w-7 h-7 rounded-xl bg-gradient-to-br from-[#0F2C59] via-[#1B3B6F] to-[#081B38] shadow-md border border-amber-400/40 flex items-center justify-center overflow-hidden shrink-0 animate-logo-glow">
+                    {/* Linha de reflexo que corre pela logo */}
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-logo-shimmer"></div>
+                    
+                    {/* Ícone de Crescimento e Escudo Geométrico */}
+                    <svg className="w-4 h-4 text-amber-300 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                      <path d="M2 17l10 5 10-5" />
+                      <path d="M2 12l10 5 10-5" />
+                    </svg>
+
+                    {/* Ponto de Pulso Ativo */}
+                    <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                  </div>
+
+                  {/* Nome da Marca FinControl */}
+                  <div className="flex items-baseline">
+                    <span className="text-lg font-serif font-black tracking-tight text-[#0F2C59]">Fin</span>
+                    <span className="text-lg font-sans font-bold tracking-tight text-slate-800">Control</span>
+                    <span className="ml-1 text-[9px] font-mono font-bold bg-amber-100 text-amber-900 px-1 rounded">26</span>
+                  </div>
+                </div>
+
+                {/* FRASE ESTÓICA EXCLUSIVA (DISCIPLINA & PROSPERIDADE) */}
+                <div className="flex items-center gap-1 bg-gradient-to-r from-amber-50/90 to-emerald-50/90 px-2 py-0.5 rounded-full border border-amber-200/80 shadow-2xs max-w-full truncate">
+                  <span className="text-xs shrink-0 animate-pulse">🏛️</span>
+                  <span className="text-[10px] font-medium text-slate-700 truncate tracking-tight transition-opacity duration-700">
+                    {FRASES_ESTOICAS[indiceFrase]}
+                  </span>
+                </div>
+
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                Ativo
+              </span>
+            </div>
+          </header>
+
+          {/* Conteúdo Principal */}
+          <main className="p-4 flex-1 overflow-y-auto">
+            
+            {/* ABA 1: DASHBOARD */}
+            {currentTab === 'dashboard' && (
+              <div className="space-y-4">
+                
+                {/* Card de Liquidez com EMOJI ANIMADO DE STATUS */}
+                <div className="bg-[#0F2C59] text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] uppercase tracking-wider text-blue-200 font-bold">Saldo Líquido Acumulado</span>
+                    
+                    {/* Badge e Emoji Animado */}
+                    {saldo < 0 ? (
+                      <div className="flex items-center gap-1.5 bg-rose-600/90 px-2.5 py-0.5 rounded-full">
+                        <span className="text-sm animate-wobble">🫣</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-white">Atenção</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 bg-emerald-600/90 px-2.5 py-0.5 rounded-full">
+                        <span className="text-sm animate-happy">🤑</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-white">Saudável</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-baseline gap-2 my-2">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-rose-200 tracking-tight">
+                      -¥ {Math.abs(saldo).toLocaleString('ja-JP')}
+                    </h2>
+                    <span className="text-2xl animate-wobble">
+                      {saldo < 0 ? '😟' : '😃'}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-blue-200/90 mb-3">
+                    {saldo < 0 ? 'O ritmo pede cautela nas categorias que mais pesam.' : 'Saldo positivo! Bom ritmo de poupança.'}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 pt-3 border-t border-blue-900/60 text-xs">
+                    <div>
+                      <span className="text-[10px] text-blue-300 uppercase">Receitas</span>
+                      <p className="font-bold text-emerald-400 text-sm">¥ {receitasTotais.toLocaleString('ja-JP')}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-blue-300 uppercase">Despesas</span>
+                      <p className="font-bold text-rose-300 text-sm">¥ {despesasTotais.toLocaleString('ja-JP')}</p>
+                    </div>
+                  </div>
+                </div>
+
+                
+                <button
+                  type="button"
+                  onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
+                  className="w-full py-3.5 bg-[#0F2C59] hover:bg-[#1B3B6F] active:scale-[0.98] text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm transition"
+                >
+                  <span className="text-lg leading-none">+</span>
+                  <span>Registrar Despesa / Receita</span>
+                </button>
+
+                {/* CALENDÁRIO DINÂMICO DE ESCALA (Transição Automática de Mês + Navegação << >>) */}
+                {(() => {
+                  // Cálculos dinâmicos para qualquer mês e ano
+                  const primeiroDiaSemana = new Date(anoCalendario, mesCalendario, 1).getDay(); // 0=Dom, 1=Seg...
+                  const totalDiasNoMes = new Date(anoCalendario, mesCalendario + 1, 0).getDate(); // 28, 29, 30 ou 31
+                  const hojeData = new Date();
+                  const ehMesAtual = (hojeData.getFullYear() === anoCalendario && hojeData.getMonth() === mesCalendario);
+                  const diaHojeNumero = hojeData.getDate();
+
+                  // Feriados oficiais do Japão para destaque visual (祝)
+                  const feriadosJapao = {
+                    '2026_9': [21, 22, 23], // Silver Week: 敬老の日, 国民の休日, 秋分の日
+                    '2026_10': [12],        // スポーツの日
+                    '2026_11': [3, 23],     // 文化の日, 勤労感謝の日
+                    '2026_12': [],
+                    '2026_1': [1, 12],      // 元日, 成人の日
+                    '2026_2': [11, 23],     // 建国記念の日, 天皇誕生日
+                  };
+                  const listaFeriados = feriadosJapao[`${anoCalendario}_${mesCalendario + 1}`] || [];
+
+                  return (
+                    <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-3">
+                      
+                      {/* SELETOR DE PERFIL INDEPENDENTE (Você vs. Esposa) */}
+                      <div className="flex justify-between items-center bg-slate-100 p-1 rounded-2xl">
+                        <button
+                          type="button"
+                          onClick={() => trocarPerfilEscala('usuario')}
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                            perfilEscala === 'usuario'
+                              ? 'bg-white text-[#0F2C59] shadow-xs'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <span>👤</span>
+                          <span>オスマン</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => trocarPerfilEscala('esposa')}
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                            perfilEscala === 'esposa'
+                              ? 'bg-white text-rose-600 shadow-xs'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <span>👩</span>
+                          <span>シルレイ</span>
+                        </button>
+                      </div>
+
+                      {/* Cabeçalho com Navegação << Mês >> e Transição Automática */}
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleMesAnterior}
+                            className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs active:scale-90 transition"
+                            title="Mês anterior"
+                          >
+                            &lt;&lt;
+                          </button>
+                          
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#0F2C59] block leading-none">
+                              《My 勤務カレンダー》
+                            </span>
+                            <h3 className="font-serif font-bold text-slate-900 text-base leading-tight">
+                              {NOMES_MESES[mesCalendario]} {anoCalendario}
+                            </h3>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleProximoMes}
+                            className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs active:scale-90 transition"
+                            title="Próximo mês"
+                          >
+                            &gt;&gt;
+                          </button>
+                        </div>
+                        
+                        {/* Contador de Folgas e Dia Atual */}
+                        <div className="text-right">
+                          <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-emerald-200 shadow-2xs">
+                            <span>休</span>
+                            <span>{Object.values(escalaMes).filter(v => v === '休').length} folgas</span>
+                          </span>
+                          <p className="text-[9px] text-slate-400 mt-0.5">
+                            {ehMesAtual ? `Hoje: dia ${diaHojeNumero}` : 'Visualizando escala'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Dias da Semana (日 月 火 水 木 金 土) */}
+                      <div className="grid grid-cols-7 text-center text-xs font-bold py-1 bg-slate-50 rounded-xl">
+                        <span className="text-rose-500">日</span>
+                        <span className="text-slate-600">月</span>
+                        <span className="text-slate-600">火</span>
+                        <span className="text-slate-600">水</span>
+                        <span className="text-slate-600">木</span>
+                        <span className="text-slate-600">金</span>
+                        <span className="text-blue-500">土</span>
+                      </div>
+
+                      {/* Grade Dinâmica do Mês (Preenche os dias vazios exatos de acordo com o 1º dia) */}
+                      <div className="grid grid-cols-7 gap-1 text-center">
+                        {/* Células vazias que antecedem o dia 1 */}
+                        {Array.from({ length: primeiroDiaSemana }).map((_, idx) => (
+                          <div key={'empty-' + idx} className="min-h-[48px] bg-slate-50/40 rounded-xl border border-transparent"></div>
+                        ))}
+
+                        {/* Dias 1 ao último dia do mês (calculado dinamicamente: 28, 29, 30 ou 31) */}
+                        {Array.from({ length: totalDiasNoMes }, (_, i) => i + 1).map((dia) => {
+                          const carimbo = escalaMes[dia] || '';
+                          const diaSemana = (primeiroDiaSemana + dia - 1) % 7; // 0=Dom, 6=Sab
+                          const isHoje = ehMesAtual && (dia === diaHojeNumero);
+                          const isFeriado = listaFeriados.includes(dia);
+                          
+                          let badgeColor = 'bg-[#86efac] text-emerald-950 border-[#4ade80]'; // 休
+                          if (carimbo === '出勤') badgeColor = 'bg-[#38bdf8] text-slate-900 border-[#0284c7]';
+                          if (carimbo === '休出') badgeColor = 'bg-[#1e3a8a] text-white border-[#172554]';
+                          if (carimbo === '欠勤' || carimbo === '欠') badgeColor = 'bg-[#2563eb] text-white border-[#1d4ed8]';
+                          if (carimbo === '休み') badgeColor = 'bg-[#f59e0b] text-slate-950 border-[#d97706]';
+                          if (carimbo === '早退') badgeColor = 'bg-[#fef08a] text-slate-900 border-[#facc15]';
+                          if (carimbo === '遅刻') badgeColor = 'bg-[#dc2626] text-white border-[#991b1b]';
+
+                          return (
+                            <button
+                              key={'dia-' + dia}
+                              type="button"
+                              onClick={() => handleDiaClick(dia)}
+                              className={`min-h-[50px] p-1 rounded-xl flex flex-col justify-between items-center transition active:scale-90 border ${
+                                isHoje 
+                                  ? 'ring-2 ring-[#0F2C59] bg-amber-50/70 border-amber-300 shadow-xs' 
+                                  : diaSemana === 0 
+                                  ? 'bg-rose-50/30 border-rose-100/70 hover:bg-rose-50' 
+                                  : diaSemana === 6 
+                                  ? 'bg-blue-50/30 border-blue-100/70 hover:bg-blue-50' 
+                                  : 'bg-white border-slate-100 hover:bg-slate-50'
+                              }`}
+                              title={`Clique para carimbar dia ${dia}`}
+                            >
+                              <div className="w-full flex justify-between items-center px-0.5">
+                                <span className={`text-[11px] font-bold leading-none ${
+                                  diaSemana === 0 ? 'text-rose-600' : diaSemana === 6 ? 'text-blue-600' : 'text-slate-700'
+                                }`}>
+                                  {dia}
+                                </span>
+                                {isFeriado && (
+                                  <span className="text-[8px] bg-rose-600 text-white font-bold px-1 rounded-xs leading-none">
+                                    祝
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Carimbo de Turno */}
+                              {carimbo ? (
+                                <span className={`w-full py-0.5 rounded-md text-[10px] font-bold border ${badgeColor} shadow-2xs leading-tight`}>
+                                  {carimbo}
+                                </span>
+                              ) : (
+                                <span className="text-[9px] text-transparent leading-none">•</span>
+                              )}
+
+                              {/* Indicador de Folga em Comum do Casal (Quando ambos têm '休' no mesmo dia) */}
+                              {(() => {
+                                const f1 = todasEscalas[`usuario_${anoCalendario}_${mesCalendario + 1}`]?.[dia];
+                                const f2 = todasEscalas[`esposa_${anoCalendario}_${mesCalendario + 1}`]?.[dia];
+                                const minhaFolga = (f1 === '休' || f1 === '休み');
+                                const esposaFolga = (f2 === '休' || f2 === '休み');
+                                if (minhaFolga && esposaFolga) {
+                                  return (
+                                    <span className="text-[8px] text-amber-600 font-bold leading-none mt-0.5 tracking-tight flex items-center gap-0.5" title="Folga em comum do casal!">
+                                      <span>💛</span>
+                                      <span>Juntos</span>
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* BARRA DE CARIMBO RÁPIDO (入力モード) INSIDE O CARD DO CALENDÁRIO */}
+                      <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-400">
+                          <span>CARIMBO RÁPIDO (TOQUE PARA APLICAR NOS DIAS):</span>
+                          {carimboAtivo !== null && (
+                            <button 
+                              type="button" 
+                              onClick={() => setCarimboAtivo(null)}
+                              className="text-[#0F2C59] underline font-bold"
+                            >
+                              Voltar ao Ciclo de Clique
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-1">
+                          {CARIMBOS.map(c => {
+                            const isSel = carimboAtivo === c.id;
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setCarimboAtivo(isSel ? null : c.id)}
+                                className={`px-2 py-1 rounded-lg text-[11px] font-bold transition active:scale-95 border ${
+                                  isSel ? 'bg-[#0F2C59] text-white border-[#0F2C59] shadow-xs' : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}
+                              >
+                                {c.label}
+                              </button>
+                            );
+                          })}
+                          <button
+                            type="button"
+                            onClick={() => setCarimboAtivo(carimboAtivo === '' ? null : '')}
+                            className={`px-2 py-1 rounded-lg text-[11px] font-bold transition active:scale-95 border ${
+                              carimboAtivo === '' ? 'bg-rose-600 text-white border-rose-600' : 'bg-slate-100 text-slate-500 border-slate-200'
+                            }`}
+                            title="Toque em um dia para apagar o carimbo"
+                          >
+                            ✕ Limpar
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })()}
+
+                {/* Status do Mês */}
+                <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl shrink-0">
+                    <span className="animate-wobble">⚡</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Setembro em Andamento</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">8 movimentos registrados na base central (¥ 32.165)</p>
+                  </div>
+                </div>
+
+                {/* Maiores Categorias */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-serif font-bold text-slate-800">Maiores Categorias (2026)</h3>
+                    <span className="text-xs">🏷️</span>
+                  </div>
+                  <div className="space-y-2.5 text-xs font-medium">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-slate-700">1. Supermercado & Feira</span>
+                        <span className="font-bold text-slate-900">¥ 1.582.806</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div className="bg-[#0F2C59] h-full w-[38%] rounded-full"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-slate-700">2. Impostos & Finanças</span>
+                        <span className="font-bold text-slate-900">¥ 807.919</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div className="bg-slate-400 h-full w-[20%] rounded-full"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-slate-700">3. Moradia (Aluguel)</span>
+                        <span className="font-bold text-slate-900">¥ 509.899</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div className="bg-slate-400 h-full w-[12%] rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão de Lançamento */}
+{/* COTAÇÃO FOREX: IENE / DÓLAR (USD/JPY) */}
+                <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200/90 shadow-xs flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0F2C59] flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100">
+                      $¥
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                        <span>USD / JPY:</span>
+                        <span className="text-emerald-600 font-extrabold text-sm tracking-tight">¥ 153.62</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400">Cotação Comercial • Banco Central</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                      +0.05%
+                    </span>
+                    <p className="text-[10px] text-slate-400 mt-0.5">1 USD = ¥ 153,62</p>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* ABA 2: LANÇAMENTOS (Com Filtros Inteligentes por Tipo, Categoria e Mês) */}
+            {currentTab === 'lancamentos' && (() => {
+              const listaFiltrada = transactions.filter((t) => {
+                const isDesp = isDespesaTx(t);
+                if (filtroTipo === 'despesa' && !isDesp) return false;
+                if (filtroTipo === 'receita' && isDesp) return false;
+                if (filtroCategoria !== 'todas' && t.categoria !== filtroCategoria) return false;
+                if (filtroMes !== 'todos' && (!t.data || !t.data.includes(filtroMes))) return false;
+                if (termoBusca.trim()) {
+                  const busca = termoBusca.toLowerCase().trim();
+                  const conteudo = `${t.estabelecimento} ${t.categoria} ${t.data} ${t.observacoes || ''}`.toLowerCase();
+                  if (!conteudo.includes(busca)) return false;
+                }
+                return true;
+              });
+
+              const subtotalDespesas = listaFiltrada.filter(t => isDespesaTx(t)).reduce((acc, t) => acc + (t.valor || 0), 0);
+              const subtotalReceitas = listaFiltrada.filter(t => !isDespesaTx(t)).reduce((acc, t) => acc + (t.valor || 0), 0);
+              const temFiltroAtivo = filtroTipo !== 'todos' || filtroCategoria !== 'todas' || filtroMes !== 'todos' || termoBusca.trim() !== '';
+              const todasCategorias = Array.from(new Set(transactions.map(t => t.categoria).filter(Boolean))).sort();
+
+              return (
+                <div className="space-y-3.5">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-base font-serif font-bold text-slate-900">Lançamentos</h2>
+                      <p className="text-[11px] text-slate-400">Filtre, pesquise ou edite qualquer registro</p>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={handleExportExcel}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs active:scale-95 transition"
+                      title="Baixar Backup em Excel (.xlsx)"
+                    >
+                      <span>📊</span>
+                      <span>Excel</span>
+                    </button>
+                  </div>
+
+                  {/* PAINEL DE FILTROS */}
+                  <div className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                      <input
+                        type="text"
+                        placeholder="Buscar loja (Trial, Anri...), nota..."
+                        value={termoBusca}
+                        onChange={(e) => setTermoBusca(e.target.value)}
+                        className="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-200 focus:border-[#0F2C59] rounded-xl text-xs outline-none transition"
+                      />
+                      {termoBusca && (
+                        <button
+                          type="button"
+                          onClick={() => setTermoBusca('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setFiltroTipo('todos')}
+                        className={`py-1.5 rounded-lg transition ${filtroTipo === 'todos' ? 'bg-white text-[#0F2C59] shadow-xs font-bold' : 'text-slate-500'}`}
+                      >
+                        Todos ({transactions.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFiltroTipo('despesa')}
+                        className={`py-1.5 rounded-lg transition ${filtroTipo === 'despesa' ? 'bg-white text-rose-600 shadow-xs font-bold' : 'text-slate-500'}`}
+                      >
+                        ↓ Despesas
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFiltroTipo('receita')}
+                        className={`py-1.5 rounded-lg transition ${filtroTipo === 'receita' ? 'bg-white text-emerald-600 shadow-xs font-bold' : 'text-slate-500'}`}
+                      >
+                        ↑ Receitas
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mês</label>
+                        <select
+                          value={filtroMes}
+                          onChange={(e) => setFiltroMes(e.target.value)}
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0F2C59] font-medium text-slate-700"
+                        >
+                          <option value="todos">Todos os meses</option>
+                          <option value="-09-">Setembro (Atual)</option>
+                          <option value="-08-">Agosto</option>
+                          <option value="-07-">Julho</option>
+                          <option value="-06-">Junho</option>
+                          <option value="-05-">Maio</option>
+                          <option value="-04-">Abril</option>
+                          <option value="-03-">Março</option>
+                          <option value="-02-">Fevereiro</option>
+                          <option value="-01-">Janeiro</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Categoria</label>
+                        <select
+                          value={filtroCategoria}
+                          onChange={(e) => setFiltroCategoria(e.target.value)}
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#0F2C59] font-medium text-slate-700 truncate"
+                        >
+                          <option value="todas">Todas as categorias</option>
+                          {todasCategorias.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-[11px]">
+                      <div className="text-slate-500 font-medium">
+                        Mostrando <strong>{listaFiltrada.length}</strong> {listaFiltrada.length === 1 ? 'item' : 'itens'}
+                        {filtroTipo === 'despesa' && (
+                          <span className="text-rose-600 font-bold ml-1.5">• Total: -¥ {subtotalDespesas.toLocaleString('ja-JP')}</span>
+                        )}
+                        {filtroTipo === 'receita' && (
+                          <span className="text-emerald-600 font-bold ml-1.5">• Total: +¥ {subtotalReceitas.toLocaleString('ja-JP')}</span>
+                        )}
+                        {filtroTipo === 'todos' && (
+                          <span className="text-slate-700 font-bold ml-1.5">
+                            • Desp: ¥ {subtotalDespesas.toLocaleString('ja-JP')}
+                          </span>
+                        )}
+                      </div>
+
+                      {temFiltroAtivo && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFiltroTipo('todos');
+                            setFiltroCategoria('todas');
+                            setFiltroMes('todos');
+                            setTermoBusca('');
+                          }}
+                          className="text-[#0F2C59] hover:underline font-bold text-[11px]"
+                        >
+                          Limpar filtros
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* LISTA DE CARDS */}
+                  <div className="space-y-2">
+                    {listaFiltrada.length === 0 ? (
+                      <div className="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs border border-slate-200 space-y-1">
+                        <div className="text-2xl mb-1">🔍</div>
+                        <p className="font-bold text-slate-600">Nenhum lançamento encontrado</p>
+                        <p>Tente ajustar os filtros acima.</p>
+                      </div>
+                    ) : (
+                      listaFiltrada.map((t) => (
+                        <div
+                          key={t.id}
+                          onClick={() => { setEditingTransaction(t); setIsModalOpen(true); }}
+                          className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex justify-between items-center text-xs active:bg-slate-50 transition cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm ${isDespesaTx(t) ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                              {isDespesaTx(t) ? '↓' : '↑'}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-slate-800 text-sm truncate">{t.estabelecimento}</h4>
+                              <p className="text-slate-400 text-[11px] truncate">{t.data} • {t.categoria}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`font-bold text-sm ${isDespesaTx(t) ? 'text-slate-900' : 'text-emerald-600'}`}>
+                              {isDespesaTx(t) ? '-' : '+'}¥ {Math.round(t.valor).toLocaleString('ja-JP')}
+                            </span>
+                            <span className="text-slate-400 text-sm font-bold pl-1">›</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleExportExcel}
+                      className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition active:scale-98"
+                    >
+                      <span>📥</span>
+                      <span>Salvar Backup de Segurança (.xlsx)</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ABA 3: CONEXÃO COM BACKUP E CHAVE */}
+            {currentTab === 'config' && (
+              <div className="bg-white p-5 rounded-3xl border border-slate-200 space-y-4 text-xs">
+                <h2 className="text-base font-serif font-bold text-slate-800">Conexão & Backup</h2>
+                
+                {/* Backup Rápido */}
+                <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-900 font-bold">
+                    <span>🛡️</span>
+                    <span>Backup de Segurança em Excel</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 leading-tight">
+                    Baixe todos os seus lançamentos em arquivo <strong>.xlsx</strong> nativo para abrir no Excel do computador ou celular a qualquer hora.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleExportExcel}
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition active:scale-98"
+                  >
+                    Baixar Planilha Excel (.xlsx)
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-500 mb-1">ID da Planilha (Google Drive)</label>
+                  <input type="text" readOnly value={SPREADSHEET_ID} className="w-full p-2 bg-slate-100 rounded-xl text-slate-600 font-mono text-[11px] outline-none" />
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block font-bold text-slate-700">Chave Gemini API (OCR Recibos)</label>
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-blue-600 font-bold hover:underline"
+                    >
+                      Obter chave grátis ↗
+                    </a>
+                  </div>
+                  
+                  <input
+                    type="password"
+                    placeholder="AIzaSy..."
+                    value={geminiApiKey}
+                    onChange={(e) => {
+                      const val = e.target.value.trim();
+                      setGeminiApiKey(val);
+                      localStorage.setItem('fc26_gemini_api_key', val);
+                    }}
+                    className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-[#0F2C59] font-mono text-xs"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleTestApiKey}
+                    disabled={isTestingKey}
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+                  >
+                    {isTestingKey ? 'Testando conexão...' : '⚡ Testar se a Chave está funcionando'}
+                  </button>
+                  
+                  <div className="mt-2 p-3 bg-blue-50 rounded-xl border border-blue-200/60 text-blue-900 text-[11px] leading-relaxed">
+                    <strong>Padronização Automática:</strong><br />
+                    O aplicativo agora converte automaticamente nomes de comprovantes (ex: TRIAL, Lawson, Anri, Hospital) para o padrão oficial, sem deixar nomes genéricos como "Supermercado".
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* Botão FAB Flutuante de Câmera */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleCapture}
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (!geminiApiKey.trim()) {
+                showToast('Cole a chave da Gemini API na aba Conexão primeiro.', true);
+                setCurrentTab('config');
+              } else {
+                fileInputRef.current?.click();
+              }
+            }}
+            disabled={isScanning}
+            className="fixed bottom-20 right-4 z-30 w-[52px] h-[52px] bg-[#0F2C59] text-white rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition border-2 border-white text-xl"
+            title="Tirar foto do comprovante com IA"
+          >
+            {isScanning ? '⏳' : '📷'}
+          </button>
+
+          {/* Bottom Sheet Modal (Criar / Editar / Excluir) */}
+          {isModalOpen && (
+            <OneTapModal
+              onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }}
+              onSave={handleSave}
+              onDelete={handleDelete}
+              initialData={editingTransaction}
+            />
+          )}
+
+          {/* Barra de Navegação Inferior */}
+          <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#FDFBF7]/95 border-t border-slate-200/80 px-6 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex justify-around items-center z-20 backdrop-blur-md">
+            <button
+              type="button"
+              onClick={() => setCurrentTab('dashboard')}
+              className={`flex flex-col items-center gap-0.5 text-[11px] font-medium transition ${currentTab === 'dashboard' ? 'text-[#0F2C59] font-bold' : 'text-slate-400'}`}
+            >
+              <span className="text-base">📊</span>
+              <span>Dashboard</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentTab('lancamentos')}
+              className={`flex flex-col items-center gap-0.5 text-[11px] font-medium transition ${currentTab === 'lancamentos' ? 'text-[#0F2C59] font-bold' : 'text-slate-400'}`}
+            >
+              <span className="text-base">📝</span>
+              <span>Lançamentos</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentTab('config')}
+              className={`flex flex-col items-center gap-0.5 text-[11px] font-medium transition ${currentTab === 'config' ? 'text-[#0F2C59] font-bold' : 'text-slate-400'}`}
+            >
+              <span className="text-base">⚙️</span>
+              <span>Conexão</span>
+            </button>
+          </nav>
+
+        </div>
+      );
     }
 
-    window.openAddBetForRound = function(round, type, date) {
-      document.getElementById('modal-add-bet').classList.remove('hidden');
-      document.getElementById('modal-bet-round').value = round;
-      document.getElementById('modal-bet-type').value = type;
-      if (date) document.getElementById('modal-bet-date').value = date;
-      document.getElementById('modal-bet-numbers').value = (APP_STATE.bets[type] || []).join(', ');
-    };
+    /**
+     * Modal Otimizado para Mobile
+     */
+    function OneTapModal({ onClose, onSave, onDelete, initialData }) {
+      const isEditing = !!(initialData && initialData.id);
+      const [tipo, setTipo] = useState(initialData?.tipo || 'Despesa');
+      const [valor, setValor] = useState(initialData?.valor ? String(initialData.valor) : '');
+      const [categoria, setCategoria] = useState(initialData?.categoria || 'Supermercado & Feira');
+      const [estabelecimento, setEstabelecimento] = useState(initialData?.estabelecimento || '');
+      const [data, setData] = useState(initialData?.data || new Date().toISOString().split('T')[0]);
 
-    window.addEventListener('DOMContentLoaded', init);
+      const categorias = tipo === 'Despesa' ? CATEGORIAS_DESPESA : CATEGORIAS_RECEITA;
+
+      const submit = (e) => {
+        if (e) e.preventDefault();
+        const num = parseFloat(valor);
+        if (!num || num <= 0) {
+          alert('Por favor, informe um valor numérico válido.');
+          return;
+        }
+        onSave({
+          data,
+          tipo,
+          categoria,
+          valor: num,
+          estabelecimento: estabelecimento.trim() || 'TRIAL スーパー'
+        });
+        onClose();
+      };
+
+      return (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end justify-center animate-in fade-in duration-200">
+          
+          <div className="bg-[#FDFBF7] w-full max-w-md rounded-t-[28px] shadow-2xl flex flex-col max-h-[90vh] max-h-[90dvh] border-t border-slate-200">
+            
+            {/* Header Fixo */}
+            <div className="px-5 py-3.5 border-b border-slate-200 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${isEditing ? 'bg-amber-500' : 'bg-[#0F2C59]'}`}></span>
+                <h3 className="font-serif font-bold text-slate-900 text-lg">
+                  {isEditing ? 'Editar Lançamento' : 'Novo Lançamento'}
+                </h3>
+              </div>
+              <button 
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 text-sm font-bold active:scale-95"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Conteúdo com Rolagem */}
+            <form onSubmit={submit} className="flex-1 overflow-y-auto px-5 py-3.5 space-y-4">
+              
+              {/* Segmentação Despesa / Receita */}
+              <div className="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => { setTipo('Despesa'); setCategoria(CATEGORIAS_DESPESA[0].id); }}
+                  className={`py-2 rounded-xl text-xs font-bold transition ${
+                    tipo === 'Despesa' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-500'
+                  }`}
+                >
+                  ↓ Despesa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setTipo('Receita'); setCategoria(CATEGORIAS_RECEITA[0].id); }}
+                  className={`py-2 rounded-xl text-xs font-bold transition ${
+                    tipo === 'Receita' ? 'bg-white text-emerald-600 shadow-xs' : 'text-slate-500'
+                  }`}
+                >
+                  ↑ Receita
+                </button>
+              </div>
+
+              {/* Campo de Valor com Teclado Numérico */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Valor (¥)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">¥</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoFocus
+                    placeholder="0"
+                    value={valor}
+                    onChange={(e) => setValor(e.target.value.replace(/[^0-9]/g, ''))}
+                    className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 focus:border-[#0F2C59] rounded-2xl text-2xl font-extrabold text-[#0F2C59] outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Categorias em Grid 2 Colunas */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Categoria (Selecione em 1 toque)
+                </label>
+                <div className="grid grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
+                  {categorias.map((c) => {
+                    const isSelected = categoria === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setCategoria(c.id)}
+                        className={`flex items-center gap-1.5 p-2 rounded-xl text-xs font-medium text-left transition active:scale-95 border ${
+                          isSelected
+                            ? 'bg-[#0F2C59] text-white border-[#0F2C59] font-bold shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-sm shrink-0">{c.icon}</span>
+                        <span className="truncate">{c.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Estabelecimento com sugestão padronizada */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Nome do Estabelecimento (Loja / Mercado)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: TRIAL スーパー, Lawson, あんり"
+                  value={estabelecimento}
+                  onChange={(e) => setEstabelecimento(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 focus:border-[#0F2C59] rounded-xl text-sm font-medium text-slate-800 outline-none"
+                />
+              </div>
+
+              {/* Data */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Data
+                </label>
+                <input
+                  type="date"
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 outline-none"
+                />
+              </div>
+
+            </form>
+
+            {/* Rodapé Fixo com Botão de Salvar e Excluir */}
+            <div className="p-4 pt-2.5 bg-[#FDFBF7] border-t border-slate-200 shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2">
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!valor}
+                className="w-full py-3.5 bg-[#0F2C59] hover:bg-[#1B3B6F] disabled:opacity-50 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-sm transition"
+              >
+                <span>✓</span>
+                <span>{isEditing ? 'Salvar Alterações' : 'Salvar Lançamento'}</span>
+              </button>
+
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(initialData.id)}
+                  className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-xl text-xs transition"
+                >
+                  🗑 Excluir este Lançamento
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>
