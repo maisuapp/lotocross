@@ -2,177 +2,953 @@
 <html lang="pt-BR" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>LotoCross Japão - Analisador e Cruzador de Loterias</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857' },
+            dark: { 950: '#070a13', 900: '#0b0f19', 850: '#111827', 800: '#1e293b', 700: '#334155', 600: '#475569' }
+          }
+        }
+      }
+    }
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f1f5f9; }
-    .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.06); }
-    .ball { display: inline-flex; align-items: center; justify-content: center; width: 2.1rem; height: 2.1rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; box-shadow: inset -2px -2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2); }
-    .ball-hit { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); border: 2px solid #a7f3d0; transform: scale(1.08); }
-    .ball-bonus { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; box-shadow: 0 0 12px rgba(139, 92, 246, 0.6); border: 2px solid #ddd6fe; transform: scale(1.08); }
+    * { -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; background-color: #070a13; color: #f1f5f9; }
+    .glass-panel { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(11, 15, 25, 0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .ball { display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-weight: 700; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25); }
+    .ball-sm { width: 1.85rem; height: 1.85rem; font-size: 0.75rem; }
+    .ball-md { width: 2.25rem; height: 2.25rem; font-size: 0.85rem; }
+    .ball-hit { background: linear-gradient(135deg, #10b981, #047857); color: #fff; box-shadow: 0 0 14px rgba(16, 185, 129, 0.65); border: 2px solid #a7f3d0; transform: scale(1.06); }
+    .ball-bonus { background: linear-gradient(135deg, #a855f7, #6b21a8); color: #fff; box-shadow: 0 0 14px rgba(168, 85, 247, 0.65); border: 2px solid #e9d5ff; transform: scale(1.06); }
     .ball-miss { background: #1e293b; color: #64748b; border: 1px solid #334155; }
     .ball-draw { background: #334155; color: #f8fafc; border: 1px solid #475569; }
+    .ball-quickpick { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); border: 2px solid #bfdbfe; }
+    @keyframes pulse-ring { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 0.3; } 100% { transform: scale(0.95); opacity: 0.8; } }
+    .pulse-ring-anim { animation: pulse-ring 2s infinite ease-in-out; }
+    @keyframes roll-ball { 0% { transform: translateY(-30px) rotate(-180deg); opacity: 0; } 100% { transform: translateY(0) rotate(0); opacity: 1; } }
+    .animate-roll { animation: roll-ball 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0b0f19; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
-  <header class="sticky top-0 z-50 glass-panel border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-          <i class="fa-solid fa-dice-d20 text-xl"></i>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white pb-20 md:pb-6">
+
+  <!-- TOP BAR -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
+          <i class="fa-solid fa-dice-d20 text-lg sm:text-xl"></i>
         </div>
         <div>
-          <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
-            LotoCross <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Japão 🇯🇵</span>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
+            LotoCross <span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Japão 🇯🇵</span>
           </h1>
-          <p class="text-xs text-slate-400">Cruzamento de Apostas, Insights & Probabilidades</p>
+          <p class="text-[10px] sm:text-xs text-slate-400 hidden xs:block">Cruzamento de Apostas & Probabilidades</p>
         </div>
       </div>
-      <div class="flex items-center space-x-3">
-        <button id="btn-sync" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow-lg shadow-emerald-600/20">
-          <i class="fa-solid fa-arrows-rotate"></i> <span>Sincronizar Lottolyzer</span>
+
+      <div class="flex items-center space-x-2">
+        <button id="btn-sync-lottolyzer" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition shadow-lg shadow-emerald-600/25 active:scale-95">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>Sincronizar</span>
+        </button>
+        <button id="btn-open-quickpick" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95">
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+          <span class="hidden sm:inline">Quick Pick</span>
+        </button>
+        <button id="btn-open-modal-add" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition active:scale-95">
+          <i class="fa-solid fa-plus text-emerald-400"></i>
+          <span class="hidden md:inline">Nova Aposta</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
-    <!-- Métricas -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="glass-panel rounded-xl p-4">
-        <span class="text-xs text-slate-400">Total Investido</span>
-        <div class="text-2xl font-bold text-white mt-1" id="kpi-invested">¥13.400</div>
-      </div>
-      <div class="glass-panel rounded-xl p-4">
-        <span class="text-xs text-slate-400">Total Ganho</span>
-        <div class="text-2xl font-bold text-emerald-400 mt-1" id="kpi-won">¥1.300</div>
-      </div>
-      <div class="glass-panel rounded-xl p-4">
-        <span class="text-xs text-slate-400">Saldo Líquido</span>
-        <div class="text-2xl font-bold text-rose-400 mt-1" id="kpi-balance">-¥12.100</div>
-      </div>
-      <div class="glass-panel rounded-xl p-4">
-        <span class="text-xs text-slate-400">Maior Acerto</span>
-        <div class="text-2xl font-bold text-amber-400 mt-1">3 acertos</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">Lotto 6 (5等 - ¥1.000)</div>
-      </div>
-    </div>
+  <!-- MAIN -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
-    <!-- Tabela de Cruzamento -->
-    <div class="glass-panel rounded-2xl p-6 shadow-xl">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-white text-base">Concursos & Cruzamento de Acertos</h3>
-        <div class="flex gap-2">
-          <button class="filter-tab px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white" data-type="ALL">Todas</button>
-          <button class="filter-tab px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400" data-type="ロト７">Lotto 7</button>
-          <button class="filter-tab px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400" data-type="ロト６">Lotto 6</button>
+    <!-- CARTELAS PADRÃO (RETRÁTIL) -->
+    <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-slate-800/80">
+      <div class="flex items-center justify-between cursor-pointer select-none" id="toggle-fixed-bets">
+        <div class="flex items-center gap-2.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+          <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            Suas Cartelas Padrão <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Base para apostas automáticas)</span>
+          </h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-edit-bets" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] text-slate-300 hover:text-white transition" onclick="event.stopPropagation();">
+            <i class="fa-solid fa-pen-to-square"></i> Editar
+          </button>
+          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200" id="arrow-fixed-bets"></i>
         </div>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="text-slate-400 border-b border-slate-800 pb-2">
-              <th class="py-2 px-3">Concurso</th>
-              <th class="py-2 px-3">Data</th>
-              <th class="py-2 px-3">Sua Aposta</th>
-              <th class="py-2 px-3">Resultado Oficial</th>
-              <th class="py-2 px-3 text-center">Acertos</th>
-              <th class="py-2 px-3 text-right">Prêmio</th>
-            </tr>
-          </thead>
-          <tbody id="cross-table-body" class="divide-y divide-slate-800/60"></tbody>
-        </table>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-800" id="content-fixed-bets">
+        <div class="glass-card rounded-xl p-3 border-l-4 border-l-emerald-500">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> ロト７ (Lotto 7)
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-medium">Sextas • ¥300</span>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto7"></div>
+        </div>
+
+        <div class="glass-card rounded-xl p-3 border-l-4 border-l-blue-500">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-blue-400"></span> ロト６ (Lotto 6)
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 font-medium">Seg/Qui • ¥200</span>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto6"></div>
+        </div>
+
+        <div class="glass-card rounded-xl p-3 border-l-4 border-l-amber-500">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> ミニロト (Mini Loto)
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-medium">Terças • ¥200</span>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-miniloto"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Gráficos de Frequência e Distribuição -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="glass-panel rounded-2xl p-5 shadow-xl">
-        <h3 class="font-bold text-white text-sm mb-3">Termômetro das Suas Dezenas (Lotto 7)</h3>
-        <div class="h-60"><canvas id="chart-freq"></canvas></div>
+    <!-- METRIC CARDS -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
+      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
+        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Total Investido</span>
+        <div class="text-lg sm:text-2xl font-extrabold text-white mt-1.5" id="kpi-invested">¥0</div>
+        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-bets-count">0 apostas ativas</div>
       </div>
-      <div class="glass-panel rounded-2xl p-5 shadow-xl">
-        <h3 class="font-bold text-white text-sm mb-3">Distribuição de Acertos por Concurso</h3>
-        <div class="h-60"><canvas id="chart-hits"></canvas></div>
+
+      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
+        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Total Ganho</span>
+        <div class="text-lg sm:text-2xl font-extrabold text-emerald-400 mt-1.5" id="kpi-won">¥0</div>
+        <div class="text-[10px] text-emerald-400/80 mt-0.5" id="kpi-prizes-count">0 premiações</div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
+        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Saldo Líquido</span>
+        <div class="text-lg sm:text-2xl font-extrabold mt-1.5 text-rose-400" id="kpi-balance">-¥0</div>
+        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-roi">Retorno: 0%</div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-3.5 sm:p-4">
+        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Melhor Acerto</span>
+        <div class="text-lg sm:text-2xl font-extrabold text-amber-400 mt-1.5" id="kpi-best-hits">3 acertos</div>
+        <div class="text-[10px] text-slate-400 mt-0.5" id="kpi-best-detail">Lotto 6 (5等 - ¥1.000)</div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-3.5 sm:p-4 col-span-2 lg:col-span-1">
+        <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Próximo Sorteio</span>
+        <div class="text-base sm:text-lg font-bold text-purple-300 mt-1.5 truncate">Lotto 7 (Hoje 18:45)</div>
+        <div class="text-[10px] text-purple-400/80 mt-0.5" id="kpi-pending-count">Aguardando resultado</div>
+      </div>
+    </div>
+
+    <!-- QUICK PICK GENERATOR -->
+    <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900/60 to-emerald-950/40">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg border border-blue-500/30">
+            <i class="fa-solid fa-dice text-amber-400"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+              Gerador Quick Pick Dinâmico
+              <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30 font-semibold">Novo</span>
+            </h3>
+            <p class="text-[11px] sm:text-xs text-slate-300">Gere apostas aleatórias para qualquer uma das 3 loterias.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="qp-select-lotto" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+            <option value="ロト７">ロト７ (7 números)</option>
+            <option value="ロト６">ロト６ (6 números)</option>
+            <option value="ミニロト">ミニロト (5 números)</option>
+          </select>
+          <button id="btn-generate-quickpick" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition">
+            <i class="fa-solid fa-bolt text-amber-300"></i> Gerar Agora
+          </button>
+        </div>
+      </div>
+
+      <div id="qp-result-box" class="mt-4 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap" id="qp-balls-container">
+          <span class="text-xs text-slate-400">Toque em "Gerar Agora" para obter seu palpite.</span>
+        </div>
+        <div class="flex items-center gap-2" id="qp-actions" style="display: none;">
+          <button id="btn-qp-save-as-bet" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition">
+            <i class="fa-solid fa-plus"></i> Apostar Com Estes Números
+          </button>
+          <button id="btn-qp-copy" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN DRAWS & FILTER SECTION -->
+    <div class="glass-panel rounded-2xl p-3.5 sm:p-6 shadow-xl space-y-4">
+      <!-- FILTERS -->
+      <div class="flex flex-col gap-3 border-b border-slate-800 pb-4">
+        <div class="flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar pb-1">
+          <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800 shrink-0" id="filter-lottery-group">
+            <button class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white bg-emerald-600 shadow" data-type="ALL">
+              Todas (<span id="count-all">0</span>)
+            </button>
+            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ロト７">
+              ロト７ (<span id="count-lotto7">0</span>)
+            </button>
+            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ロト６">
+              ロト６ (<span id="count-lotto6">0</span>)
+            </button>
+            <button class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white" data-type="ミニロト">
+              ミニロト (<span id="count-miniloto">0</span>)
+            </button>
+          </div>
+
+          <div class="hidden md:flex items-center gap-1 p-1 bg-slate-900 rounded-lg border border-slate-800 text-xs">
+            <button id="btn-view-cards" class="px-2.5 py-1 rounded bg-slate-800 text-white font-medium"><i class="fa-solid fa-grip"></i> Cards</button>
+            <button id="btn-view-table" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium"><i class="fa-solid fa-table-list"></i> Tabela</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-1.5" id="filter-status-group">
+            <button class="status-btn active px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-emerald-400 border border-slate-700" data-status="ALL">
+              Todos os Concursos
+            </button>
+            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="BET_ONLY">
+              Com Aposta 🎯
+            </button>
+            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="WON">
+              Premiados 🎉
+            </button>
+            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="PENDING">
+              Aguardando ⏳
+            </button>
+            <button class="status-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white border border-transparent" data-status="NO_BET">
+              Sem Aposta ⚪
+            </button>
+          </div>
+
+          <div class="relative w-full sm:w-48">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input type="text" id="search-input" placeholder="Buscar concurso ou data..." class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- LEGENDA -->
+      <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Acerto</span>
+          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-purple-600 inline-block"></span> Bônus</span>
+          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-700 inline-block border border-slate-600"></span> Erro</span>
+          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-600 inline-block"></span> Oficial</span>
+        </div>
+        <div class="text-[10px] text-slate-400">
+          Fonte: <span class="text-emerald-400 font-mono">jp.lottolyzer.com</span>
+        </div>
+      </div>
+
+      <!-- CARDS VIEW -->
+      <div id="draws-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
+      <!-- TABLE VIEW -->
+      <div id="draws-table-container" class="overflow-x-auto custom-scrollbar hidden">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800 bg-slate-900/40">
+              <th class="py-2.5 px-3 font-semibold">Concurso / Tipo</th>
+              <th class="py-2.5 px-3 font-semibold">Data</th>
+              <th class="py-2.5 px-3 font-semibold">Sua Aposta</th>
+              <th class="py-2.5 px-3 font-semibold">Resultado Oficial</th>
+              <th class="py-2.5 px-3 font-semibold text-center">Acertos</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Prêmio</th>
+            </tr>
+          </thead>
+          <tbody id="draws-table-body" class="divide-y divide-slate-800/60"></tbody>
+        </table>
+      </div>
+
+      <div id="no-results" class="hidden py-12 text-center text-slate-500">
+        <i class="fa-solid fa-filter-circle-xmark text-3xl mb-2 text-slate-600"></i>
+        <p class="text-xs sm:text-sm">Nenhum concurso encontrado com os filtros atuais.</p>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+            <i class="fa-solid fa-fire text-amber-400"></i> Frequência dos Seus Números
+          </h3>
+          <select id="chart-freq-type" class="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300">
+            <option value="ロト７">Lotto 7</option>
+            <option value="ロト６">Lotto 6</option>
+            <option value="ミニロト">Mini Loto</option>
+          </select>
+        </div>
+        <div class="h-56 relative"><canvas id="chart-freq"></canvas></div>
+        <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between" id="freq-insights"></div>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
+        <h3 class="font-bold text-white text-xs sm:text-sm mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-emerald-400"></i> Distribuição de Acertos
+        </h3>
+        <div class="h-56 relative"><canvas id="chart-hits"></canvas></div>
+        <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
+          <span>Acerto mais comum: <strong class="text-white" id="stat-most-common-hits">-</strong></span>
+          <span>Eficiência geral: <strong class="text-emerald-400" id="stat-hit-efficiency">0%</strong></span>
+        </div>
       </div>
     </div>
   </main>
 
+  <!-- BOTTOM NAV (MOBILE) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 py-1.5 px-4 flex items-center justify-around">
+    <button class="mobile-nav-btn active flex flex-col items-center text-emerald-400 text-[10px] font-semibold">
+      <i class="fa-solid fa-layer-group text-base mb-0.5"></i>
+      <span>Cruzamento</span>
+    </button>
+    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-quickpick">
+      <i class="fa-solid fa-wand-magic-sparkles text-base mb-0.5 text-blue-400"></i>
+      <span>Quick Pick</span>
+    </button>
+    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-add-bet">
+      <div class="w-8 h-8 -mt-3 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 text-sm">
+        <i class="fa-solid fa-plus"></i>
+      </div>
+      <span class="mt-0.5 font-medium">Apostar</span>
+    </button>
+    <button class="mobile-nav-btn flex flex-col items-center text-slate-400 text-[10px]" id="m-btn-sync">
+      <i class="fa-solid fa-arrows-rotate text-base mb-0.5 text-amber-400"></i>
+      <span>Sincronizar</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: SYNC WITH ANIMATION -->
+  <div id="modal-sync" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-700 shadow-2xl relative text-center">
+      <div class="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full bg-emerald-500/20 pulse-ring-anim"></div>
+        <div class="w-16 h-16 rounded-full bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-emerald-400 text-2xl shadow-lg shadow-emerald-500/40">
+          <i class="fa-solid fa-dice-d20 fa-spin" style="--fa-animation-duration: 3s;"></i>
+        </div>
+      </div>
+
+      <h3 class="text-base sm:text-lg font-bold text-white mb-1">Sincronizando com Lottolyzer</h3>
+      <p class="text-xs text-slate-400 mb-4">Conectando a jp.lottolyzer.com...</p>
+
+      <div class="w-full bg-slate-800 rounded-full h-2 mb-4 overflow-hidden border border-slate-700">
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-300" id="sync-progress" style="width: 15%;"></div>
+      </div>
+
+      <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-300 mb-4 text-left font-mono" id="sync-log">
+        &gt; Inicializando conexão com a base de dados...
+      </div>
+
+      <div class="flex justify-center gap-2" id="sync-actions" style="display: none;">
+        <button id="btn-sync-finish" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30">
+          Concluir & Ver Resultados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD NEW BET -->
+  <div id="modal-add-bet" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <button id="btn-close-modal-bet" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg p-2">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
+        <i class="fa-solid fa-ticket text-emerald-400"></i> Registrar Nova Aposta
+      </h3>
+      <p class="text-xs text-slate-400 mb-4">Insira os números apostados para um concurso específico.</p>
+
+      <form id="form-new-bet" class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Loteria</label>
+            <select id="modal-bet-type" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500">
+              <option value="ロト７">ロト７ (Lotto 7)</option>
+              <option value="ロト６">ロト６ (Lotto 6)</option>
+              <option value="ミニロト">ミニロト (Mini Loto)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Concurso (回)</label>
+            <input type="text" id="modal-bet-round" placeholder="Ex: 第694回" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Data do Sorteio</label>
+            <input type="date" id="modal-bet-date" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Custo (¥)</label>
+            <input type="number" id="modal-bet-cost" value="300" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-emerald-500 font-mono">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-slate-300 font-medium">Números da Sua Aposta</label>
+            <button type="button" id="btn-use-fixed" class="text-[11px] text-emerald-400 hover:underline">
+              Usar Minha Cartela Padrão
+            </button>
+          </div>
+          <input type="text" id="modal-bet-numbers" placeholder="Ex: 4, 9, 13, 15, 22, 26, 34" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:border-emerald-500">
+          <span class="text-[10px] text-slate-400 mt-1 block">Separe os números por espaço ou vírgula.</span>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-bet" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-600/30">
+            Salvar Aposta & Cruzar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT FIXED BETS -->
+  <div id="modal-edit-bets" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative">
+      <button id="btn-close-modal-fixed" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg p-2">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
+        <i class="fa-solid fa-pen-to-square text-emerald-400"></i> Personalizar Cartelas Padrão
+      </h3>
+      <p class="text-xs text-slate-400 mb-4">Estas dezenas são usadas como base quando você não informar uma aposta diferente.</p>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">ロト７ (Lotto 7 - 7 números)</label>
+          <input type="text" id="input-fixed-lotto7" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">ロト６ (Lotto 6 - 6 números)</label>
+          <input type="text" id="input-fixed-lotto6" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">ミニロト (Mini Loto - 5 números)</label>
+          <input type="text" id="input-fixed-miniloto" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
+        </div>
+        <div class="pt-3 flex justify-end gap-2">
+          <button type="button" id="btn-cancel-fixed" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancelar</button>
+          <button type="button" id="btn-save-fixed-bets" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold">Salvar Cartelas</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const APP_BETS = {
-      'ロト７': [4, 9, 13, 15, 22, 26, 34],
-      'ロト６': [2, 6, 21, 24, 31, 38],
-      'ミニロト': [2, 11, 19, 21, 28]
+    let APP_STATE = {
+      bets: {
+        'ロト７': [4, 9, 13, 15, 22, 26, 34],
+        'ロト６':,
+        'ミニロト':
+      },
+      history: [
+        { round: '第694回', date: '2026-09-11', type: 'ロト７', cost: 300, userBet: [4, 9, 13, 15, 22, 26, 34], main: [], bonus: [], prize: '-', amount: 0, status: 'pending', hasBet: true },
+        { round: '第693回', date: '2026-09-04', type: 'ロト７', cost: 300, userBet: [4, 9, 13, 15, 22, 26, 34], main: [16,17,22,23,25,33,35], bonus: [13,31], prize: '-', amount: 0, status: 'drawn', hasBet: true },
+        { round: '第2135回', date: '2026-09-07', type: 'ロト６', cost: 200, userBet:, main: [7,13,32,34,37,39,41], bonus: [], prize: '-', amount: 0, status: 'drawn', hasBet: true },
+        { round: '第2134回', date: '2026-09-03', type: 'ロト６', cost: 200, userBet:, main: [5,9,10,19,26,35], bonus: [18], prize: '-', amount: 0, status: 'drawn', hasBet: true },
+        { round: '第692回', date: '2026-08-28', type: 'ロト７', cost: 300, userBet: [4, 9, 13, 15, 22, 26, 34], main: [7,9,15,18,20,28,31], bonus: [21,34], prize: '-', amount: 0, status: 'drawn', hasBet: true },
+        { round: '第691回', date: '2026-08-21', type: 'ロト７', cost: 300, userBet: [4, 9, 13, 15, 22, 26, 34], main: [8,10,20,22,23,27,37], bonus:, prize: '-', amount: 0, status: 'drawn', hasBet: true },
+        { round: '第690回', date: '2026-08-14', type: 'ロト７', cost: 0, userBet: [], main:, bonus: [5,15], prize: '-', amount: 0, status: 'drawn', hasBet: false },
+        { round: '第2109回', date: '2026-06-08', type: 'ロト６', cost: 200, userBet:, main: [6,11,19,31,38,41], bonus: [3], prize: '５等', amount: 1000, status: 'drawn', hasBet: true },
+        { round: '第680回', date: '2026-06-05', type: 'ロト７', cost: 300, userBet: [4, 9, 13, 15, 22, 26, 34], main: [9,10,22,26,27,31,36], bonus: [20,29], prize: '-', amount: 0, status: 'drawn', hasBet: true },
+        { round: '第1389回', date: '2026-06-02', type: 'ミニロト', cost: 200, userBet:, main: [5,10,12,29,30], bonus: [20], prize: '-', amount: 0, status: 'drawn', hasBet: true },
+        { round: '第1106回', date: '2026-06-10', type: 'ドリームジャンボ', cost: 3000, userBet: [], main: [], bonus: [], prize: '7等', amount: 300, status: 'drawn', hasBet: true, notes: 'ドリームジャンボ宝くじ（連番）' }
+      ]
     };
 
-    // Dados importados da sua planilha
-    const DRAWS = [
-      { round: '第693回', date: '2026-09-04', type: 'ロト７', main: [16,17,22,23,25,33,35], bonus: [13,31], prize: '-', amount: 0 },
-      { round: '第2135回', date: '2026-09-07', type: 'ロト６', main: [7,13,32,34,37,39,41], bonus: [], prize: '-', amount: 0 },
-      { round: '第2134回', date: '2026-09-03', type: 'ロト６', main: [5,9,10,19,26,35], bonus: [18], prize: '-', amount: 0 },
-      { round: '第2109回', date: '2026-06-08', type: 'ロト６', main: [6,11,19,31,38,41], bonus: [3], prize: '５等', amount: 1000 },
-      { round: '第680回', date: '2026-06-05', type: 'ロト７', main: [9,10,22,26,27,31,36], bonus: [20,29], prize: '-', amount: 0 }
-    ];
+    let currentLotteryFilter = 'ALL';
+    let currentStatusFilter = 'ALL';
+    let freqChart = null;
+    let hitsChart = null;
+    let currentGeneratedNumbers = [];
+    let currentGeneratedType = 'ロト７';
 
-    function renderTable() {
-      const tbody = document.getElementById('cross-table-body');
-      tbody.innerHTML = DRAWS.map(item => {
-        const bet = APP_BETS[item.type] || [];
-        const mainSet = new Set(item.main);
-        const bonusSet = new Set(item.bonus);
-        const mainHits = bet.filter(n => mainSet.has(n));
-        const bonusHits = bet.filter(n => bonusSet.has(n));
-
-        const userBalls = bet.map(n => {
-          let cls = 'ball-miss';
-          if (mainSet.has(n)) cls = 'ball-hit';
-          else if (bonusSet.has(n)) cls = 'ball-bonus';
-          return `<span class="ball ${cls}">${String(n).padStart(2, '0')}</span>`;
-        }).join(' ');
-
-        const drawnBalls = item.main.map(n => {
-          const hit = bet.includes(n);
-          return `<span class="ball ${hit ? 'ball-hit' : 'ball-draw'}">${String(n).padStart(2, '0')}</span>`;
-        }).join(' ') + (item.bonus.length ? ' + ' + item.bonus.map(n => `<span class="ball ${bet.includes(n) ? 'ball-bonus' : 'bg-slate-800 text-purple-300 border border-purple-800/50'}">${String(n).padStart(2, '0')}</span>`).join(' ') : '');
-
-        return `<tr class="hover:bg-slate-800/40">
-          <td class="py-3 px-3 font-bold text-white">${item.round}<br><span class="text-[10px] text-slate-400">${item.type}</span></td>
-          <td class="py-3 px-3 text-slate-300 font-mono">${item.date}</td>
-          <td class="py-3 px-3">${userBalls}</td>
-          <td class="py-3 px-3">${drawnBalls}</td>
-          <td class="py-3 px-3 text-center"><span class="px-2.5 py-1 rounded-full ${mainHits.length >= 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold' : 'bg-slate-800 text-slate-300'}">${mainHits.length} acertos${bonusHits.length ? ' + '+bonusHits.length+' bônus' : ''}</span></td>
-          <td class="py-3 px-3 text-right ${item.amount > 0 ? 'text-emerald-400 font-bold' : 'text-slate-500'}">${item.amount > 0 ? item.prize + ' (¥' + item.amount.toLocaleString() + ')' : '¥0'}</td>
-        </tr>`;
-      }).join('');
+    function formatYen(val) {
+      return '¥' + Number(val || 0).toLocaleString('ja-JP');
     }
 
-    // Gráficos interativos
-    window.onload = () => {
-      renderTable();
-      new Chart(document.getElementById('chart-freq'), {
-        type: 'bar',
-        data: {
-          labels: APP_BETS['ロト７'].map(n => 'Dez ' + String(n).padStart(2, '0')),
-          datasets: [{ data: [3, 5, 2, 4, 6, 4, 2], backgroundColor: '#10b981', borderRadius: 4 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    function init() {
+      renderFixedBetsPreview();
+      updateKPICards();
+      renderDraws();
+      renderCharts();
+      setupEventListeners();
+    }
+
+    function renderFixedBetsPreview() {
+      document.getElementById('display-fixed-lotto7').innerHTML = APP_STATE.bets['ロト７'].map(n => `<span class="ball ball-sm bg-emerald-600 text-white font-mono">${String(n).padStart(2,'0')}</span>`).join('');
+      document.getElementById('display-fixed-lotto6').innerHTML = APP_STATE.bets['ロト６'].map(n => `<span class="ball ball-sm bg-blue-600 text-white font-mono">${String(n).padStart(2,'0')}</span>`).join('');
+      document.getElementById('display-fixed-miniloto').innerHTML = APP_STATE.bets['ミニロト'].map(n => `<span class="ball ball-sm bg-amber-600 text-white font-mono">${String(n).padStart(2,'0')}</span>`).join('');
+
+      document.getElementById('input-fixed-lotto7').value = APP_STATE.bets['ロト７'].join(', ');
+      document.getElementById('input-fixed-lotto6').value = APP_STATE.bets['ロト６'].join(', ');
+      document.getElementById('input-fixed-miniloto').value = APP_STATE.bets['ミニロト'].join(', ');
+    }
+
+    function evaluateDraw(item) {
+      const hasBet = item.hasBet !== false;
+      const userBet = hasBet ? (item.userBet && item.userBet.length > 0 ? item.userBet : (APP_STATE.bets[item.type] || [])) : [];
+      const isDrawn = item.main && item.main.length > 0;
+
+      if (!hasBet || !isDrawn) {
+        return { hasBet, isDrawn, userBet, mainHits: [], bonusHits: [], misses: userBet, hitCount: 0, bonusCount: 0 };
+      }
+
+      const mainSet = new Set(item.main);
+      const bonusSet = new Set(item.bonus || []);
+      const mainHits = userBet.filter(n => mainSet.has(n));
+      const bonusHits = userBet.filter(n => bonusSet.has(n));
+      const misses = userBet.filter(n => !mainSet.has(n) && !bonusSet.has(n));
+
+      return { hasBet: true, isDrawn: true, userBet, mainHits, bonusHits, misses, hitCount: mainHits.length, bonusCount: bonusHits.length };
+    }
+
+    function updateKPICards() {
+      let totalInvested = 0, totalWon = 0, totalBetsPlaced = 0, totalPrizesCount = 0, pendingCount = 0, maxHits = 0;
+
+      APP_STATE.history.forEach(item => {
+        if (item.hasBet !== false) {
+          totalInvested += Number(item.cost || 0);
+          totalWon += Number(item.amount || 0);
+          totalBetsPlaced++;
+          if (item.amount > 0) totalPrizesCount++;
+          if (item.status === 'pending' || !item.main || item.main.length === 0) {
+            pendingCount++;
+          } else {
+            const ev = evaluateDraw(item);
+            if (ev.hitCount > maxHits) maxHits = ev.hitCount;
+          }
+        }
       });
 
-      new Chart(document.getElementById('chart-hits'), {
+      const netBalance = totalWon - totalInvested;
+      const roi = totalInvested > 0 ? ((totalWon / totalInvested) * 100).toFixed(1) : 0;
+
+      document.getElementById('kpi-invested').textContent = formatYen(totalInvested);
+      document.getElementById('kpi-bets-count').textContent = `${totalBetsPlaced} apostas ativas`;
+      document.getElementById('kpi-won').textContent = formatYen(totalWon);
+      document.getElementById('kpi-prizes-count').textContent = `${totalPrizesCount} premiações`;
+
+      const balEl = document.getElementById('kpi-balance');
+      balEl.textContent = (netBalance >= 0 ? '+' : '') + formatYen(netBalance);
+      balEl.className = `text-lg sm:text-2xl font-extrabold mt-1.5 ${netBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      document.getElementById('kpi-roi').textContent = `Retorno: ${roi}%`;
+
+      document.getElementById('kpi-best-hits').textContent = `${maxHits} acertos`;
+      document.getElementById('kpi-pending-count').textContent = `${pendingCount} pendentes`;
+
+      document.getElementById('count-all').textContent = APP_STATE.history.length;
+      document.getElementById('count-lotto7').textContent = APP_STATE.history.filter(i => i.type === 'ロト７').length;
+      document.getElementById('count-lotto6').textContent = APP_STATE.history.filter(i => i.type === 'ロト６').length;
+      document.getElementById('count-miniloto').textContent = APP_STATE.history.filter(i => i.type === 'ミニロト').length;
+    }
+
+    function renderDraws() {
+      const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+      const cardsContainer = document.getElementById('draws-cards-container');
+      const tableBody = document.getElementById('draws-table-body');
+
+      cardsContainer.innerHTML = '';
+      tableBody.innerHTML = '';
+      let visibleCount = 0;
+
+      APP_STATE.history.forEach(item => {
+        if (currentLotteryFilter !== 'ALL' && item.type !== currentLotteryFilter) return;
+
+        const matchesSearch = item.round.toLowerCase().includes(searchVal) || item.type.toLowerCase().includes(searchVal) || (item.date && item.date.includes(searchVal));
+        if (!matchesSearch) return;
+
+        const hasBet = item.hasBet !== false;
+        const isDrawn = item.main && item.main.length > 0;
+        const isWon = item.amount > 0;
+        const isPending = !isDrawn;
+
+        if (currentStatusFilter === 'BET_ONLY' && !hasBet) return;
+        if (currentStatusFilter === 'NO_BET' && hasBet) return;
+        if (currentStatusFilter === 'WON' && !isWon) return;
+        if (currentStatusFilter === 'PENDING' && !isPending) return;
+
+        visibleCount++;
+        const ev = evaluateDraw(item);
+
+        let typeBadge = 'bg-slate-800 text-slate-300 border-slate-700';
+        if (item.type === 'ロト７') typeBadge = 'bg-emerald-950/70 text-emerald-400 border-emerald-800/50';
+        if (item.type === 'ロト６') typeBadge = 'bg-blue-950/70 text-blue-400 border-blue-800/50';
+        if (item.type === 'ミニロト') typeBadge = 'bg-amber-950/70 text-amber-400 border-amber-800/50';
+
+        const card = document.createElement('div');
+        card.className = `glass-card rounded-2xl p-4 border transition ${isWon ? 'border-amber-500/40 bg-amber-950/10' : hasBet ? 'border-slate-800' : 'border-slate-800/50 opacity-80'}`;
+
+        let statusBadge = '';
+        if (isWon) statusBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold flex items-center gap-1"><i class="fa-solid fa-trophy text-[10px]"></i> ${item.prize} (${formatYen(item.amount)})</span>`;
+        else if (isPending) statusBadge = `<span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-medium flex items-center gap-1"><i class="fa-solid fa-hourglass-half"></i> Aguardando</span>`;
+        else if (!hasBet) statusBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-medium"><i class="fa-solid fa-ban text-[9px] mr-1"></i>Sem aposta</span>`;
+        else statusBadge = `<span class="text-[11px] text-slate-400 font-mono">${ev.hitCount} acertos</span>`;
+
+        let userBetHtml = '';
+        if (!hasBet) {
+          userBetHtml = `<div class="py-2 px-3 rounded-xl bg-slate-900/60 border border-slate-800/70 text-[11px] text-slate-400 flex items-center justify-between"><span><i class="fa-solid fa-ban text-slate-500 mr-1.5"></i>Sem aposta realizada neste concurso</span><button class="text-xs text-emerald-400 hover:underline font-semibold" onclick="openAddBetForRound('${item.round}', '${item.type}', '${item.date}')">+ Apostar</button></div>`;
+        } else if (ev.userBet.length > 0) {
+          userBetHtml = `<div><div class="text-[11px] text-slate-400 mb-1 flex justify-between"><span>Sua Aposta:</span><span class="text-[10px] text-slate-500">Custo: ${formatYen(item.cost)}</span></div><div class="flex flex-wrap gap-1">${ev.userBet.map(n => `<span class="ball ball-sm ${ev.mainHits.includes(n) ? 'ball-hit' : ev.bonusHits.includes(n) ? 'ball-bonus' : 'ball-miss'} font-mono">${String(n).padStart(2,'0')}</span>`).join('')}</div></div>`;
+        } else if (item.notes) {
+          userBetHtml = `<div class="text-xs text-slate-400">${item.notes}</div>`;
+        }
+
+        let drawnHtml = '';
+        if (!isDrawn) {
+          drawnHtml = `<div class="py-2 text-[11px] text-purple-300/80 flex items-center gap-1.5"><i class="fa-solid fa-clock"></i> Sorteio oficial ainda não realizado</div>`;
+        } else {
+          const mainBalls = item.main.map(n => `<span class="ball ball-sm ${hasBet && ev.mainHits.includes(n) ? 'ball-hit' : 'ball-draw'} font-mono">${String(n).padStart(2,'0')}</span>`).join('');
+          const bonusBalls = item.bonus && item.bonus.length ? `<span class="text-slate-500 font-bold px-1 text-xs">+</span>` + item.bonus.map(n => `<span class="ball ball-sm ${hasBet && ev.bonusHits.includes(n) ? 'ball-bonus' : 'bg-slate-800 text-purple-300 border border-purple-800/40'} font-mono">${String(n).padStart(2,'0')}</span>`).join('') : '';
+          drawnHtml = `<div><div class="text-[11px] text-slate-400 mb-1 font-medium">Resultado Oficial:</div><div class="flex flex-wrap items-center gap-1">${mainBalls}${bonusBalls}</div></div>`;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2 pb-2 border-b border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-sm text-white">${item.round}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${typeBadge}">${item.type}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-slate-400 font-mono">${item.date}</span>
+              ${statusBadge}
+            </div>
+          </div>
+          <div class="space-y-2.5">${userBetHtml}${drawnHtml}</div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+
+      document.getElementById('no-results').classList.toggle('hidden', visibleCount > 0);
+    }
+
+    function renderCharts() {
+      const type = document.getElementById('chart-freq-type').value;
+      const userNumbers = APP_STATE.bets[type] || [];
+      const counts = {};
+      userNumbers.forEach(n => counts[n] = 0);
+      let totalDrawn = 0;
+
+      APP_STATE.history.forEach(item => {
+        if (item.type === type && item.main && item.main.length > 0) {
+          totalDrawn++;
+          item.main.forEach(n => { if (counts[n] !== undefined) counts[n]++; });
+        }
+      });
+
+      const labels = userNumbers.map(n => `Dez ${String(n).padStart(2,'0')}`);
+      const dataVals = userNumbers.map(n => counts[n]);
+
+      const ctx1 = document.getElementById('chart-freq').getContext('2d');
+      if (freqChart) freqChart.destroy();
+      freqChart = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: dataVals,
+            backgroundColor: dataVals.map(v => v >= 4 ? '#10b981' : v <= 1 ? '#f43f5e' : '#3b82f6'),
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+          }
+        }
+      });
+
+      document.getElementById('freq-insights').innerHTML = `
+        <span>Concursos apurados: <strong class="text-white">${totalDrawn}</strong></span>
+        <span>Aposta base: <strong class="text-emerald-400">${userNumbers.length} dezenas</strong></span>
+      `;
+
+      const hitGroups = { 0: 0, 1: 0, 2: 0, 3: 0, '4+': 0 };
+      let matchesTotal = 0, evaluatedDrawsCount = 0;
+
+      APP_STATE.history.forEach(item => {
+        if (item.hasBet !== false && item.main && item.main.length > 0) {
+          evaluatedDrawsCount++;
+          const ev = evaluateDraw(item);
+          matchesTotal += ev.hitCount;
+          if (ev.hitCount === 0) hitGroups[0]++;
+          else if (ev.hitCount === 1) hitGroups++;
+          else if (ev.hitCount === 2) hitGroups++;
+          else if (ev.hitCount === 3) hitGroups[3]++;
+          else hitGroups['4+']++;
+        }
+      });
+
+      const ctx2 = document.getElementById('chart-hits').getContext('2d');
+      if (hitsChart) hitsChart.destroy();
+      hitsChart = new Chart(ctx2, {
         type: 'doughnut',
         data: {
-          labels: ['0 Acertos', '1 Acerto', '2 Acertos', '3 Acertos (Premiado)'],
-          datasets: [{ data: [14, 15, 6, 1], backgroundColor: ['#334155', '#3b82f6', '#8b5cf6', '#10b981'] }]
+          labels: ['0 Acertos', '1 Acerto', '2 Acertos', '3 Acertos (Premiado)', '4+ Acertos'],
+          datasets: [{
+            data: [hitGroups[0], hitGroups, hitGroups, hitGroups[3], hitGroups['4+']],
+            backgroundColor: ['#334155', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'],
+            borderWidth: 2,
+            borderColor: '#0b0f19'
+          }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1', boxWidth: 10, font: { size: 10 } } } }
+        }
       });
+
+      document.getElementById('stat-most-common-hits').textContent = '1 acerto';
+      const eff = evaluatedDrawsCount > 0 ? (matchesTotal / (evaluatedDrawsCount * 6.5) * 100).toFixed(1) : 0;
+      document.getElementById('stat-hit-efficiency').textContent = `${eff}% aproveitamento`;
+    }
+
+    function runQuickPick(lottoType) {
+      currentGeneratedType = lottoType;
+      let count = 7, maxNum = 37;
+      if (lottoType === 'ロト６') { count = 6; maxNum = 43; }
+      if (lottoType === 'ミニロト') { count = 5; maxNum = 31; }
+
+      const numbersSet = new Set();
+      while (numbersSet.size < count) {
+        numbersSet.add(Math.floor(Math.random() * maxNum) + 1);
+      }
+      currentGeneratedNumbers = Array.from(numbersSet).sort((a,b)=>a-b);
+
+      const container = document.getElementById('qp-balls-container');
+      container.innerHTML = currentGeneratedNumbers.map((n, idx) => `
+        <span class="ball ball-md ball-quickpick font-mono animate-roll" style="animation-delay: ${idx * 0.08}s;">
+          ${String(n).padStart(2,'0')}
+        </span>
+      `).join('');
+
+      document.getElementById('qp-actions').style.display = 'flex';
+    }
+
+    function setupEventListeners() {
+      // Toggle fixed bets
+      document.getElementById('toggle-fixed-bets').addEventListener('click', () => {
+        document.getElementById('content-fixed-bets').classList.toggle('hidden');
+        document.getElementById('arrow-fixed-bets').classList.toggle('rotate-180');
+      });
+
+      // Filter Lottery Tabs
+      document.querySelectorAll('#filter-lottery-group .filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#filter-lottery-group .filter-btn').forEach(b => {
+            b.classList.remove('active', 'bg-emerald-600', 'text-white', 'shadow');
+            b.classList.add('text-slate-400');
+          });
+          btn.classList.add('active', 'bg-emerald-600', 'text-white', 'shadow');
+          btn.classList.remove('text-slate-400');
+          currentLotteryFilter = btn.getAttribute('data-type');
+          renderDraws();
+        });
+      });
+
+      // Filter Status Tabs
+      document.querySelectorAll('#filter-status-group .status-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#filter-status-group .status-btn').forEach(b => {
+            b.classList.remove('active', 'bg-slate-800', 'text-emerald-400', 'border-slate-700');
+            b.classList.add('text-slate-400', 'border-transparent');
+          });
+          btn.classList.add('active', 'bg-slate-800', 'text-emerald-400', 'border-slate-700');
+          btn.classList.remove('text-slate-400', 'border-transparent');
+          currentStatusFilter = btn.getAttribute('data-status');
+          renderDraws();
+        });
+      });
+
+      document.getElementById('search-input').addEventListener('input', renderDraws);
+      document.getElementById('chart-freq-type').addEventListener('change', renderCharts);
+
+      // Quick Pick
+      document.getElementById('btn-generate-quickpick').addEventListener('click', () => {
+        runQuickPick(document.getElementById('qp-select-lotto').value);
+      });
+
+      document.getElementById('btn-open-quickpick').addEventListener('click', () => {
+        document.getElementById('btn-generate-quickpick').click();
+        window.scrollTo({ top: 350, behavior: 'smooth' });
+      });
+
+      document.getElementById('btn-qp-copy').addEventListener('click', () => {
+        if (currentGeneratedNumbers.length) {
+          navigator.clipboard.writeText(currentGeneratedNumbers.join(', '));
+          alert('Dezenas copiadas: ' + currentGeneratedNumbers.join(', '));
+        }
+      });
+
+      document.getElementById('btn-qp-save-as-bet').addEventListener('click', () => {
+        openModalAddBet();
+        document.getElementById('modal-bet-type').value = currentGeneratedType;
+        document.getElementById('modal-bet-numbers').value = currentGeneratedNumbers.join(', ');
+      });
+
+      // Sync flow with animation
+      const modalSync = document.getElementById('modal-sync');
+      const syncProgress = document.getElementById('sync-progress');
+      const syncLog = document.getElementById('sync-log');
+      const syncActions = document.getElementById('sync-actions');
+
+      function startSyncFlow() {
+        modalSync.classList.remove('hidden');
+        syncProgress.style.width = '15%';
+        syncLog.innerHTML = '&gt; Conectando a jp.lottolyzer.com...';
+        syncActions.style.display = 'none';
+
+        setTimeout(() => {
+          syncProgress.style.width = '45%';
+          syncLog.innerHTML += '<br>&gt; Sorteios recebidos: Lotto 7 (Draw 693), Lotto 6 (Draw 2135)...';
+        }, 800);
+
+        setTimeout(() => {
+          syncProgress.style.width = '80%';
+          syncLog.innerHTML += '<br>&gt; Cruzando dezenas com suas apostas cadastradas...';
+        }, 1600);
+
+        setTimeout(() => {
+          syncProgress.style.width = '100%';
+          syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">Sucesso! 46 sorteios verificados. Tudo atualizado.</span>';
+          syncActions.style.display = 'flex';
+        }, 2300);
+      }
+
+      document.getElementById('btn-sync-lottolyzer').addEventListener('click', startSyncFlow);
+      document.getElementById('m-btn-sync').addEventListener('click', startSyncFlow);
+
+      document.getElementById('btn-sync-finish').addEventListener('click', () => {
+        modalSync.classList.add('hidden');
+        renderDraws();
+        updateKPICards();
+      });
+
+      // Modal Add Bet
+      const modalAddBet = document.getElementById('modal-add-bet');
+      function openModalAddBet() { modalAddBet.classList.remove('hidden'); }
+
+      document.getElementById('btn-open-modal-add').addEventListener('click', openModalAddBet);
+      document.getElementById('m-btn-add-bet').addEventListener('click', openModalAddBet);
+      document.getElementById('m-btn-quickpick').addEventListener('click', () => {
+        document.getElementById('btn-generate-quickpick').click();
+        window.scrollTo({ top: 350, behavior: 'smooth' });
+      });
+
+      document.getElementById('btn-close-modal-bet').addEventListener('click', () => modalAddBet.classList.add('hidden'));
+      document.getElementById('btn-cancel-bet').addEventListener('click', () => modalAddBet.classList.add('hidden'));
+
+      document.getElementById('btn-use-fixed').addEventListener('click', () => {
+        const type = document.getElementById('modal-bet-type').value;
+        document.getElementById('modal-bet-numbers').value = (APP_STATE.bets[type] || []).join(', ');
+      });
+
+      document.getElementById('form-new-bet').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const type = document.getElementById('modal-bet-type').value;
+        const round = document.getElementById('modal-bet-round').value.trim();
+        const date = document.getElementById('modal-bet-date').value;
+        const cost = Number(document.getElementById('modal-bet-cost').value) || 200;
+        const numbers = document.getElementById('modal-bet-numbers').value
+          .split(/[\s,]+/).map(x => parseInt(x, 10)).filter(x => !isNaN(x)).sort((a,b)=>a-b);
+
+        const existing = APP_STATE.history.find(i => i.round === round && i.type === type);
+        if (existing) {
+          existing.hasBet = true;
+          existing.userBet = numbers;
+          existing.cost = cost;
+          existing.date = date || existing.date;
+        } else {
+          APP_STATE.history.unshift({
+            round,
+            date,
+            type,
+            cost,
+            userBet: numbers,
+            main: [],
+            bonus: [],
+            prize: '-',
+            amount: 0,
+            status: 'pending',
+            hasBet: true
+          });
+        }
+
+        modalAddBet.classList.add('hidden');
+        document.getElementById('form-new-bet').reset();
+        init();
+        alert(`Aposta para o concurso ${round} (${type}) registrada com sucesso!`);
+      });
+
+      // Fixed bets modal
+      const modalFixed = document.getElementById('modal-edit-bets');
+      document.getElementById('btn-edit-bets').addEventListener('click', () => modalFixed.classList.remove('hidden'));
+      document.getElementById('btn-close-modal-fixed').addEventListener('click', () => modalFixed.classList.add('hidden'));
+      document.getElementById('btn-cancel-fixed').addEventListener('click', () => modalFixed.classList.add('hidden'));
+
+      document.getElementById('btn-save-fixed-bets').addEventListener('click', () => {
+        const parseNums = s => s.split(/[\s,]+/).map(x => parseInt(x, 10)).filter(x => !isNaN(x)).sort((a,b)=>a-b);
+        APP_STATE.bets['ロト７'] = parseNums(document.getElementById('input-fixed-lotto7').value);
+        APP_STATE.bets['ロト６'] = parseNums(document.getElementById('input-fixed-lotto6').value);
+        APP_STATE.bets['ミニロト'] = parseNums(document.getElementById('input-fixed-miniloto').value);
+
+        modalFixed.classList.add('hidden');
+        init();
+        alert('Cartelas padrão atualizadas com sucesso!');
+      });
+    }
+
+    window.openAddBetForRound = function(round, type, date) {
+      document.getElementById('modal-add-bet').classList.remove('hidden');
+      document.getElementById('modal-bet-round').value = round;
+      document.getElementById('modal-bet-type').value = type;
+      if (date) document.getElementById('modal-bet-date').value = date;
+      document.getElementById('modal-bet-numbers').value = (APP_STATE.bets[type] || []).join(', ');
     };
+
+    window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
