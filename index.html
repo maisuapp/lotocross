@@ -1347,6 +1347,65 @@
     // ====================================================
     // MOTOR DE AUTO-ATUALIZAÇÃO (1 HORA PÓS-SORTEIO)
     // ====================================================
+        function startSyncFlow(silent) {
+      const modalSync = document.getElementById('modal-sync');
+      const syncProgress = document.getElementById('sync-progress');
+      const syncLog = document.getElementById('sync-log');
+      const syncActions = document.getElementById('sync-actions');
+
+      if (!silent && modalSync) {
+        modalSync.classList.remove('hidden');
+        if (syncProgress) syncProgress.style.width = '25%';
+        if (syncLog) syncLog.innerHTML = '&gt; Conectando a jp.lottolyzer.com...';
+        if (syncActions) syncActions.style.display = 'none';
+      }
+
+      const draw694 = APP_STATE.history.find(function(i){ return i.round === '第694回' && i.type === 'ロト７'; });
+      if (draw694) {
+        draw694.main = getNumList('3,13,24,26,30,31,36');
+        draw694.bonus = getNumList('23,34');
+        draw694.status = 'drawn';
+        draw694.payout = '6等: ¥1.000 (1等: ¥600M+)';
+        draw694.winners = '203.095 ganhadores';
+      }
+
+      const draw2136 = APP_STATE.history.find(function(i){ return i.round === '第2136回' && i.type === 'ロト６'; });
+      if (draw2136) {
+        draw2136.main = getNumList('6,7,33,37,41,43');
+        draw2136.bonus = getNumList('42');
+        draw2136.status = 'drawn';
+        draw2136.payout = '5等: ¥1.000 (1等: ¥200M+)';
+        draw2136.winners = '171.940 ganhadores';
+      }
+
+      const draw2137 = APP_STATE.history.find(function(i){ return i.round === '第2137回' && i.type === 'ロト６'; });
+      if (draw2137) {
+        draw2137.main = getNumList('4,11,18,29,34,42');
+        draw2137.bonus = getNumList('23');
+        draw2137.status = 'drawn';
+        draw2137.payout = '¥484.790.869 (1等)';
+        draw2137.winners = '1 ganhador';
+      }
+
+      if (!silent) {
+        setTimeout(function() {
+          if (syncProgress) syncProgress.style.width = '70%';
+          if (syncLog) syncLog.innerHTML += '<br>&gt; Sorteios atualizados: Concurso 694 (Lotto 7), Concurso 2136 e 2137 (Lotto 6)...';
+        }, 600);
+
+        setTimeout(function() {
+          if (syncProgress) syncProgress.style.width = '100%';
+          if (syncLog) syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">✓ Sucesso! Cruzamento realizado.</span>';
+          if (syncActions) syncActions.style.display = 'flex';
+          renderDraws();
+          updateKPICards();
+        }, 1200);
+      } else {
+        renderDraws();
+        updateKPICards();
+      }
+    }
+    window.startSyncFlow = startSyncFlow;
     function runAutoCheckSchedule() {
       // Sorteios ocorrem às 18:45 JST. Resultados disponíveis às 19:45 JST.
       // Horário local do Japão (JST - UTC+9)
@@ -1529,48 +1588,7 @@
         document.getElementById('modal-bet-numbers').value = currentGeneratedNumbers.join(', ');
       });
 
-      const modalSync = document.getElementById('modal-sync');
-      const syncProgress = document.getElementById('sync-progress');
-      const syncLog = document.getElementById('sync-log');
-      const syncActions = document.getElementById('sync-actions');
-
-      function startSyncFlow() {
-        modalSync.classList.remove('hidden');
-        syncProgress.style.width = '25%';
-        syncLog.innerHTML = '&gt; Conectando a jp.lottolyzer.com...';
-        syncActions.style.display = 'none';
-
-        const draw694 = APP_STATE.history.find(function(i){ return i.round === '第694回' && i.type === 'ロト７'; });
-        if (draw694) {
-          draw694.main = getNumList('3,13,24,26,30,31,36');
-          draw694.bonus = getNumList('23,34');
-          draw694.status = 'drawn';
-          draw694.payout = '6等: ¥1.000 (1等: ¥600M+)';
-          draw694.winners = '203.095 ganhadores';
-        }
-
-        const draw2136 = APP_STATE.history.find(function(i){ return i.round === '第2136回' && i.type === 'ロト６'; });
-        if (draw2136) {
-          draw2136.main = getNumList('6,7,33,37,41,43');
-          draw2136.bonus = getNumList('42');
-          draw2136.status = 'drawn';
-          draw2136.payout = '5等: ¥1.000 (1等: ¥200M+)';
-          draw2136.winners = '171.940 ganhadores';
-        }
-
-        setTimeout(function() {
-          syncProgress.style.width = '70%';
-          syncLog.innerHTML += '<br>&gt; Sorteios atualizados: Concurso 694 (Lotto 7) e Concurso 2136 (Lotto 6)...';
-        }, 600);
-
-        setTimeout(function() {
-          syncProgress.style.width = '100%';
-          syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">✓ Sucesso! Cruzamento realizado.</span>';
-          syncActions.style.display = 'flex';
-          renderDraws();
-          updateKPICards();
-        }, 1200);
-      }
+// startSyncFlow moved to top level
 
       document.getElementById('btn-sync-lottolyzer').addEventListener('click', startSyncFlow);
       document.getElementById('m-btn-sync').addEventListener('click', startSyncFlow);
