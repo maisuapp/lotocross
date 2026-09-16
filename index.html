@@ -39,6 +39,158 @@
     .pulse-ring-anim { animation: pulse-ring 2s infinite ease-in-out; }
     @keyframes roll-ball { 0% { transform: translateY(-20px) rotate(-180deg); opacity: 0; } 100% { transform: translateY(0) rotate(0); opacity: 1; } }
     .animate-roll { animation: roll-ball 0.35s ease-out forwards; }
+  
+    /* --- ANIMAÇÃO EXCLUSIVA DE CREDIBILIDADE: LOGO LOTOCROSS --- */
+    @keyframes logoShimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .logo-text-animated {
+      background: linear-gradient(110deg, #ffffff 15%, #a7f3d0 35%, #34d399 50%, #6ee7b7 65%, #ffffff 85%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: logoShimmer 4.5s linear infinite;
+      display: inline-block;
+      letter-spacing: -0.02em;
+    }
+    @keyframes diceFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      30% { transform: translateY(-3px) rotate(-6deg) scale(1.04); }
+      70% { transform: translateY(2px) rotate(6deg) scale(0.98); }
+    }
+    .logo-dice-animated {
+      animation: diceFloat 4s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes logoPulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.25);
+      }
+      50% {
+        box-shadow: 0 0 28px rgba(16, 185, 129, 0.8), 0 0 12px rgba(52, 211, 153, 0.6), inset 0 0 14px rgba(255, 255, 255, 0.45);
+      }
+    }
+    .logo-box-glow {
+      animation: logoPulseGlow 3s ease-in-out infinite;
+    }
+    @keyframes badgeLivePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.15); }
+    }
+    .live-dot {
+      animation: badgeLivePulse 1.8s infinite ease-in-out;
+    }
+
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-20 md:pb-8">
+
+
+  <!-- BARRA SUPERIOR -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-300 flex items-center justify-center text-slate-950 font-black shadow-lg logo-box-glow shrink-0">
+          <i class="fa-solid fa-dice-d20 text-xl logo-dice-animated text-white drop-shadow-md"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold flex items-center gap-1.5">
+              <span class="logo-text-animated font-black tracking-wide">LotoCross</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot"></span>
+                Japão 🇯🇵
+              </span>
+            </h1>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden xs:block font-medium">Cruzamento Oficial de Apostas, Resultados & Probabilidades</p>
+        </div>
+      </div>
+    </div>tml>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>LotoCross Japão v9.2 - Analisador e Cruzador de Loterias</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857' },
+            dark: { 950: '#070a13', 900: '#0b0f19', 850: '#111827', 800: '#1e293b', 700: '#334155' }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #070a13; color: #f1f5f9; }
+    .glass-panel { background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(11, 15, 25, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.07); }
+    .ball { display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-weight: 700; transition: all 0.2s; box-shadow: inset -2px -2px 4px rgba(0,0,0,0.4); }
+    .ball-sm { width: 1.85rem; height: 1.85rem; font-size: 0.75rem; }
+    .ball-md { width: 2.25rem; height: 2.25rem; font-size: 0.85rem; }
+    .ball-hit { background: linear-gradient(135deg, #10b981, #047857); color: #fff; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); border: 2px solid #a7f3d0; }
+    .ball-bonus { background: linear-gradient(135deg, #a855f7, #6b21a8); color: #fff; box-shadow: 0 0 12px rgba(168, 85, 247, 0.6); border: 2px solid #e9d5ff; }
+    .ball-miss { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+    .ball-draw { background: #334155; color: #f8fafc; border: 1px solid #475569; }
+    .ball-quickpick { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; border: 2px solid #bfdbfe; }
+    @keyframes pulse-ring { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 0.3; } 100% { transform: scale(0.95); opacity: 0.8; } }
+    .pulse-ring-anim { animation: pulse-ring 2s infinite ease-in-out; }
+    @keyframes roll-ball { 0% { transform: translateY(-20px) rotate(-180deg); opacity: 0; } 100% { transform: translateY(0) rotate(0); opacity: 1; } }
+    .animate-roll { animation: roll-ball 0.35s ease-out forwards; }
+  
+    /* --- ANIMAÇÃO EXCLUSIVA DE CREDIBILIDADE: LOGO LOTOCROSS --- */
+    @keyframes logoShimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .logo-text-animated {
+      background: linear-gradient(110deg, #ffffff 15%, #a7f3d0 35%, #34d399 50%, #6ee7b7 65%, #ffffff 85%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: logoShimmer 4.5s linear infinite;
+      display: inline-block;
+      letter-spacing: -0.02em;
+    }
+    @keyframes diceFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      30% { transform: translateY(-3px) rotate(-6deg) scale(1.04); }
+      70% { transform: translateY(2px) rotate(6deg) scale(0.98); }
+    }
+    .logo-dice-animated {
+      animation: diceFloat 4s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes logoPulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.25);
+      }
+      50% {
+        box-shadow: 0 0 28px rgba(16, 185, 129, 0.8), 0 0 12px rgba(52, 211, 153, 0.6), inset 0 0 14px rgba(255, 255, 255, 0.45);
+      }
+    }
+    .logo-box-glow {
+      animation: logoPulseGlow 3s ease-in-out infinite;
+    }
+    @keyframes badgeLivePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.15); }
+    }
+    .live-dot {
+      animation: badgeLivePulse 1.8s infinite ease-in-out;
+    }
+
   </style>
 </head>
 <body class="min-h-screen flex flex-col pb-20 md:pb-8">
@@ -81,6 +233,49 @@
 
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+
+    <!-- BANNER DE ALERTA: PRÓXIMO SORTEIO OFICIAL COM CONTAGEM REGRESSIVA -->
+    <div id="alert-next-draw" class="glass-panel rounded-2xl p-4 sm:p-5 shadow-2xl border border-amber-500/35 bg-gradient-to-r from-amber-950/30 via-slate-900/90 to-emerald-950/25 relative overflow-hidden">
+      <div class="absolute -right-8 -top-8 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 relative z-10">
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-emerald-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-amber-500/25 shrink-0 animate-pulse">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                Alerta de Sorteio Oficial
+              </span>
+              <span class="text-xs text-slate-400 font-mono" id="countdown-draw-day">Hoje às 18:45 JST</span>
+            </div>
+            <h2 class="text-base sm:text-xl font-black text-white mt-0.5 flex items-center gap-2" id="countdown-draw-title">
+              ロト６ (第2138回) • 17/09/2026
+            </h2>
+          </div>
+        </div>
+
+        <!-- RELÓGIO DIGITAL DE CONTAGEM REGRESSIVA -->
+        <div class="flex items-center gap-2 bg-slate-950/80 p-2 sm:p-2.5 rounded-2xl border border-slate-800/90 shrink-0 w-full md:w-auto justify-center shadow-inner">
+          <div class="text-center px-2 sm:px-3">
+            <div class="text-lg sm:text-2xl font-black text-amber-400 font-mono tracking-tight" id="timer-hours">00</div>
+            <div class="text-[9px] text-slate-400 font-bold uppercase">Horas</div>
+          </div>
+          <div class="text-lg font-bold text-slate-600">:</div>
+          <div class="text-center px-2 sm:px-3">
+            <div class="text-lg sm:text-2xl font-black text-amber-400 font-mono tracking-tight" id="timer-minutes">00</div>
+            <div class="text-[9px] text-slate-400 font-bold uppercase">Min</div>
+          </div>
+          <div class="text-lg font-bold text-slate-600">:</div>
+          <div class="text-center px-2 sm:px-3">
+            <div class="text-lg sm:text-2xl font-black text-emerald-400 font-mono tracking-tight" id="timer-seconds">00</div>
+            <div class="text-[9px] text-slate-400 font-bold uppercase">Seg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
 
     <!-- CARTELAS PADRÃO (RETRÁTIL) -->
@@ -165,38 +360,6 @@
         <span class="text-xs text-slate-400 font-medium">Próximo Sorteio</span>
         <div class="text-base sm:text-lg font-bold text-purple-300 mt-1.5 truncate" id="kpi-next-draw">Lotto 6 (17/09/2026)</div>
         <div class="text-xs text-purple-400 mt-0.5" id="kpi-pending-count">Aguardando resultado</div>
-      </div>
-    </div>
-
-
-    
-
-
-        <div class="flex items-center gap-2 flex-wrap">
-          <select id="qp-select-lotto" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none">
-            <option value="ロト７">ロト７ (7 números)</option>
-            <option value="ロト６">ロト６ (6 números)</option>
-            <option value="ミニロト">ミニロト (5 números)</option>
-          </select>
-          <button id="btn-generate-quickpick" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition">
-            <i class="fa-solid fa-bolt text-amber-300"></i> Gerar Agora
-          </button>
-        </div>
-      </div>
-
-
-      <div id="qp-result-box" class="mt-4 pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2 flex-wrap" id="qp-balls-container">
-          <span class="text-xs text-slate-400">Toque em "Gerar Agora" para obter seu palpite.</span>
-        </div>
-        <div class="flex items-center gap-2" id="qp-actions" style="display: none;">
-          <button id="btn-qp-save-as-bet" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition">
-            <i class="fa-solid fa-plus"></i> Apostar Com Estes Números
-          </button>
-          <button id="btn-qp-copy" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition">
-            <i class="fa-solid fa-copy"></i> Copiar
-          </button>
-        </div>
       </div>
     </div>
 
@@ -288,7 +451,38 @@
 
 
       <!-- CARDS VIEW (JANELAS SUSPENSAS RETRÁTEIS) -->
-      <div id="draws-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      
+      <!-- CONCURSOS ATIVOS / PRÓXIMOS SORTEIOS (COM APOSTAS) -->
+      <div>
+        <div class="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Sorteios Ativos com Aposta Registrada</span>
+        </div>
+        <div id="draws-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- PAINEL RETRÁTIL: CONCURSOS ANTERIORES REALIZADOS (OCULTO POR PADRÃO) -->
+      <div class="pt-3 border-t border-slate-800/80">
+        <button id="btn-toggle-past-draws" type="button" class="w-full py-2.5 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-300 hover:text-white flex items-center justify-between transition shadow-sm active:scale-[0.99]">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
+            <span>Histórico de Sorteios Anteriores (<span id="count-past-draws">0</span> apurados)</span>
+          </span>
+          <span class="flex items-center gap-1.5 text-xs text-slate-400 font-normal">
+            <span id="label-toggle-past">Toque para expandir</span>
+            <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" id="arrow-past-draws"></i>
+          </span>
+        </button>
+
+        <div id="past-draws-collapsible" class="hidden space-y-3 mt-3 pt-2 border-t border-slate-800/50">
+          <div class="text-[11px] text-slate-400 flex items-center justify-between px-1">
+            <span>Sorteios apurados com suas apostas cruzadas:</span>
+            <span class="text-emerald-400 font-medium">Mais recentes no topo</span>
+          </div>
+          <div id="past-draws-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
+
 
 
       <!-- TABLE VIEW -->
@@ -408,22 +602,48 @@
 
 
 
-    <!-- QUICK PICK DINÂMICO (REPOSICIONADO NA PARTE INFERIOR) -->
-    <!-- QUICK PICK GENERATOR -->
-    <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900/60 to-emerald-950/40">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <!-- SEÇÃO UNIFICADA: GERADOR QUICK PICK DINÂMICO -->
+    <div class="glass-panel rounded-2xl p-4 sm:p-6 shadow-xl border border-blue-500/30 bg-gradient-to-r from-blue-950/40 via-slate-900/80 to-emerald-950/40 space-y-4" id="section-quickpick">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg border border-blue-500/30">
+          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg border border-blue-500/30 shadow-lg shadow-blue-500/10">
             <i class="fa-solid fa-dice text-amber-400"></i>
           </div>
           <div>
             <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
               Gerador Quick Pick Dinâmico
+              <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30 font-semibold">Instantâneo</span>
             </h3>
-            <p class="text-xs text-slate-300">Gere palpites instantâneos para qualquer uma das 3 loterias.</p>
+            <p class="text-xs text-slate-300">Gere palpites matematicamente balanceados para qualquer loteria japonesa.</p>
           </div>
         </div>
 
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="qp-select-lotto" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-blue-500">
+            <option value="ロト７">ロト７ (7 números)</option>
+            <option value="ロト６" selected>ロト６ (6 números)</option>
+            <option value="ミニロト">ミニロト (5 números)</option>
+          </select>
+          <button id="btn-generate-quickpick" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition">
+            <i class="fa-solid fa-bolt text-amber-300"></i> Gerar Agora
+          </button>
+        </div>
+      </div>
+
+      <div id="qp-result-box" class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap" id="qp-balls-container">
+          <span class="text-xs text-slate-400 italic">Toque em "Gerar Agora" acima para gerar seu palpite instantâneo.</span>
+        </div>
+        <div class="flex items-center gap-2" id="qp-actions" style="display: none;">
+          <button id="btn-qp-save-as-bet" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition">
+            <i class="fa-solid fa-plus"></i> Apostar Com Estes Números
+          </button>
+          <button id="btn-qp-copy" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition">
+            <i class="fa-solid fa-copy"></i> Copiar
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- MÓDULO: CONSULTA HISTÓRICA E ANÁLISE DE SORTEIOS (BANCO DE DADOS) -->
     <div class="glass-panel rounded-2xl p-4 sm:p-6 shadow-xl border border-teal-500/30 bg-gradient-to-br from-slate-900 via-slate-950 to-teal-950/30 space-y-4" id="section-history-lookup">
@@ -505,6 +725,54 @@
         </div>
       </div>
     </div>
+  
+    <!-- SEÇÃO FINAL: RANKING OFICIAL DE NÚMEROS MAIS FREQUENTES (LOTO6 & LOTO7) -->
+    <div class="glass-panel rounded-2xl p-4 sm:p-6 shadow-xl border border-amber-500/30 bg-gradient-to-br from-slate-900 via-slate-950 to-amber-950/20 space-y-4" id="section-number-ranking">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+              <i class="fa-solid fa-fire text-amber-400"></i> Frequência Oficial
+            </span>
+            <span class="text-xs text-slate-400 font-mono">Atualização Automática</span>
+          </div>
+          <h3 class="text-base sm:text-xl font-black text-white mt-1 flex items-center gap-2">
+            Ranking das Dezenas Mais Sorteadas
+          </h3>
+          <p class="text-xs text-slate-400">Estatística histórica consolidada para orientar desdobramentos e apostas.</p>
+        </div>
+
+        <!-- Seletor de Loteria para o Ranking -->
+        <div class="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800 shrink-0">
+          <button class="rank-filter-btn active px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 shadow" id="btn-rank-lotto6" onclick="switchRankingType('ロト６')">
+            ロト６ (1 a 43)
+          </button>
+          <button class="rank-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white" id="btn-rank-lotto7" onclick="switchRankingType('ロト７')">
+            ロト７ (1 a 37)
+          </button>
+        </div>
+      </div>
+
+      <!-- Top 5 Pódio das Mais Quentes -->
+      <div>
+        <div class="text-xs font-bold text-amber-300 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-trophy text-amber-400"></i> Top 5 Dezenas Mais Frequentes (Hot Numbers)
+        </div>
+        <div id="ranking-podium" class="grid grid-cols-5 gap-2 sm:gap-3"></div>
+      </div>
+
+      <!-- Grid Completo Ordenado -->
+      <div class="mt-4 pt-3 border-t border-slate-800/80">
+        <div class="text-xs font-bold text-slate-300 mb-2.5 flex items-center justify-between">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-simple text-blue-400"></i> Ranking Completo por Ordem de Aparição
+          </span>
+          <span class="text-xs text-slate-400 font-mono" id="ranking-total-draws-info"></span>
+        </div>
+        <div id="ranking-full-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2"></div>
+      </div>
+    </div>
+
   </main>
 
 
@@ -823,6 +1091,9 @@
       updateKPICards();
       renderDraws();
       renderCharts();
+      renderFrequencyRanking();
+      updateCountdownTimer();
+      setInterval(updateCountdownTimer, 1000);
       setupEventListeners();
     }
 
@@ -927,50 +1198,52 @@
 
     function renderDraws() {
       const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
-      const container = document.getElementById('draws-cards-container');
+      const activeContainer = document.getElementById('draws-cards-container');
+      const pastContainer = document.getElementById('past-draws-cards-container');
       const tableBody = document.getElementById('draws-table-body');
-      container.innerHTML = '';
-      tableBody.innerHTML = '';
-      let count = 0;
 
+      if (activeContainer) activeContainer.innerHTML = '';
+      if (pastContainer) pastContainer.innerHTML = '';
+      if (tableBody) tableBody.innerHTML = '';
+
+      let activeCount = 0;
+      let pastCount = 0;
 
       APP_STATE.history.forEach(function(item, idx) {
         if (currentLotteryFilter !== 'ALL' && item.type !== currentLotteryFilter) return;
+
         const match = item.round.toLowerCase().includes(searchVal) || item.type.toLowerCase().includes(searchVal) || item.date.includes(searchVal);
         if (!match) return;
 
-
         const hasBet = item.hasBet !== false;
-        const isDrawn = item.main && item.main.length > 0;
-        const isWon = item.amount > 0;
+        const isDrawn = Boolean(item.status === 'drawn' || (item.main && item.main.length > 0));
         const isPending = !isDrawn;
+        const isWon = item.amount > 0;
 
+        // REGRA ESSENCIAL: Ocultar sorteios sem aposta (deixar apenas sorteios com apostas)
+        if (!hasBet && currentStatusFilter !== 'NO_BET') return;
 
         if (currentStatusFilter === 'BET_ONLY' && !hasBet) return;
         if (currentStatusFilter === 'NO_BET' && hasBet) return;
         if (currentStatusFilter === 'WON' && !isWon) return;
         if (currentStatusFilter === 'PENDING' && !isPending) return;
 
-
-        count++;
         const ev = evaluateDraw(item);
         let badgeStyle = 'bg-slate-800 text-slate-300 border-slate-700';
         if (item.type === 'ロト７') badgeStyle = 'bg-emerald-950/70 text-emerald-400 border-emerald-800/50';
         if (item.type === 'ロト６') badgeStyle = 'bg-blue-950/70 text-blue-400 border-blue-800/50';
         if (item.type === 'ミニロト') badgeStyle = 'bg-amber-950/70 text-amber-400 border-amber-800/50';
 
-
         let statusHtml = '';
         if (isWon) {
           statusHtml = '<button onclick="event.stopPropagation(); triggerHanabi();" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold animate-bounce"><i class="fa-solid fa-trophy text-xs mr-1"></i>' + item.prize + ' (' + formatYen(item.amount) + ') 🎆</button>';
         } else if (isPending) {
-          statusHtml = '<span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs"><i class="fa-solid fa-hourglass-half mr-1"></i>Aguardando</span>';
+          statusHtml = '<span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-1"><i class="fa-solid fa-hourglass-half"></i> Aguardando Sorteio</span>';
         } else if (!hasBet) {
           statusHtml = '<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 text-xs"><i class="fa-solid fa-ban mr-1"></i>Sem aposta</span>';
         } else {
           statusHtml = '<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-mono">' + ev.hitCount + ' acertos</span>';
         }
-
 
         let betHtml = '';
         if (!hasBet) {
@@ -983,57 +1256,77 @@
             }).join('') + '</div></div>';
         }
 
-
         let resHtml = '';
         if (!isDrawn) {
-          resHtml = '<div class="py-2 text-xs text-purple-300/80 flex items-center gap-1.5"><i class="fa-solid fa-clock"></i> Sorteio oficial ainda não realizado</div>';
+          resHtml = '<div class="py-2 text-xs text-purple-300/90 flex items-center gap-1.5"><i class="fa-solid fa-clock animate-pulse"></i> Sorteio oficial agendado • Apuração após 19:45 JST</div>';
         } else {
-          const mainB = item.main.map(function(n){
+          const mainB = item.main && item.main.length ? item.main.map(function(n){
             const isH = hasBet && ev.mainHits.includes(n);
             return '<span class="ball ball-sm ' + (isH ? 'ball-hit' : 'ball-draw') + ' font-mono">' + String(n).padStart(2,'0') + '</span>';
-          }).join('');
+          }).join('') : '<span class="text-xs text-slate-500">Apuração em andamento</span>';
+
           const bonB = item.bonus && item.bonus.length ? '<span class="text-slate-500 font-bold px-1 text-xs">+</span>' + item.bonus.map(function(n){
             const isB = hasBet && ev.bonusHits.includes(n);
             return '<span class="ball ball-sm ' + (isB ? 'ball-bonus' : 'bg-slate-800 text-purple-300 border border-purple-800/40') + ' font-mono">' + String(n).padStart(2,'0') + '</span>';
           }).join('') : '';
-          resHtml = '<div><div class="text-xs text-slate-400 mb-1 font-medium">Resultado Oficial:</div><div class="flex flex-wrap items-center gap-1">' + mainB + bonB + '</div></div>';
+
+          resHtml = '<div><div class="text-xs text-slate-400 mb-1">Resultado Oficial:</div><div class="flex flex-wrap items-center gap-1">' + mainB + bonB + '</div></div>';
         }
 
+        const cardHtml = '<div class="glass-card rounded-2xl p-3.5 sm:p-4 border border-slate-800/90 hover:border-slate-700 transition cursor-pointer" onclick="toggleDrawAccordion(' + idx + ')">' +
+          '<div class="flex items-center justify-between gap-2">' +
+            '<div class="flex items-center gap-2 flex-wrap">' +
+              '<span class="font-extrabold text-sm text-white">' + item.round + '</span>' +
+              '<span class="text-xs px-2 py-0.5 rounded-full border ' + badgeStyle + ' font-bold">' + item.type + '</span>' +
+              '<span class="text-xs text-slate-400 font-mono">' + item.date + '</span>' +
+            '</div>' +
+            '<div class="flex items-center gap-2">' +
+              statusHtml +
+              '<i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200" id="arrow-draw-' + idx + '"></i>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mt-3 pt-3 border-t border-slate-800/80 space-y-2.5 hidden" id="body-draw-' + idx + '">' +
+            betHtml +
+            resHtml +
+            '<div class="text-[11px] text-slate-400 pt-1 border-t border-slate-800/50 flex justify-between"><span>Rateio: ' + (item.payout || '-') + '</span><span>' + (item.winners || '') + '</span></div>' +
+          '</div>' +
+        '</div>';
 
-        const payoutHtml = '<div class="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-xs bg-slate-900/50 px-2.5 py-1.5 rounded-xl">' +
-          '<div><span class="text-slate-400 mr-1">Prêmio Pago:</span><strong class="' + (isWon ? 'text-amber-300' : 'text-slate-300') + ' font-mono">' + item.payout + '</strong></div>' +
-          '<div><span class="text-slate-400 mr-1">Ganhadores:</span><strong class="text-emerald-400 font-mono">' + item.winners + '</strong></div></div>';
+        // Separação em dois grupos:
+        // 1) Ativos (Pendentes com aposta): Mostrados diretamente na tela principal
+        // 2) Anteriores (Já Sorteados com aposta): Ocultos dentro da gaveta retrátil por padrão
+        if (isPending) {
+          activeCount++;
+          if (activeContainer) activeContainer.insertAdjacentHTML('beforeend', cardHtml);
+        } else {
+          pastCount++;
+          if (pastContainer) pastContainer.insertAdjacentHTML('beforeend', cardHtml);
+        }
 
-
-        const openClass = idx === 0 ? '' : 'hidden';
-        const rotClass = idx === 0 ? 'rotate-180' : '';
-
-
-        const card = document.createElement('div');
-        card.className = 'glass-card rounded-2xl border transition overflow-hidden ' + (isWon ? 'border-amber-500/50 shadow-lg shadow-amber-500/10' : 'border-slate-800');
-        card.innerHTML = '<div class="p-3 sm:p-3.5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-800/40 transition" onclick="toggleDrawAccordion(' + idx + ')">' +
-          '<div class="flex items-center gap-2">' +
-          '<span class="font-extrabold text-xs sm:text-sm text-white">' + item.round + '</span>' +
-          '<span class="px-2 py-0.5 rounded text-xs font-bold border ' + badgeStyle + '">' + item.type + '</span>' +
-          '<span class="text-xs text-slate-400 font-mono">' + item.date + '</span>' +
-          '</div><div class="flex items-center gap-2">' + statusHtml + '<i class="fa-solid fa-chevron-down text-slate-500 text-xs transition-transform duration-200 ' + rotClass + '" id="arrow-draw-' + idx + '"></i></div></div>' +
-          '<div id="body-draw-' + idx + '" class="' + openClass + ' p-3.5 pt-1 border-t border-slate-800/60 space-y-3 bg-slate-900/30">' + betHtml + resHtml + payoutHtml + '</div>';
-        container.appendChild(card);
-
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 transition text-xs ' + (isWon ? 'bg-amber-500/5' : '');
-        tr.innerHTML = '<td class="py-2.5 px-3"><div class="font-bold text-white">' + item.round + '</div><span class="px-1.5 py-0.5 rounded text-xs border ' + badgeStyle + '">' + item.type + '</span></td>' +
-          '<td class="py-2.5 px-3 text-slate-300 font-mono">' + item.date + '</td>' +
-          '<td class="py-2.5 px-3">' + (hasBet && ev.userBet.length ? ev.userBet.map(function(n){ return '<span class="ball ball-sm font-mono mr-1">' + String(n).padStart(2,'0') + '</span>'; }).join('') : '<span class="text-slate-500 italic">Sem aposta</span>') + '</td>' +
-          '<td class="py-2.5 px-3">' + (isDrawn ? item.main.map(function(n){ return '<span class="ball ball-sm font-mono mr-1">' + String(n).padStart(2,'0') + '</span>'; }).join('') : '<span class="text-purple-400">Pendente</span>') + '</td>' +
-          '<td class="py-2.5 px-3 text-center">' + (hasBet && isDrawn ? ev.hitCount + ' acertos' : '-') + '</td>' +
-          '<td class="py-2.5 px-3 text-right"><div class="' + (isWon ? 'text-emerald-400 font-bold' : 'text-slate-300') + '">' + item.payout + '</div><div class="text-xs text-slate-400">' + item.winners + '</div></td>';
-        tableBody.appendChild(tr);
+        // Preenchimento da tabela (caso o usuário alterne para a visualização em tabela)
+        if (tableBody) {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/30 transition';
+          tr.innerHTML = '<td class="py-2.5 px-3 font-semibold text-white">' + item.round + ' <span class="text-slate-400 font-normal">(' + item.type + ')</span></td>' +
+            '<td class="py-2.5 px-3 text-slate-400 font-mono">' + item.date + '</td>' +
+            '<td class="py-2.5 px-3">' + (ev.userBet.length ? ev.userBet.join(', ') : '-') + '</td>' +
+            '<td class="py-2.5 px-3">' + ((item.main && item.main.length) ? item.main.join(', ') : '-') + '</td>' +
+            '<td class="py-2.5 px-3 text-center font-mono">' + (hasBet && isDrawn ? ev.hitCount + ' acertos' : (isPending ? '⏳' : '-')) + '</td>' +
+            '<td class="py-2.5 px-3 text-right"><div class="' + (isWon ? 'text-emerald-400 font-bold' : 'text-slate-300') + '">' + item.payout + '</div><div class="text-xs text-slate-400">' + item.winners + '</div></td>';
+          tableBody.appendChild(tr);
+        }
       });
-      document.getElementById('no-results').classList.toggle('hidden', count > 0);
-    }
 
+      // Atualiza o contador no botão da gaveta retrátil de concursos anteriores
+      const countPastEl = document.getElementById('count-past-draws');
+      if (countPastEl) countPastEl.textContent = pastCount;
+
+      const noRes = document.getElementById('no-results');
+      if (noRes) {
+        if (activeCount === 0 && pastCount === 0) noRes.classList.remove('hidden');
+        else noRes.classList.add('hidden');
+      }
+    }
 
     function renderCharts() {
       const type = document.getElementById('chart-freq-type').value;
@@ -1515,12 +1808,234 @@
     // ====================================================
     // MOTOR DE AUTO-ATUALIZAÇÃO (1 HORA PÓS-SORTEIO)
     // ====================================================
-        function startSyncFlow(silent) {
+        
+    // ====================================================
+    // MOTOR DE CONTAGEM REGRESSIVA DO PRÓXIMO SORTEIO
+    // ====================================================
+    function updateCountdownTimer() {
+      const now = new Date();
+      // UTC + 9 para horário oficial de Tóquio (JST)
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const jstNow = new Date(utc + (3600000 * 9));
+
+      // Sorteios oficiais às 18:45 JST:
+      // Segunda (1): ロト６
+      // Terça (2): ミニロト
+      // Quinta (4): ロト６
+      // Sexta (5): ロト７
+      const schedule = [
+        { day: 1, type: 'ロト６', name: 'Lotto 6' },
+        { day: 2, type: 'ミニロト', name: 'Mini Loto' },
+        { day: 4, type: 'ロト６', name: 'Lotto 6' },
+        { day: 5, type: 'ロト７', name: 'Lotto 7' }
+      ];
+
+      let nextTarget = null;
+      let targetType = '';
+
+      for (let offset = 0; offset <= 7; offset++) {
+        const candidate = new Date(jstNow);
+        candidate.setDate(candidate.getDate() + offset);
+        const dayOfWeek = candidate.getDay();
+
+        const match = schedule.find(function(s){ return s.day === dayOfWeek; });
+        if (match) {
+          candidate.setHours(18, 45, 0, 0);
+          if (candidate.getTime() > jstNow.getTime()) {
+            nextTarget = candidate;
+            targetType = match.type;
+            break;
+          }
+        }
+      }
+
+      if (!nextTarget) return;
+
+      const diffMs = nextTarget.getTime() - jstNow.getTime();
+      const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      const yyyy = nextTarget.getFullYear();
+      const mm = String(nextTarget.getMonth() + 1).padStart(2, '0');
+      const dd = String(nextTarget.getDate()).padStart(2, '0');
+      const targetDateStr = yyyy + '-' + mm + '-' + dd;
+
+      let roundStr = '';
+      if (APP_STATE && APP_STATE.history) {
+        const item = APP_STATE.history.find(function(i){ return i.date === targetDateStr && i.type === targetType; });
+        if (item) roundStr = item.round;
+      }
+
+      const isToday = (nextTarget.getDate() === jstNow.getDate());
+      const isTomorrow = (nextTarget.getDate() === jstNow.getDate() + 1);
+      const dayLabel = isToday ? 'Hoje às 18:45 JST' : (isTomorrow ? 'Amanhã às 18:45 JST' : dd + '/' + mm + ' às 18:45 JST');
+
+      const elHours = document.getElementById('timer-hours');
+      const elMin = document.getElementById('timer-minutes');
+      const elSec = document.getElementById('timer-seconds');
+      const elTitle = document.getElementById('countdown-draw-title');
+      const elDay = document.getElementById('countdown-draw-day');
+
+      if (elHours) elHours.textContent = String(hours).padStart(2, '0');
+      if (elMin) elMin.textContent = String(minutes).padStart(2, '0');
+      if (elSec) elSec.textContent = String(seconds).padStart(2, '0');
+      if (elTitle) elTitle.textContent = targetType + (roundStr ? ' (' + roundStr + ')' : '') + ' • ' + dd + '/' + mm + '/' + yyyy;
+      if (elDay) elDay.textContent = dayLabel;
+    }
+
+    // ====================================================
+    // RANKING HISTÓRICO DINÂMICO (LOTO6 & LOTO7)
+    // ====================================================
+    let currentRankingType = 'ロト６';
+
+    function switchRankingType(type) {
+      currentRankingType = type;
+      const b6 = document.getElementById('btn-rank-lotto6');
+      const b7 = document.getElementById('btn-rank-lotto7');
+      if (type === 'ロト６') {
+        if (b6) b6.className = 'rank-filter-btn active px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 shadow';
+        if (b7) b7.className = 'rank-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white';
+      } else {
+        if (b7) b7.className = 'rank-filter-btn active px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 shadow';
+        if (b6) b6.className = 'rank-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white';
+      }
+      renderFrequencyRanking();
+    }
+    window.switchRankingType = switchRankingType;
+
+    function renderFrequencyRanking() {
+      const type = currentRankingType;
+      const maxNum = (type === 'ロト７' ? 37 : 43);
+      const freqCounts = {};
+      for (let n = 1; n <= maxNum; n++) freqCounts[n] = 0;
+
+      let totalDraws = 0;
+
+      // 1. Contar a partir de APP_STATE.history apurados
+      APP_STATE.history.forEach(function(item) {
+        if (item.type === type && item.status === 'drawn' && item.main && item.main.length) {
+          totalDraws++;
+          item.main.forEach(function(n) {
+            if (freqCounts[n] !== undefined) freqCounts[n]++;
+          });
+        }
+      });
+
+      // 2. Contar a partir de BUILTIN_LOOKUP_DB para ampliar a base estatística
+      const db = (BUILTIN_LOOKUP_DB && BUILTIN_LOOKUP_DB[type]) ? BUILTIN_LOOKUP_DB[type] : {};
+      Object.keys(db).forEach(function(r) {
+        const d = db[r];
+        if (d && d.main && d.main.length) {
+          totalDraws++;
+          d.main.forEach(function(n) {
+            if (freqCounts[n] !== undefined) freqCounts[n]++;
+          });
+        }
+      });
+
+      // Ordenar por frequência decrescente
+      const sortedNums = Object.keys(freqCounts).map(Number).sort(function(a, b) {
+        return freqCounts[b] - freqCounts[a];
+      });
+
+      const maxFreq = sortedNums.length ? freqCounts[sortedNums[0]] : 1;
+
+      // Renderizar Top 5 Pódio
+      const podiumEl = document.getElementById('ranking-podium');
+      if (podiumEl) {
+        const top5 = sortedNums.slice(0, 5);
+        const medals = ['🥇', '🥈', '🥉', '4º', '5º'];
+        podiumEl.innerHTML = top5.map(function(n, idx) {
+          const count = freqCounts[n];
+          return '<div class="glass-card rounded-xl p-2.5 sm:p-3 text-center border border-amber-500/20 bg-slate-900/80 shadow-lg">' +
+            '<div class="text-xs font-bold text-amber-400 mb-1">' + medals[idx] + '</div>' +
+            '<div class="flex justify-center my-1">' +
+              '<span class="ball ball-md font-mono ' + (type === 'ロト７' ? 'bg-emerald-600' : 'bg-blue-600') + ' text-white font-bold shadow-md">' + String(n).padStart(2, '0') + '</span>' +
+            '</div>' +
+            '<div class="text-[11px] font-extrabold text-amber-300 mt-1">' + count + 'x</div>' +
+            '<div class="text-[9px] text-slate-400">sorteada</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      // Renderizar Grid Completo
+      const gridEl = document.getElementById('ranking-full-grid');
+      const infoEl = document.getElementById('ranking-total-draws-info');
+      if (infoEl) infoEl.textContent = 'Base: ' + totalDraws + ' concursos apurados';
+
+      if (gridEl) {
+        gridEl.innerHTML = sortedNums.map(function(n, idx) {
+          const count = freqCounts[n];
+          const pct = maxFreq > 0 ? Math.round((count / maxFreq) * 100) : 0;
+          return '<div class="p-2 rounded-xl bg-slate-900/70 border border-slate-800/80 flex items-center justify-between gap-2">' +
+            '<div class="flex items-center gap-1.5">' +
+              '<span class="text-[10px] text-slate-400 w-4 font-mono font-bold">' + (idx + 1) + '</span>' +
+              '<span class="ball ball-sm font-mono ' + (type === 'ロト７' ? 'bg-emerald-700' : 'bg-blue-700') + ' text-white font-bold">' + String(n).padStart(2, '0') + '</span>' +
+            '</div>' +
+            '<div class="text-right flex-1 pl-1">' +
+              '<div class="text-[11px] font-bold text-slate-200">' + count + ' <span class="text-[9px] text-slate-400 font-normal">vezes</span></div>' +
+              '<div class="w-full bg-slate-800 rounded-full h-1 mt-1 overflow-hidden">' +
+                '<div class="' + (type === 'ロト７' ? 'bg-emerald-400' : 'bg-blue-400') + ' h-1 rounded-full" style="width: ' + pct + '%"></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+
+    // ====================================================
+    // ANIMAÇÃO DO BOTÃO DE SINCRONIZAR
+    // ====================================================
+    function triggerSyncButtonAnimation(isStarting) {
+      const btnHeader = document.getElementById('btn-sync-lottolyzer');
+      const btnMobile = document.getElementById('m-btn-sync');
+      const iconHeader = btnHeader ? btnHeader.querySelector('i') : null;
+      const iconMobile = btnMobile ? btnMobile.querySelector('i') : null;
+      const spanHeader = btnHeader ? btnHeader.querySelector('span') : null;
+
+      if (isStarting) {
+        if (iconHeader) iconHeader.classList.add('fa-spin');
+        if (iconMobile) iconMobile.classList.add('fa-spin');
+        if (spanHeader) spanHeader.textContent = 'Sincronizando...';
+        if (btnHeader) {
+          btnHeader.classList.add('ring-2', 'ring-emerald-400', 'animate-pulse');
+          btnHeader.disabled = true;
+        }
+      } else {
+        if (iconHeader) {
+          iconHeader.classList.remove('fa-spin', 'fa-arrows-rotate');
+          iconHeader.classList.add('fa-check');
+        }
+        if (spanHeader) spanHeader.textContent = 'Sincronizado!';
+        if (btnHeader) {
+          btnHeader.classList.remove('animate-pulse');
+          btnHeader.classList.add('bg-emerald-500');
+        }
+        setTimeout(function() {
+          if (iconHeader) {
+            iconHeader.classList.remove('fa-check');
+            iconHeader.classList.add('fa-arrows-rotate');
+          }
+          if (iconMobile) iconMobile.classList.remove('fa-spin');
+          if (spanHeader) spanHeader.textContent = 'Sincronizar';
+          if (btnHeader) {
+            btnHeader.classList.remove('ring-2', 'ring-emerald-400', 'bg-emerald-500');
+            btnHeader.disabled = false;
+          }
+        }, 1800);
+      }
+    }
+
+
+function startSyncFlow(silent) {
       const modalSync = document.getElementById('modal-sync');
       const syncProgress = document.getElementById('sync-progress');
       const syncLog = document.getElementById('sync-log');
       const syncActions = document.getElementById('sync-actions');
 
+      triggerSyncButtonAnimation(true);
       if (!silent && modalSync) {
         modalSync.classList.remove('hidden');
         if (syncProgress) syncProgress.style.width = '20%';
@@ -1569,6 +2084,8 @@
           if (syncActions) syncActions.style.display = 'flex';
           renderDraws();
           updateKPICards();
+          renderFrequencyRanking();
+          triggerSyncButtonAnimation(false);
         }, 1000);
       } else {
         renderDraws();
@@ -1615,6 +2132,55 @@
 
 
     function setupEventListeners() {
+
+      // Toggle para Concursos Anteriores Realizados
+      const btnTogglePast = document.getElementById('btn-toggle-past-draws');
+      if (btnTogglePast) {
+        btnTogglePast.addEventListener('click', function() {
+          const panel = document.getElementById('past-draws-collapsible');
+          const arrow = document.getElementById('arrow-past-draws');
+          const label = document.getElementById('label-toggle-past');
+          if (panel) {
+            const isHidden = panel.classList.contains('hidden');
+            if (isHidden) {
+              panel.classList.remove('hidden');
+              if (arrow) arrow.classList.add('rotate-180');
+              if (label) label.textContent = 'Toque para recolher';
+            } else {
+              panel.classList.add('hidden');
+              if (arrow) arrow.classList.remove('rotate-180');
+              if (label) label.textContent = 'Toque para expandir';
+            }
+          }
+        });
+      }
+
+      // Quick Pick Mobile Bottom Button Handler
+      const mBtnQp = document.getElementById('m-btn-quickpick');
+      if (mBtnQp) {
+        mBtnQp.addEventListener('click', function() {
+          const qpSection = document.getElementById('section-quickpick');
+          if (qpSection) {
+            qpSection.scrollIntoView({ behavior: 'smooth' });
+            const btnGen = document.getElementById('btn-generate-quickpick');
+            if (btnGen) btnGen.click();
+          }
+        });
+      }
+
+      // Header Quick Pick Button Handler
+      const btnHdrQp = document.getElementById('btn-open-quickpick');
+      if (btnHdrQp) {
+        btnHdrQp.addEventListener('click', function() {
+          const qpSection = document.getElementById('section-quickpick');
+          if (qpSection) {
+            qpSection.scrollIntoView({ behavior: 'smooth' });
+            const btnGen = document.getElementById('btn-generate-quickpick');
+            if (btnGen) btnGen.click();
+          }
+        });
+      }
+
 
 
       // Ouvintes da Consulta Histórica
