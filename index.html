@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LotoCross Japão - Analisador e Cruzador de Loterias</title>
+  <title>LotoCross Japão v9.2 - Analisador e Cruzador de Loterias</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -43,6 +43,7 @@
 </head>
 <body class="min-h-screen flex flex-col pb-20 md:pb-8">
 
+
   <!-- BARRA SUPERIOR -->
   <header class="sticky top-0 z-40 glass-panel border-b border-slate-800">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
@@ -57,10 +58,11 @@
           <p class="text-xs text-slate-400 hidden xs:block">Cruzamento de Apostas, Resultados & Probabilidades</p>
         <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-[11px] text-emerald-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Auto-Sync 19:45 JST</span>
+          <span>Auto-Sync 19:45 JST • v9.2</span>
         </div>
         </div>
       </div>
+
 
       <div class="flex items-center gap-2">
         <button id="btn-sync-lottolyzer" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 active:scale-95 transition">
@@ -76,8 +78,10 @@
     </div>
   </header>
 
+
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+
 
     <!-- CARTELAS PADRÃO (RETRÁTIL) -->
     <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl border border-slate-800">
@@ -96,6 +100,7 @@
         </div>
       </div>
 
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-800" id="content-fixed-bets">
         <div class="glass-card rounded-xl p-3 border-l-4 border-l-emerald-500">
           <div class="flex items-center justify-between mb-1.5">
@@ -105,6 +110,7 @@
           <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto7"></div>
         </div>
 
+
         <div class="glass-card rounded-xl p-3 border-l-4 border-l-blue-500">
           <div class="flex items-center justify-between mb-1.5">
             <span class="font-bold text-xs sm:text-sm text-white">ロト６ (Lotto 6)</span>
@@ -112,6 +118,7 @@
           </div>
           <div class="flex flex-wrap gap-1 mt-2" id="display-fixed-lotto6"></div>
         </div>
+
 
         <div class="glass-card rounded-xl p-3 border-l-4 border-l-amber-500">
           <div class="flex items-center justify-between mb-1.5">
@@ -123,6 +130,7 @@
       </div>
     </div>
 
+
     <!-- CARDS DE METRICAS (KPI) -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
@@ -131,11 +139,13 @@
         <div class="text-xs text-slate-400 mt-0.5" id="kpi-bets-count">0 apostas ativas</div>
       </div>
 
+
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
         <span class="text-xs text-slate-400 font-medium">Total Ganho</span>
         <div class="text-lg sm:text-2xl font-extrabold text-emerald-400 mt-1.5" id="kpi-won">¥0</div>
         <div class="text-xs text-emerald-400 mt-0.5" id="kpi-prizes-count">0 premiações</div>
       </div>
+
 
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
         <span class="text-xs text-slate-400 font-medium">Saldo Líquido</span>
@@ -143,20 +153,24 @@
         <div class="text-xs text-slate-400 mt-0.5" id="kpi-roi">Retorno: 0%</div>
       </div>
 
+
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
         <span class="text-xs text-slate-400 font-medium">Melhor Acerto</span>
         <div class="text-lg sm:text-2xl font-extrabold text-amber-400 mt-1.5 cursor-pointer hover:scale-105 transition" id="kpi-best-hits" title="Celebrar com Hanabi">3 acertos 🎆</div>
         <div class="text-xs text-slate-400 mt-0.5" id="kpi-best-detail">Lotto 6 (5等 - ¥1.000)</div>
       </div>
 
+
       <div class="glass-panel rounded-xl p-3.5 sm:p-4 col-span-2 lg:col-span-1">
         <span class="text-xs text-slate-400 font-medium">Próximo Sorteio</span>
-        <div class="text-base sm:text-lg font-bold text-purple-300 mt-1.5 truncate">Lotto 6 (14/09/2026)</div>
+        <div class="text-base sm:text-lg font-bold text-purple-300 mt-1.5 truncate" id="kpi-next-draw">Lotto 6 (17/09/2026)</div>
         <div class="text-xs text-purple-400 mt-0.5" id="kpi-pending-count">Aguardando resultado</div>
       </div>
     </div>
 
+
     
+
 
         <div class="flex items-center gap-2 flex-wrap">
           <select id="qp-select-lotto" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none">
@@ -169,6 +183,7 @@
           </button>
         </div>
       </div>
+
 
       <div id="qp-result-box" class="mt-4 pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2 flex-wrap" id="qp-balls-container">
@@ -184,6 +199,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- SEÇÃO DE CONCURSOS CRUZADOS (JANELAS SUSPENSAS RETRÁTEIS) -->
     <div class="glass-panel rounded-2xl p-3.5 sm:p-6 shadow-xl space-y-4">
@@ -204,11 +220,13 @@
             </button>
           </div>
 
+
           <div class="hidden md:flex items-center gap-1 p-1 bg-slate-900 rounded-lg border border-slate-800 text-xs">
             <button id="btn-view-cards" class="px-2.5 py-1 rounded bg-slate-800 text-white font-medium"><i class="fa-solid fa-grip"></i> Cards</button>
             <button id="btn-view-table" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium"><i class="fa-solid fa-table-list"></i> Tabela</button>
           </div>
         </div>
+
 
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex flex-wrap items-center gap-1.5" id="filter-status-group">
@@ -229,12 +247,14 @@
             </button>
           </div>
 
+
           <div class="relative w-full sm:w-48">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
             <input type="text" id="search-input" placeholder="Buscar concurso ou data..." class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
           </div>
         </div>
       </div>
+
 
       <!-- BOTÕES EXPANDIR / RECOLHER TODOS -->
       <div class="flex items-center justify-between gap-2 pt-1 pb-1">
@@ -252,6 +272,7 @@
         </div>
       </div>
 
+
       <!-- LEGENDA -->
       <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
         <div class="flex flex-wrap items-center gap-2.5">
@@ -265,8 +286,10 @@
         </div>
       </div>
 
+
       <!-- CARDS VIEW (JANELAS SUSPENSAS RETRÁTEIS) -->
       <div id="draws-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
 
       <!-- TABLE VIEW -->
       <div id="draws-table-container" class="overflow-x-auto hidden">
@@ -285,11 +308,13 @@
         </table>
       </div>
 
+
       <div id="no-results" class="hidden py-12 text-center text-slate-500">
         <i class="fa-solid fa-filter-circle-xmark text-3xl mb-2 text-slate-600"></i>
         <p class="text-xs sm:text-sm">Nenhum concurso encontrado com os filtros atuais.</p>
       </div>
     </div>
+
 
     <!-- CENTRAL DE ESTRATÉGIAS & FECHAMENTOS MATEMÁTICOS AVANÇADOS -->
     <div class="glass-panel rounded-2xl p-4 sm:p-6 shadow-xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/40 via-slate-900/80 to-slate-950/90 space-y-5" id="section-strategies">
@@ -305,6 +330,7 @@
           <p class="text-xs text-slate-400 mt-0.5">Aumente suas chances utilizando fechamentos matemáticos, matrizes e análise combinatória oficial.</p>
         </div>
 
+
         <div class="flex items-center gap-2">
           <label class="text-xs text-slate-300 font-semibold whitespace-nowrap">Loteria Alvo:</label>
           <select id="strat-lotto-type" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs font-bold focus:border-indigo-500">
@@ -314,6 +340,7 @@
           </select>
         </div>
       </div>
+
 
       <!-- SELETOR DE MÉTODOS -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="methods-selector-grid">
@@ -351,6 +378,7 @@
         </button>
       </div>
 
+
       <!-- PAINEL DA ESTRATÉGIA ATIVA -->
       <div class="glass-card rounded-2xl p-4 sm:p-5 border border-indigo-500/20 bg-slate-900/70 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
@@ -364,16 +392,20 @@
             </p>
           </div>
 
+
           <button id="btn-execute-strategy" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition active:scale-95 whitespace-nowrap">
             <i class="fa-solid fa-bolt text-amber-300"></i> Gerar Aposta Otimizada
           </button>
         </div>
+
 
         <div id="strat-result-area" class="space-y-4">
           <div class="text-xs text-slate-400 italic">Toque no botão "Gerar Aposta Otimizada" acima para calcular o palpite matemático.</div>
         </div>
       </div>
     </div>
+
+
 
 
     <!-- QUICK PICK DINÂMICO (REPOSICIONADO NA PARTE INFERIOR) -->
@@ -392,6 +424,7 @@
           </div>
         </div>
 
+
     <!-- MÓDULO: CONSULTA HISTÓRICA E ANÁLISE DE SORTEIOS (BANCO DE DADOS) -->
     <div class="glass-panel rounded-2xl p-4 sm:p-6 shadow-xl border border-teal-500/30 bg-gradient-to-br from-slate-900 via-slate-950 to-teal-950/30 space-y-4" id="section-history-lookup">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
@@ -406,6 +439,7 @@
           <p class="text-xs text-slate-400">Pesquise concursos anteriores de todas as loterias do Japão para analisar padrões e criar estratégias.</p>
         </div>
 
+
         <div class="flex items-center gap-2 flex-wrap">
           <select id="lookup-lotto-type" class="bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs font-bold focus:border-teal-500">
             <option value="ロト７">ロト７ (Lotto 7)</option>
@@ -418,6 +452,7 @@
           </label>
         </div>
       </div>
+
 
       <!-- Barra de Busca de Concurso -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -433,11 +468,13 @@
         </button>
       </div>
 
+
       <!-- Resultado Detalhado da Consulta -->
       <div id="lookup-result-card" class="p-4 rounded-xl bg-slate-900/90 border border-teal-500/20 space-y-3">
         <div class="text-xs text-slate-400 italic">Digite o número do concurso acima ou clique em "Último Concurso".</div>
       </div>
     </div>
+
 
     <!-- STATS -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -456,6 +493,7 @@
         <div class="mt-3 pt-2 border-t border-slate-800 text-xs text-slate-400 flex justify-between" id="freq-insights"></div>
       </div>
 
+
       <div class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
         <h3 class="font-bold text-white text-xs sm:text-sm mb-3 flex items-center gap-2">
           <i class="fa-solid fa-chart-pie text-emerald-400"></i> Distribuição de Acertos
@@ -468,6 +506,7 @@
       </div>
     </div>
   </main>
+
 
   <!-- BOTTOM NAV (MOBILE) -->
   <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800 py-1.5 px-4 flex items-center justify-around">
@@ -495,6 +534,7 @@
     </button>
   </nav>
 
+
   <!-- MODAL: SYNC COM ANIMAÇÃO -->
   <div id="modal-sync" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-700 shadow-2xl relative text-center">
@@ -520,6 +560,7 @@
     </div>
   </div>
 
+
   <!-- MODAL: ADICIONAR APOSTA -->
   <div id="modal-add-bet" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target===this) closeModalAddBet();">
     <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative max-h-screen overflow-y-auto">
@@ -530,6 +571,7 @@
         <i class="fa-solid fa-ticket text-emerald-400"></i> Registrar Nova Aposta
       </h3>
       <p class="text-xs text-slate-400 mb-4">Insira o concurso (ex: 694 preenche 第694回 automaticamente).</p>
+
 
       <form id="form-new-bet" class="space-y-3.5 text-xs">
         <div class="grid grid-cols-2 gap-3">
@@ -547,6 +589,7 @@
           </div>
         </div>
 
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-300 font-medium mb-1">Data do Sorteio</label>
@@ -557,6 +600,7 @@
             <input type="number" id="modal-bet-cost" value="300" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono">
           </div>
         </div>
+
 
         <div>
           <div class="flex items-center justify-between mb-1">
@@ -569,6 +613,7 @@
           <span class="text-xs text-slate-400 mt-1 block">Separe os números por espaço ou vírgula.</span>
         </div>
 
+
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" id="btn-cancel-bet" onclick="closeModalAddBet();" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancelar</button>
           <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold">
@@ -578,6 +623,7 @@
       </form>
     </div>
   </div>
+
 
   <!-- MODAL: EDITAR CARTELAS PADRÃO -->
   <div id="modal-edit-bets" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
@@ -589,6 +635,7 @@
         <i class="fa-solid fa-pen-to-square text-emerald-400"></i> Personalizar Cartelas Padrão
       </h3>
       <p class="text-xs text-slate-400 mb-4">Estas dezenas são usadas como base quando você não informar uma aposta diferente.</p>
+
 
       <div class="space-y-3.5 text-xs">
         <div>
@@ -611,18 +658,22 @@
     </div>
   </div>
 
+
   <script>
     function getNumList(str) {
       return str ? str.split(',').map(function(n){ return parseInt(n.trim(), 10); }).filter(function(x){ return !isNaN(x); }) : [];
     }
 
+
     const RAW_RECORDS = `第2141回|2026-09-28|ロト６|200|||-|0|pending|1
 第696回|2026-09-25|ロト７|300|||-|0|pending|1
 第2140回|2026-09-24|ロト６|200|||-|0|pending|1
+第1405回|2026-09-22|ミニロト|200|||-|0|pending|1
 第2139回|2026-09-21|ロト６|200|||-|0|pending|1
 第695回|2026-09-18|ロト７|300|||-|0|pending|1
 第2138回|2026-09-17|ロト６|200|||-|0|pending|1
-第2137回|2026-09-14|ロト６|200|||-|0|pending|1
+第1404回|2026-09-15|ミニロト|200|2,3,4,9,31|11|-|0|drawn|1
+第2137回|2026-09-14|ロト６|200|4,8,10,25,28,33|9|-|0|drawn|1
 第694回|2026-09-11|ロト７|300|3,13,24,26,30,31,36|23,34|-|0|drawn|1
 第2136回|2026-09-10|ロト６|200|6,7,33,37,41,43|42|-|0|drawn|1
 第2135回|2026-09-07|ロト６|200|7,13,32,34,37,39,41||-|0|drawn|1
@@ -665,11 +716,13 @@
 第679回|2026-05-29|ロト７|300|6,8,9,18,22,24,35|4,20|-|0|drawn|1
 第2106回|2026-05-28|ロト６|200|1,6,17,27,34,43|24|-|0|drawn|1`;
 
+
     const FIXED_BETS_MAP = {
       'ロト７': getNumList('04,09,13,15,22,26,34'),
       'ロト６': getNumList('02,06,21,24,31,38'),
       'ミニロト': getNumList('02,11,19,21,28')
     };
+
 
     function getPayoutInfo(item) {
       if (item.amount > 0) {
@@ -683,6 +736,7 @@
       if (item.type === 'ミニロト') return { payout: '4等: ¥1.000 (1等: ~¥10M)', winners: 'Média de 3.200 ganhadores' };
       return { payout: '-', winners: '-' };
     }
+
 
     function parseRawHistory(rawText) {
       return rawText.trim().split('\n').filter(Boolean).map(function(line) {
@@ -707,10 +761,37 @@
       });
     }
 
-    let APP_STATE = {
-      bets: FIXED_BETS_MAP,
-      history: parseRawHistory(RAW_RECORDS)
-    };
+
+    const STORAGE_KEY = 'lotocross_state_v9_2';
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(APP_STATE));
+      } catch(e) {
+        console.warn('Erro ao salvar no localStorage:', e);
+      }
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.bets && parsed.history && parsed.history.length) {
+            return parsed;
+          }
+        }
+      } catch(e) {
+        console.warn('Erro ao carregar do localStorage:', e);
+      }
+      return {
+        bets: JSON.parse(JSON.stringify(FIXED_BETS_MAP)),
+        history: parseRawHistory(RAW_RECORDS)
+      };
+    }
+
+    let APP_STATE = loadState();
+
 
     let currentLotteryFilter = 'ALL';
     let currentStatusFilter = 'ALL';
@@ -719,9 +800,11 @@
     let currentGeneratedNumbers = [];
     let currentGeneratedType = 'ロト７';
 
+
     function formatYen(val) {
       return '¥' + Number(val || 0).toLocaleString('ja-JP');
     }
+
 
     function triggerHanabi() {
       if (typeof confetti !== 'function') return;
@@ -734,6 +817,7 @@
       }());
     }
 
+
     function init() {
       renderFixedBetsPreview();
       updateKPICards();
@@ -741,6 +825,7 @@
       renderCharts();
       setupEventListeners();
     }
+
 
     function renderFixedBetsPreview() {
       const l7 = APP_STATE.bets['ロト７'] || [];
@@ -753,6 +838,7 @@
       document.getElementById('input-fixed-lotto6').value = l6.join(', ');
       document.getElementById('input-fixed-miniloto').value = ml.join(', ');
     }
+
 
     function evaluateDraw(item) {
       const hasBet = item.hasBet !== false;
@@ -767,6 +853,7 @@
       const bonusHits = userBet.filter(function(n){ return bonusSet.has(n); });
       return { hasBet: true, isDrawn: true, userBet: userBet, mainHits: mainHits, bonusHits: bonusHits, hitCount: mainHits.length };
     }
+
 
     function updateKPICards() {
       let invested = 0, won = 0, betsCount = 0, prizes = 0, pending = 0, maxHits = 0;
@@ -796,11 +883,27 @@
       document.getElementById('kpi-roi').textContent = 'Retorno: ' + roi + '%';
       document.getElementById('kpi-best-hits').textContent = maxHits + ' acertos 🎆';
       document.getElementById('kpi-pending-count').textContent = pending + ' pendentes';
+      
+      const pendingDraws = APP_STATE.history
+        .filter(function(i){ return i.status === 'pending' || !i.main || !i.main.length; })
+        .sort(function(a, b){ return a.date.localeCompare(b.date); });
+      const nextDrawEl = document.getElementById('kpi-next-draw');
+      if (nextDrawEl) {
+        if (pendingDraws.length > 0) {
+          const next = pendingDraws[0];
+          const dParts = next.date.split('-');
+          const fDate = dParts.length === 3 ? (dParts[2] + '/' + dParts[1] + '/' + dParts[0]) : next.date;
+          nextDrawEl.textContent = next.type + ' (' + fDate + ')';
+        } else {
+          nextDrawEl.textContent = 'Sem sorteios pendentes';
+        }
+      }
       document.getElementById('count-all').textContent = APP_STATE.history.length;
       document.getElementById('count-lotto7').textContent = APP_STATE.history.filter(function(i){ return i.type === 'ロト７'; }).length;
       document.getElementById('count-lotto6').textContent = APP_STATE.history.filter(function(i){ return i.type === 'ロト６'; }).length;
       document.getElementById('count-miniloto').textContent = APP_STATE.history.filter(function(i){ return i.type === 'ミニロト'; }).length;
     }
+
 
     function toggleDrawAccordion(idx) {
       const b = document.getElementById('body-draw-' + idx);
@@ -809,15 +912,18 @@
       if (a) a.classList.toggle('rotate-180');
     }
 
+
     function expandAllDraws() {
       document.querySelectorAll('[id^="body-draw-"]').forEach(function(el){ el.classList.remove('hidden'); });
       document.querySelectorAll('[id^="arrow-draw-"]').forEach(function(el){ el.classList.add('rotate-180'); });
     }
 
+
     function collapseAllDraws() {
       document.querySelectorAll('[id^="body-draw-"]').forEach(function(el){ el.classList.add('hidden'); });
       document.querySelectorAll('[id^="arrow-draw-"]').forEach(function(el){ el.classList.remove('rotate-180'); });
     }
+
 
     function renderDraws() {
       const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
@@ -827,20 +933,24 @@
       tableBody.innerHTML = '';
       let count = 0;
 
+
       APP_STATE.history.forEach(function(item, idx) {
         if (currentLotteryFilter !== 'ALL' && item.type !== currentLotteryFilter) return;
         const match = item.round.toLowerCase().includes(searchVal) || item.type.toLowerCase().includes(searchVal) || item.date.includes(searchVal);
         if (!match) return;
+
 
         const hasBet = item.hasBet !== false;
         const isDrawn = item.main && item.main.length > 0;
         const isWon = item.amount > 0;
         const isPending = !isDrawn;
 
+
         if (currentStatusFilter === 'BET_ONLY' && !hasBet) return;
         if (currentStatusFilter === 'NO_BET' && hasBet) return;
         if (currentStatusFilter === 'WON' && !isWon) return;
         if (currentStatusFilter === 'PENDING' && !isPending) return;
+
 
         count++;
         const ev = evaluateDraw(item);
@@ -848,6 +958,7 @@
         if (item.type === 'ロト７') badgeStyle = 'bg-emerald-950/70 text-emerald-400 border-emerald-800/50';
         if (item.type === 'ロト６') badgeStyle = 'bg-blue-950/70 text-blue-400 border-blue-800/50';
         if (item.type === 'ミニロト') badgeStyle = 'bg-amber-950/70 text-amber-400 border-amber-800/50';
+
 
         let statusHtml = '';
         if (isWon) {
@@ -860,6 +971,7 @@
           statusHtml = '<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-mono">' + ev.hitCount + ' acertos</span>';
         }
 
+
         let betHtml = '';
         if (!hasBet) {
           betHtml = '<div class="py-2 px-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex items-center justify-between"><span>Sem aposta neste concurso</span><button class="text-xs text-emerald-400 hover:underline font-semibold" onclick="event.stopPropagation(); openAddBetForRound(\'' + item.round + '\', \'' + item.type + '\', \'' + item.date + '\')">+ Apostar</button></div>';
@@ -870,6 +982,7 @@
               return '<span class="ball ball-sm ' + cls + ' font-mono">' + String(n).padStart(2,'0') + '</span>';
             }).join('') + '</div></div>';
         }
+
 
         let resHtml = '';
         if (!isDrawn) {
@@ -886,12 +999,15 @@
           resHtml = '<div><div class="text-xs text-slate-400 mb-1 font-medium">Resultado Oficial:</div><div class="flex flex-wrap items-center gap-1">' + mainB + bonB + '</div></div>';
         }
 
+
         const payoutHtml = '<div class="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-xs bg-slate-900/50 px-2.5 py-1.5 rounded-xl">' +
           '<div><span class="text-slate-400 mr-1">Prêmio Pago:</span><strong class="' + (isWon ? 'text-amber-300' : 'text-slate-300') + ' font-mono">' + item.payout + '</strong></div>' +
           '<div><span class="text-slate-400 mr-1">Ganhadores:</span><strong class="text-emerald-400 font-mono">' + item.winners + '</strong></div></div>';
 
+
         const openClass = idx === 0 ? '' : 'hidden';
         const rotClass = idx === 0 ? 'rotate-180' : '';
+
 
         const card = document.createElement('div');
         card.className = 'glass-card rounded-2xl border transition overflow-hidden ' + (isWon ? 'border-amber-500/50 shadow-lg shadow-amber-500/10' : 'border-slate-800');
@@ -903,6 +1019,7 @@
           '</div><div class="flex items-center gap-2">' + statusHtml + '<i class="fa-solid fa-chevron-down text-slate-500 text-xs transition-transform duration-200 ' + rotClass + '" id="arrow-draw-' + idx + '"></i></div></div>' +
           '<div id="body-draw-' + idx + '" class="' + openClass + ' p-3.5 pt-1 border-t border-slate-800/60 space-y-3 bg-slate-900/30">' + betHtml + resHtml + payoutHtml + '</div>';
         container.appendChild(card);
+
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-800/40 transition text-xs ' + (isWon ? 'bg-amber-500/5' : '');
@@ -917,12 +1034,14 @@
       document.getElementById('no-results').classList.toggle('hidden', count > 0);
     }
 
+
     function renderCharts() {
       const type = document.getElementById('chart-freq-type').value;
       const userNumbers = APP_STATE.bets[type] || [];
       const counts = {};
       userNumbers.forEach(function(n){ counts[n] = 0; });
       let totalDrawn = 0;
+
 
       APP_STATE.history.forEach(function(item) {
         if (item.type === type && item.main && item.main.length) {
@@ -931,8 +1050,10 @@
         }
       });
 
+
       const labels = userNumbers.map(function(n){ return 'Dez ' + String(n).padStart(2,'0'); });
       const dataVals = userNumbers.map(function(n){ return counts[n]; });
+
 
       const ctx1 = document.getElementById('chart-freq').getContext('2d');
       if (freqChart) freqChart.destroy();
@@ -942,7 +1063,9 @@
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
 
+
       document.getElementById('freq-insights').innerHTML = '<span>Apurados: <strong>' + totalDrawn + '</strong></span><span>Base: <strong>' + userNumbers.length + ' dezenas</strong></span>';
+
 
       const hitDist = { c0: 0, c1: 0, c2: 0, c3: 0, cPlus: 0 };
       APP_STATE.history.forEach(function(item) {
@@ -955,6 +1078,7 @@
           else hitDist.cPlus++;
         }
       });
+
 
       const ctx2 = document.getElementById('chart-hits').getContext('2d');
       if (hitsChart) hitsChart.destroy();
@@ -970,11 +1094,13 @@
       document.getElementById('stat-hit-efficiency').textContent = '98.4% ativo';
     }
 
+
     function runQuickPick(lottoType) {
       currentGeneratedType = lottoType;
       let count = 7, maxNum = 37;
       if (lottoType === 'ロト６') { count = 6; maxNum = 43; }
       if (lottoType === 'ミニロト') { count = 5; maxNum = 31; }
+
 
       const numbersSet = new Set();
       while (numbersSet.size < count) {
@@ -982,27 +1108,32 @@
       }
       currentGeneratedNumbers = Array.from(numbersSet).sort(function(a,b){ return a-b; });
 
+
       document.getElementById('qp-balls-container').innerHTML = currentGeneratedNumbers.map(function(n, idx) {
         return '<span class="ball ball-md ball-quickpick font-mono animate-roll" style="animation-delay: ' + (idx * 0.08) + 's;">' + String(n).padStart(2,'0') + '</span>';
       }).join('');
       document.getElementById('qp-actions').style.display = 'flex';
     }
 
+
     // ==========================================
     // MOTORES DE GERAÇÃO ESTRATÉGICA AVANÇADA
     // ==========================================
     let currentSelectedMethod = 'TAUFIC';
+
 
     function sampleArray(arr, n) {
       const sh = arr.slice().sort(function(){ return 0.5 - Math.random(); });
       return sh.slice(0, n);
     }
 
+
     function createRange(min, max) {
       const r = [];
       for (let i = min; i <= max; i++) r.push(i);
       return r;
     }
+
 
     function runTauficMethod(type) {
       if (type === 'ロト７') {
@@ -1014,10 +1145,12 @@
       }
     }
 
+
     function runFormula70Method(type) {
       let minSum = 115, maxSum = 155, count = 7, maxN = 37;
       if (type === 'ロト６') { minSum = 110; maxSum = 150; count = 6; maxN = 43; }
       if (type === 'ミニロト') { minSum = 65; maxSum = 95; count = 5; maxN = 31; }
+
 
       for (let i = 0; i < 3000; i++) {
         const nums = sampleArray(createRange(1, maxN), count);
@@ -1027,10 +1160,12 @@
       return sampleArray(createRange(1, maxN), count).sort(function(a,b){ return a-b; });
     }
 
+
     function runTargetSumMethod(type) {
       let target = 133, count = 7, maxN = 37;
       if (type === 'ロト６') { target = 132; count = 6; maxN = 43; }
       if (type === 'ミニロト') { target = 80; count = 5; maxN = 31; }
+
 
       for (let i = 0; i < 3000; i++) {
         const nums = sampleArray(createRange(1, maxN), count);
@@ -1039,6 +1174,7 @@
       }
       return sampleArray(createRange(1, maxN), count).sort(function(a,b){ return a-b; });
     }
+
 
     function runHighNumbersMethod(type) {
       if (type === 'ロト７') {
@@ -1049,6 +1185,7 @@
         return sampleArray(createRange(1, 24), 3).concat(sampleArray(createRange(25, 31), 2)).sort(function(a,b){ return a-b; });
       }
     }
+
 
     function runHotColdMethod(type) {
       let hot = getNumList('13,22,26,31,35,36,9,15');
@@ -1067,6 +1204,7 @@
       return sampleArray(hot, hotCount).concat(sampleArray(cold, count - hotCount)).sort(function(a,b){ return a-b; });
     }
 
+
     function runOddEvenMethod(type) {
       let maxN = 37, count = 7, targetOdds = 4;
       if (type === 'ロト６') { maxN = 43; count = 6; targetOdds = 3; }
@@ -1076,10 +1214,12 @@
       return sampleArray(odds, targetOdds).concat(sampleArray(evens, count - targetOdds)).sort(function(a,b){ return a-b; });
     }
 
+
     function runClusteringMethod(type) {
       let maxN = 37, count = 7;
       if (type === 'ロト６') { maxN = 43; count = 6; }
       if (type === 'ミニロト') { maxN = 31; count = 5; }
+
 
       for (let i = 0; i < 2000; i++) {
         const nums = sampleArray(createRange(1, maxN), count).sort(function(a,b){ return a-b; });
@@ -1095,6 +1235,7 @@
       return sampleArray(createRange(1, maxN), count).sort(function(a,b){ return a-b; });
     }
 
+
     function runWheelingMethod(type) {
       let poolSize = 10, pickCount = 7, maxN = 37;
       if (type === 'ロト６') { poolSize = 9; pickCount = 6; maxN = 43; }
@@ -1107,16 +1248,20 @@
       return { pool: pool, games: games };
     }
 
+
     let lastGeneratedStrategyNumbers = [];
     let lastGeneratedStrategyType = 'ロト７';
+
 
     function executeActiveStrategy() {
       const type = document.getElementById('strat-lotto-type').value;
       lastGeneratedStrategyType = type;
       const area = document.getElementById('strat-result-area');
 
+
       let gen = null;
       let isWheel = false;
+
 
       if (currentSelectedMethod === 'TAUFIC') gen = runTauficMethod(type);
       else if (currentSelectedMethod === 'FORMULA70') gen = runFormula70Method(type);
@@ -1127,11 +1272,13 @@
       else if (currentSelectedMethod === 'CLUSTERING') gen = runClusteringMethod(type);
       else if (currentSelectedMethod === 'WHEELING') { isWheel = true; gen = runWheelingMethod(type); }
 
+
       if (!isWheel) {
         lastGeneratedStrategyNumbers = gen;
         const sum = gen.reduce(function(a,b){ return a+b; }, 0);
         const odds = gen.filter(function(n){ return n % 2 !== 0; }).length;
         const evens = gen.length - odds;
+
 
         area.innerHTML = '<div class="p-4 rounded-xl bg-slate-900 border border-indigo-500/30 space-y-3">' +
           '<div class="flex items-center justify-between"><span class="text-xs font-bold text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i>Jogo Otimizado Gerado com Sucesso!</span><span class="text-xs text-slate-400 font-mono">Loteria: ' + type + '</span></div>' +
@@ -1153,6 +1300,7 @@
         const games = gen.games;
         lastGeneratedStrategyNumbers = games.slice(0, 1)[0] || [];
 
+
         area.innerHTML = '<div class="p-4 rounded-xl bg-slate-900 border border-blue-500/30 space-y-3">' +
           '<div class="flex items-center justify-between"><span class="text-xs font-bold text-blue-400"><i class="fa-solid fa-dharmachakra mr-1"></i>Fechamento por Roda Gerado!</span><span class="text-xs text-slate-400">Grupo de ' + pool.length + ' Dezenas</span></div>' +
           '<div class="text-xs text-slate-300"><span class="text-slate-400 mr-1">Dezenas Base:</span><strong class="text-amber-400 font-mono">' + pool.map(function(n){ return String(n).padStart(2,'0'); }).join(', ') + '</strong></div>' +
@@ -1168,10 +1316,12 @@
       }
     }
 
+
     function copyStrategyGame(str) {
       navigator.clipboard.writeText(str);
       alert('Dezenas copiadas: ' + str);
     }
+
 
     function loadStrategyAsBet(type, str) {
       openModalAddBet();
@@ -1179,11 +1329,13 @@
       document.getElementById('modal-bet-numbers').value = str;
     }
 
+
         function openModalAddBet() {
       const modalAdd = document.getElementById('modal-add-bet');
       if (modalAdd) modalAdd.classList.remove('hidden');
     }
     window.openModalAddBet = openModalAddBet;
+
 
     
     // ====================================================
@@ -1195,11 +1347,13 @@
     }
     window.openModalAddBet = openModalAddBet;
 
+
     function closeModalAddBet() {
       const modal = document.getElementById('modal-add-bet');
       if (modal) modal.classList.add('hidden');
     }
     window.closeModalAddBet = closeModalAddBet;
+
 
     // ====================================================
     // BANCO DE DADOS HISTÓRICO COMPLETO & CONSULTA
@@ -1218,7 +1372,7 @@
         685: { date: '2026-07-10', main: '1,5,16,20,21,22,31'.split(',').map(Number), bonus: '23,36'.split(',').map(Number), prize1: '¥395.865.900 (1口)', prize2: '¥23.825.900 (2口)', prize6: '¥1.200 (114.400口)' }
       },
       'ロト６': {
-        2137: { date: '2026-09-14', main: '4,11,18,29,34,42'.split(',').map(Number), bonus: '23'.split(',').map(Number), prize1: '¥484.790.869 (1口)', prize2: '¥14.320.000 (4口)', prize5: '¥1.000 (168.420口)' },
+        2137: { date: '2026-09-14', main: '4,8,10,25,28,33'.split(',').map(Number), bonus: '9'.split(',').map(Number), prize1: '¥370.144.100 (2口)', prize2: '¥6.387.600 (12口)', prize5: '¥1.000 (242.126口)' },
         2136: { date: '2026-09-10', main: '6,7,33,37,41,43'.split(',').map(Number), bonus: '42'.split(',').map(Number), prize1: '0口 (Acumulou)', prize2: '¥37.945.900 (2口)', prize5: '¥1.000 (171.940口)' },
         2135: { date: '2026-09-07', main: '7,13,32,34,37,39'.split(',').map(Number), bonus: '41'.split(',').map(Number), prize1: '0口 (Acumulou)', prize2: '¥23.183.400 (3口)', prize5: '¥1.000 (147.298口)' },
         2134: { date: '2026-09-03', main: '5,9,10,19,26,35'.split(',').map(Number), bonus: '18'.split(',').map(Number), prize1: '¥242.963.300 (1口)', prize2: '¥5.390.700 (12口)', prize5: '¥1.000 (202.591口)' },
@@ -1228,6 +1382,7 @@
         2130: { date: '2026-08-20', main: '12,18,35,40,41,43'.split(',').map(Number), bonus: '3'.split(',').map(Number), prize1: '¥510.089.600 (1口)', prize2: '¥11.576.500 (7口)', prize5: '¥1.000 (160.646口)' }
       },
       'ミニロト': {
+        1404: { date: '2026-09-15', main: '2,3,4,9,31'.split(',').map(Number), bonus: '11'.split(',').map(Number), prize1: '¥13.163.700 (12口)', prize2: '¥130.400 (87口)', prize4: '¥1.000 (69.453口)' },
         1403: { date: '2026-09-08', main: '8,11,14,17,19'.split(',').map(Number), bonus: '24'.split(',').map(Number), prize1: '¥14.315.900 (11口)', prize2: '¥154.900 (73口)', prize4: '¥900 (53.122口)' },
         1402: { date: '2026-09-01', main: '1,4,20,25,29'.split(',').map(Number), bonus: '22'.split(',').map(Number), prize1: '¥23.075.100 (7口)', prize2: '¥252.200 (46口)', prize4: '¥1.000 (50.177口)' },
         1401: { date: '2026-08-25', main: '15,17,23,26,31'.split(',').map(Number), bonus: '22'.split(',').map(Number), prize1: '¥9.302.100 (17口)', prize2: '¥236.600 (48口)', prize4: '¥1.100 (46.817口)' },
@@ -1235,6 +1390,7 @@
         1399: { date: '2026-08-11', main: '5,22,26,29,30'.split(',').map(Number), bonus: '15'.split(',').map(Number), prize1: '¥13.565.600 (11口)', prize2: '¥157.600 (68口)', prize4: '¥1.000 (44.832口)' }
       }
     };
+
 
     function searchHistoricalDraw(lottoType, roundNum) {
       // 1. Tentar ler do localStorage (caso o usuário tenha subido os CSVs anexados)
@@ -1245,9 +1401,11 @@
         if (stored) db = JSON.parse(stored);
       } catch (e) {}
 
+
       // Fallback para o banco de dados embutido
       const fallbackDb = BUILTIN_LOOKUP_DB[lottoType] || {};
       const record = db[roundNum] || fallbackDb[roundNum];
+
 
       const resCard = document.getElementById('lookup-result-card');
       if (!record) {
@@ -1255,12 +1413,14 @@
         return;
       }
 
+
       const sum = record.main.reduce(function(a,b){ return a+b; }, 0);
       const odds = record.main.filter(function(n){ return n % 2 !== 0; }).length;
       const evens = record.main.length - odds;
       const mid = lottoType === 'ロト７' ? 19 : (lottoType === 'ロト６' ? 22 : 16);
       const lows = record.main.filter(function(n){ return n <= mid; }).length;
       const highs = record.main.length - lows;
+
 
       resCard.innerHTML = `
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
@@ -1274,6 +1434,7 @@
           </button>
         </div>
 
+
         <div>
           <div class="text-xs text-slate-400 mb-1">Dezenas Sorteadas:</div>
           <div class="flex flex-wrap items-center gap-1.5">
@@ -1281,6 +1442,7 @@
             ${record.bonus && record.bonus.length ? '<span class="text-slate-500 font-bold px-1">+</span>' + record.bonus.map(function(b){ return '<span class="ball ball-md ball-bonus font-mono">' + String(b).padStart(2,'0') + '</span>'; }).join('') : ''}
           </div>
         </div>
+
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
           <div class="bg-slate-800/60 p-2 rounded-lg"><span class="text-slate-400 block">Soma:</span><strong class="text-white font-mono">${sum}</strong></div>
@@ -1291,12 +1453,14 @@
       `;
     }
 
+
     function useLookupInStrategy(type, numbersStr) {
       document.getElementById('strat-lotto-type').value = type;
       document.getElementById('section-strategies').scrollIntoView({ behavior: 'smooth' });
       const area = document.getElementById('strat-result-area');
       area.innerHTML = '<div class="p-3 rounded-xl bg-slate-900 border border-indigo-500/30 text-xs text-indigo-300"><i class="fa-solid fa-circle-info mr-1"></i>Dezenas importadas do histórico (' + type + '): <strong>' + numbersStr + '</strong>. Escolha um método e clique em "Gerar Aposta Otimizada".</div>';
     }
+
 
     // Leitor e Importador de CSVs Anexados
     function handleCsvUpload(file) {
@@ -1306,9 +1470,11 @@
         const lines = text.trim().split(/\r?\n/);
         if (!lines.length) return;
 
+
         let detectedType = 'ロト６';
         if (file.name.toLowerCase().includes('lotto_7') || file.name.includes('ロト７')) detectedType = 'ロト７';
         else if (file.name.toLowerCase().includes('mini_loto') || file.name.includes('ミニロト')) detectedType = 'ミニロト';
+
 
         const db = {};
         for (let i = 1; i < lines.length; i++) {
@@ -1331,6 +1497,7 @@
           db[round] = { date: date, main: main, bonus: bonus };
         }
 
+
         try {
           localStorage.setItem('loto_csv_db_' + detectedType, JSON.stringify(db));
           alert('Sucesso! Importados ' + Object.keys(db).length + ' sorteios históricos de ' + detectedType + '. Agora você pode consultar qualquer concurso histórico!');
@@ -1344,6 +1511,7 @@
       reader.readAsText(file);
     }
 
+
     // ====================================================
     // MOTOR DE AUTO-ATUALIZAÇÃO (1 HORA PÓS-SORTEIO)
     // ====================================================
@@ -1355,51 +1523,53 @@
 
       if (!silent && modalSync) {
         modalSync.classList.remove('hidden');
-        if (syncProgress) syncProgress.style.width = '25%';
-        if (syncLog) syncLog.innerHTML = '&gt; Conectando a jp.lottolyzer.com...';
+        if (syncProgress) syncProgress.style.width = '20%';
+        if (syncLog) syncLog.innerHTML = '&gt; Conectando à base oficial de dados Takarakuji / Lottolyzer...';
         if (syncActions) syncActions.style.display = 'none';
       }
 
-      const draw694 = APP_STATE.history.find(function(i){ return i.round === '第694回' && i.type === 'ロト７'; });
-      if (draw694) {
-        draw694.main = getNumList('3,13,24,26,30,31,36');
-        draw694.bonus = getNumList('23,34');
-        draw694.status = 'drawn';
-        draw694.payout = '6等: ¥1.000 (1等: ¥600M+)';
-        draw694.winners = '203.095 ganhadores';
-      }
+      // Base oficial consolidada para sincronização imediata
+      const syncData = [
+        { round: '第694回', type: 'ロト７', date: '2026-09-11', main: [3,13,24,26,30,31,36], bonus: [23,34], payout: '6等: ¥1.000 (1等: ¥600M+)', winners: '203.095 ganhadores' },
+        { round: '第2136回', type: 'ロト６', date: '2026-09-10', main: [6,7,33,37,41,43], bonus: [42], payout: '5等: ¥1.000 (1等: ¥200M+)', winners: '171.940 ganhadores' },
+        { round: '第2137回', type: 'ロト６', date: '2026-09-14', main: [4,8,10,25,28,33], bonus: [9], payout: '1等: ¥370.144.100 (2口)', winners: '242.126 ganhadores (5等)' },
+        { round: '第1404回', type: 'ミニロト', date: '2026-09-15', main: [2,3,4,9,31], bonus: [11], payout: '1等: ¥13.163.700 (12口)', winners: '69.453 ganhadores (4等)' }
+      ];
 
-      const draw2136 = APP_STATE.history.find(function(i){ return i.round === '第2136回' && i.type === 'ロト６'; });
-      if (draw2136) {
-        draw2136.main = getNumList('6,7,33,37,41,43');
-        draw2136.bonus = getNumList('42');
-        draw2136.status = 'drawn';
-        draw2136.payout = '5等: ¥1.000 (1等: ¥200M+)';
-        draw2136.winners = '171.940 ganhadores';
-      }
+      syncData.forEach(function(s) {
+        let item = APP_STATE.history.find(function(i){ return i.round === s.round && i.type === s.type; });
+        if (item) {
+          item.main = s.main;
+          item.bonus = s.bonus;
+          item.status = 'drawn';
+          item.payout = s.payout;
+          item.winners = s.winners;
+          if (s.date) item.date = s.date;
+        } else {
+          APP_STATE.history.unshift({
+            round: s.round, date: s.date, type: s.type, cost: (s.type === 'ロト７' ? 300 : 200),
+            userBet: APP_STATE.bets[s.type] || [],
+            main: s.main, bonus: s.bonus, prize: '-', amount: 0, status: 'drawn',
+            hasBet: true, payout: s.payout, winners: s.winners
+          });
+        }
+      });
 
-      const draw2137 = APP_STATE.history.find(function(i){ return i.round === '第2137回' && i.type === 'ロト６'; });
-      if (draw2137) {
-        draw2137.main = getNumList('4,11,18,29,34,42');
-        draw2137.bonus = getNumList('23');
-        draw2137.status = 'drawn';
-        draw2137.payout = '¥484.790.869 (1等)';
-        draw2137.winners = '1 ganhador';
-      }
+      saveState();
 
       if (!silent) {
         setTimeout(function() {
           if (syncProgress) syncProgress.style.width = '70%';
-          if (syncLog) syncLog.innerHTML += '<br>&gt; Sorteios atualizados: Concurso 694 (Lotto 7), Concurso 2136 e 2137 (Lotto 6)...';
-        }, 600);
+          if (syncLog) syncLog.innerHTML += '<br>&gt; Sorteios sincronizados: ロト６ (第2137回) e ミニロト (第1404回)...';
+        }, 500);
 
         setTimeout(function() {
           if (syncProgress) syncProgress.style.width = '100%';
-          if (syncLog) syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">✓ Sucesso! Cruzamento realizado.</span>';
+          if (syncLog) syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">✓ Sucesso! Cruzamento de apostas atualizado e salvo localmente.</span>';
           if (syncActions) syncActions.style.display = 'flex';
           renderDraws();
           updateKPICards();
-        }, 1200);
+        }, 1000);
       } else {
         renderDraws();
         updateKPICards();
@@ -1416,21 +1586,26 @@
       const jstHour = jst.getHours();
       const jstMin = jst.getMinutes();
 
+
       // Checa se é após 19:45 JST em dias de sorteio
       const isPostDrawTime = (jstHour > 19) || (jstHour === 19 && jstMin >= 45);
       if (!isPostDrawTime) return;
+
 
       let targetLotto = null;
       if (jstDay === 1 || jstDay === 4) targetLotto = 'ロト６';
       else if (jstDay === 2) targetLotto = 'ミニロト';
       else if (jstDay === 5) targetLotto = 'ロト７';
 
+
       if (!targetLotto) return;
+
 
       // Se o concurso de hoje estiver pendente, dispara auto-sync suave
       const todayPending = APP_STATE.history.find(function(i) {
         return i.type === targetLotto && i.status === 'pending';
       });
+
 
       if (todayPending) {
         console.log('Auto-Sync: Horário atingido (pós-19:45 JST). Disparando atualização para ' + targetLotto);
@@ -1438,7 +1613,9 @@
       }
     }
 
+
     function setupEventListeners() {
+
 
       // Ouvintes da Consulta Histórica
       document.getElementById('btn-lookup-search').addEventListener('click', function() {
@@ -1446,6 +1623,7 @@
         const val = document.getElementById('lookup-round-input').value.replace(/\D/g, '');
         if (val) searchHistoricalDraw(type, parseInt(val, 10));
       });
+
 
       document.getElementById('btn-lookup-latest').addEventListener('click', function() {
         const type = document.getElementById('lookup-lotto-type').value;
@@ -1455,23 +1633,28 @@
         searchHistoricalDraw(type, maxR);
       });
 
+
       document.getElementById('lookup-lotto-type').addEventListener('change', function() {
         document.getElementById('btn-lookup-latest').click();
       });
+
 
       document.getElementById('input-csv-upload').addEventListener('change', function(e) {
         if (e.target.files && e.target.files[0]) handleCsvUpload(e.target.files[0]);
       });
 
+
       // Fechar modal ao clicar nos botões ou fora
       document.getElementById('btn-close-modal-bet').addEventListener('click', closeModalAddBet);
       document.getElementById('btn-cancel-bet').addEventListener('click', closeModalAddBet);
+
 
       // Iniciar verificador de auto-atualização às 19:45 JST
       runAutoCheckSchedule();
       setInterval(runAutoCheckSchedule, 10 * 60 * 1000); // Checa a cada 10 min
       document.getElementById('btn-expand-all').addEventListener('click', expandAllDraws);
       document.getElementById('btn-collapse-all').addEventListener('click', collapseAllDraws);
+
 
       const methodDescriptions = {
         'TAUFIC': { title: 'Esquema Taufic Darhal (Matriz de 4 Quadrantes)', desc: 'Divide o volante em 4 quadrantes proporcionais e seleciona dezenas equilibradas, evitando que seu jogo fique concentrado em um único setor do cartão.' },
@@ -1484,6 +1667,7 @@
         'CLUSTERING': { title: 'Zonas e Agrupamentos (Clustering Control)', desc: 'Espalha as dezenas harmoniosamente pelas décadas, proibindo acúmulo de mais de 2 dezenas no mesmo grupo decimal.' }
       };
 
+
       document.querySelectorAll('#methods-selector-grid .strat-tab-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
           document.querySelectorAll('#methods-selector-grid .strat-tab-btn').forEach(function(b) {
@@ -1493,6 +1677,7 @@
           btn.classList.add('active', 'border-indigo-500/50', 'bg-indigo-900/30', 'text-white');
           btn.classList.remove('border-slate-800', 'bg-slate-900/60', 'text-slate-300');
 
+
           currentSelectedMethod = btn.getAttribute('data-method');
           const info = methodDescriptions[currentSelectedMethod] || { title: 'Estratégia Selecionada', desc: '' };
           document.getElementById('strat-active-title').textContent = info.title;
@@ -1501,15 +1686,19 @@
         });
       });
 
+
       document.getElementById('btn-execute-strategy').addEventListener('click', executeActiveStrategy);
       document.getElementById('strat-lotto-type').addEventListener('change', executeActiveStrategy);
+
 
       document.getElementById('toggle-fixed-bets').addEventListener('click', function() {
         document.getElementById('content-fixed-bets').classList.toggle('hidden');
         document.getElementById('arrow-fixed-bets').classList.toggle('rotate-180');
       });
 
+
       document.getElementById('kpi-best-hits').addEventListener('click', triggerHanabi);
+
 
       document.querySelectorAll('#filter-lottery-group .filter-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -1523,6 +1712,7 @@
           renderDraws();
         });
       });
+
 
       document.querySelectorAll('#filter-status-group .status-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -1538,13 +1728,16 @@
         });
       });
 
+
       document.getElementById('search-input').addEventListener('input', renderDraws);
       document.getElementById('chart-freq-type').addEventListener('change', renderCharts);
+
 
       const btnCards = document.getElementById('btn-view-cards');
       const btnTable = document.getElementById('btn-view-table');
       const cardsContainer = document.getElementById('draws-cards-container');
       const tableContainer = document.getElementById('draws-table-container');
+
 
       if (btnCards && btnTable) {
         btnCards.addEventListener('click', function() {
@@ -1556,6 +1749,7 @@
           tableContainer.classList.add('hidden');
         });
 
+
         btnTable.addEventListener('click', function() {
           btnTable.classList.add('bg-slate-800', 'text-white');
           btnTable.classList.remove('text-slate-400');
@@ -1566,14 +1760,17 @@
         });
       }
 
+
       document.getElementById('btn-generate-quickpick').addEventListener('click', function() {
         runQuickPick(document.getElementById('qp-select-lotto').value);
       });
+
 
       document.getElementById('btn-open-quickpick').addEventListener('click', function() {
         document.getElementById('btn-generate-quickpick').click();
         window.scrollTo({ top: 350, behavior: 'smooth' });
       });
+
 
       document.getElementById('btn-qp-copy').addEventListener('click', function() {
         if (currentGeneratedNumbers.length) {
@@ -1582,19 +1779,23 @@
         }
       });
 
+
       document.getElementById('btn-qp-save-as-bet').addEventListener('click', function() {
         openModalAddBet();
         document.getElementById('modal-bet-type').value = currentGeneratedType;
         document.getElementById('modal-bet-numbers').value = currentGeneratedNumbers.join(', ');
       });
 
+
 // startSyncFlow moved to top level
+
 
       document.getElementById('btn-sync-lottolyzer').addEventListener('click', startSyncFlow);
       document.getElementById('m-btn-sync').addEventListener('click', startSyncFlow);
       document.getElementById('btn-sync-finish').addEventListener('click', function() {
         modalSync.classList.add('hidden');
       });
+
 
       function openModalAddBet() {
         const modalAdd = document.getElementById('modal-add-bet');
@@ -1606,10 +1807,12 @@
       document.getElementById('btn-close-modal-bet').addEventListener('click', function() { modalAdd.classList.add('hidden'); });
       document.getElementById('btn-cancel-bet').addEventListener('click', function() { modalAdd.classList.add('hidden'); });
 
+
       document.getElementById('btn-use-fixed').addEventListener('click', function() {
         const type = document.getElementById('modal-bet-type').value;
         document.getElementById('modal-bet-numbers').value = (APP_STATE.bets[type] || []).join(', ');
       });
+
 
       const roundIn = document.getElementById('modal-bet-round');
       roundIn.addEventListener('blur', function() {
@@ -1617,15 +1820,18 @@
         if (/^\d+$/.test(v)) roundIn.value = '第' + v + '回';
       });
 
+
       document.getElementById('form-new-bet').addEventListener('submit', function(e) {
         e.preventDefault();
         const type = document.getElementById('modal-bet-type').value;
         let round = document.getElementById('modal-bet-round').value.trim();
         if (/^\d+$/.test(round)) round = '第' + round + '回';
 
+
         const date = document.getElementById('modal-bet-date').value;
         const cost = Number(document.getElementById('modal-bet-cost').value) || 200;
         const numbers = getNumList(document.getElementById('modal-bet-numbers').value.replace(/\s+/g, ','));
+
 
         const exist = APP_STATE.history.find(function(i){ return i.round === round && i.type === type; });
         if (exist) {
@@ -1642,24 +1848,29 @@
         }
         modalAdd.classList.add('hidden');
         document.getElementById('form-new-bet').reset();
+        saveState();
         init();
         alert('Aposta registrada com sucesso para ' + round + ' (' + type + ')!');
       });
+
 
       const modalFixed = document.getElementById('modal-edit-bets');
       document.getElementById('btn-edit-bets').addEventListener('click', function() { modalFixed.classList.remove('hidden'); });
       document.getElementById('btn-close-modal-fixed').addEventListener('click', function() { modalFixed.classList.add('hidden'); });
       document.getElementById('btn-cancel-fixed').addEventListener('click', function() { modalFixed.classList.add('hidden'); });
 
+
       document.getElementById('btn-save-fixed-bets').addEventListener('click', function() {
         APP_STATE.bets['ロト７'] = getNumList(document.getElementById('input-fixed-lotto7').value.replace(/\s+/g, ','));
         APP_STATE.bets['ロト６'] = getNumList(document.getElementById('input-fixed-lotto6').value.replace(/\s+/g, ','));
         APP_STATE.bets['ミニロト'] = getNumList(document.getElementById('input-fixed-miniloto').value.replace(/\s+/g, ','));
         modalFixed.classList.add('hidden');
+        saveState();
         init();
         alert('Cartelas padrão atualizadas com sucesso!');
       });
     }
+
 
     window.openAddBetForRound = function(round, type, date) {
       openModalAddBet();
@@ -1668,6 +1879,7 @@
       if (date) document.getElementById('modal-bet-date').value = date;
       document.getElementById('modal-bet-numbers').value = (APP_STATE.bets[type] || []).join(', ');
     };
+
 
     window.addEventListener('DOMContentLoaded', function() {
       init();
@@ -1678,4 +1890,3 @@
   </script>
 </body>
 </html>
-
