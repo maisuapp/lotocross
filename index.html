@@ -88,39 +88,41 @@
 
 
   <!-- BARRA SUPERIOR -->
-  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-300 flex items-center justify-center text-slate-950 font-black shadow-lg logo-box-glow shrink-0">
-          <i class="fa-solid fa-dice-d20 text-xl logo-dice-animated text-white drop-shadow-md"></i>
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/90 backdrop-blur-xl bg-slate-950/85">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+      <!-- LOGO & BADGE RESPONSIVOS -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-300 flex items-center justify-center text-slate-950 font-black shadow-lg logo-box-glow shrink-0">
+          <i class="fa-solid fa-dice-d20 text-lg sm:text-xl logo-dice-animated text-white drop-shadow-md"></i>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base sm:text-lg font-extrabold flex items-center gap-1.5">
-              <span class="logo-text-animated font-black tracking-wide">LotoCross</span>
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot"></span>
-                Japão 🇯🇵
-              </span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 whitespace-nowrap">
+            <h1 class="text-base sm:text-lg font-black tracking-tight flex items-center gap-1.5">
+              <span class="logo-text-animated">LotoCross</span>
+              <span class="text-xs">🇯🇵</span>
             </h1>
+            <span class="hidden sm:inline-flex text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot"></span>
+              <span>Oficial Takarakuji</span>
+            </span>
           </div>
-          <div class="flex items-center gap-2">
-            <p class="text-[11px] text-slate-400 hidden sm:block font-medium">Cruzamento Oficial de Apostas, Resultados & Probabilidades</p>
-            <span class="text-[10px] px-2 py-0.2 rounded-full bg-slate-800 text-emerald-400 border border-emerald-500/20 font-mono hidden md:inline">Auto-Sync 19:45 JST</span>
-          </div>
+          <p class="text-[10px] text-slate-400 hidden md:block font-medium truncate">Cruzamento Oficial de Apostas, Resultados & Probabilidades</p>
         </div>
       </div>
 
-
-      <div class="flex items-center gap-2">
-        <button id="btn-sync-lottolyzer" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 active:scale-95 transition">
-          <i class="fa-solid fa-arrows-rotate"></i> <span>Sincronizar</span>
+      <!-- BOTÕES DE AÇÃO DO HEADER -->
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <button id="btn-sync-lottolyzer" class="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 active:scale-95 transition">
+          <i class="fa-solid fa-arrows-rotate" id="sync-icon-hdr"></i>
+          <span>Sincronizar</span>
         </button>
         <button id="btn-open-quickpick" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-blue-600/20 text-blue-300 border border-blue-500/30 text-xs sm:text-sm font-semibold flex items-center gap-1.5 active:scale-95 transition">
-          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> <span class="hidden sm:inline">Quick Pick</span>
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+          <span class="hidden sm:inline">Quick Pick</span>
         </button>
         <button id="btn-open-modal-add" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-semibold flex items-center gap-1.5 active:scale-95 transition">
-          <i class="fa-solid fa-plus text-emerald-400"></i> <span class="hidden md:inline">Nova Aposta</span>
+          <i class="fa-solid fa-plus text-emerald-400"></i>
+          <span class="hidden md:inline">Nova Aposta</span>
         </button>
       </div>
     </div>
@@ -223,13 +225,12 @@
 
 
     <!-- CARDS DE METRICAS (KPI) -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
         <span class="text-xs text-slate-400 font-medium">Total Investido</span>
         <div class="text-lg sm:text-2xl font-extrabold text-white mt-1.5" id="kpi-invested">¥0</div>
         <div class="text-xs text-slate-400 mt-0.5" id="kpi-bets-count">0 apostas ativas</div>
       </div>
-
 
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
         <span class="text-xs text-slate-400 font-medium">Total Ganho</span>
@@ -237,28 +238,18 @@
         <div class="text-xs text-emerald-400 mt-0.5" id="kpi-prizes-count">0 premiações</div>
       </div>
 
-
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
         <span class="text-xs text-slate-400 font-medium">Saldo Líquido</span>
         <div class="text-lg sm:text-2xl font-extrabold mt-1.5 text-rose-400" id="kpi-balance">-¥0</div>
         <div class="text-xs text-slate-400 mt-0.5" id="kpi-roi">Retorno: 0%</div>
       </div>
 
-
       <div class="glass-panel rounded-xl p-3.5 sm:p-4">
         <span class="text-xs text-slate-400 font-medium">Melhor Acerto</span>
         <div class="text-lg sm:text-2xl font-extrabold text-amber-400 mt-1.5 cursor-pointer hover:scale-105 transition" id="kpi-best-hits" title="Celebrar com Hanabi">3 acertos 🎆</div>
         <div class="text-xs text-slate-400 mt-0.5" id="kpi-best-detail">Lotto 6 (5等 - ¥1.000)</div>
       </div>
-
-
-      <div class="glass-panel rounded-xl p-3.5 sm:p-4 col-span-2 lg:col-span-1">
-        <span class="text-xs text-slate-400 font-medium">Próximo Sorteio</span>
-        <div class="text-base sm:text-lg font-bold text-purple-300 mt-1.5 truncate" id="kpi-next-draw">Lotto 6 (17/09/2026)</div>
-        <div class="text-xs text-purple-400 mt-0.5" id="kpi-pending-count">Aguardando resultado</div>
-      </div>
     </div>
-
 
     <!-- SEÇÃO DE CONCURSOS CRUZADOS (JANELAS SUSPENSAS RETRÁTEIS) -->
     <div class="glass-panel rounded-2xl p-3.5 sm:p-6 shadow-xl space-y-4">
@@ -848,7 +839,7 @@
 第1405回|2026-09-22|ミニロト|200|||-|0|pending|1
 第2139回|2026-09-21|ロト６|200|||-|0|pending|1
 第695回|2026-09-18|ロト７|300|||-|0|pending|1
-第2138回|2026-09-17|ロト６|200|||-|0|pending|1
+第2138回|2026-09-17|ロト６|200|9,16,21,26,38,40|12|-|0|drawn|1
 第1404回|2026-09-15|ミニロト|200|2,3,4,9,31|11|-|0|drawn|1
 第2137回|2026-09-14|ロト６|200|4,8,10,25,28,33|9|-|0|drawn|1
 第694回|2026-09-11|ロト７|300|3,13,24,26,30,31,36|23,34|-|0|drawn|1
@@ -884,7 +875,7 @@
 第2111回|2026-06-15|ロト６|200|1,5,8,12,37,43|36|-|0|drawn|1
 第681回|2026-06-12|ロト７|300|1,10,12,13,19,33,35|14,37|-|0|drawn|1
 第2110回|2026-06-11|ロト６|200|3,9,18,35,36,40|29|-|0|drawn|1
-第1106回|2026-06-10|ドリームジャンボ|3000|||7等|300|drawn|1
+第1106回|2026-06-10|ドリームジャンボ|3000|0|0|7等|300|drawn|1
 第2109回|2026-06-08|ロト６|200|6,11,19,31,38,41|3|５等|1000|drawn|1
 第680回|2026-06-05|ロト７|300|9,10,22,26,27,31,36|20,29|-|0|drawn|1
 第2108回|2026-06-04|ロト６|200|2,5,10,15,28,43|27|-|0|drawn|1
@@ -939,7 +930,7 @@
     }
 
 
-    const STORAGE_KEY = 'lotocross_state_v9_2';
+    const STORAGE_KEY = 'lotocross_state_v9_5';
 
     function saveState() {
       try {
@@ -1043,7 +1034,8 @@
           won += Number(item.amount || 0);
           betsCount++;
           if (item.amount > 0) prizes++;
-          if (item.status === 'pending' || !item.main || !item.main.length) {
+          const isDrawn = Boolean(item.status === 'drawn' || (item.main && item.main.length > 0));
+          if (!isDrawn) {
             pending++;
           } else {
             const ev = evaluateDraw(item);
@@ -1053,37 +1045,37 @@
       });
       const net = won - invested;
       const roi = invested > 0 ? ((won / invested) * 100).toFixed(1) : 0;
-      document.getElementById('kpi-invested').textContent = formatYen(invested);
-      document.getElementById('kpi-bets-count').textContent = betsCount + ' apostas ativas';
-      document.getElementById('kpi-won').textContent = formatYen(won);
-      document.getElementById('kpi-prizes-count').textContent = prizes + ' premiações';
-      const balEl = document.getElementById('kpi-balance');
-      balEl.textContent = (net >= 0 ? '+' : '') + formatYen(net);
-      balEl.className = 'text-lg sm:text-2xl font-extrabold mt-1.5 ' + (net >= 0 ? 'text-emerald-400' : 'text-rose-400');
-      document.getElementById('kpi-roi').textContent = 'Retorno: ' + roi + '%';
-      document.getElementById('kpi-best-hits').textContent = maxHits + ' acertos 🎆';
-      document.getElementById('kpi-pending-count').textContent = pending + ' pendentes';
-      
-      const pendingDraws = APP_STATE.history
-        .filter(function(i){ return i.status === 'pending' || !i.main || !i.main.length; })
-        .sort(function(a, b){ return a.date.localeCompare(b.date); });
-      const nextDrawEl = document.getElementById('kpi-next-draw');
-      if (nextDrawEl) {
-        if (pendingDraws.length > 0) {
-          const next = pendingDraws[0];
-          const dParts = next.date.split('-');
-          const fDate = dParts.length === 3 ? (dParts[2] + '/' + dParts[1] + '/' + dParts[0]) : next.date;
-          nextDrawEl.textContent = next.type + ' (' + fDate + ')';
-        } else {
-          nextDrawEl.textContent = 'Sem sorteios pendentes';
-        }
-      }
-      document.getElementById('count-all').textContent = APP_STATE.history.length;
-      document.getElementById('count-lotto7').textContent = APP_STATE.history.filter(function(i){ return i.type === 'ロト７'; }).length;
-      document.getElementById('count-lotto6').textContent = APP_STATE.history.filter(function(i){ return i.type === 'ロト６'; }).length;
-      document.getElementById('count-miniloto').textContent = APP_STATE.history.filter(function(i){ return i.type === 'ミニロト'; }).length;
-    }
 
+      const elInv = document.getElementById('kpi-invested');
+      if (elInv) elInv.textContent = formatYen(invested);
+      const elBets = document.getElementById('kpi-bets-count');
+      if (elBets) elBets.textContent = betsCount + ' apostas ativas';
+      const elWon = document.getElementById('kpi-won');
+      if (elWon) elWon.textContent = formatYen(won);
+      const elPrizes = document.getElementById('kpi-prizes-count');
+      if (elPrizes) elPrizes.textContent = prizes + ' premiações';
+
+      const balEl = document.getElementById('kpi-balance');
+      if (balEl) {
+        balEl.textContent = (net >= 0 ? '+' : '') + formatYen(net);
+        balEl.className = 'text-lg sm:text-2xl font-extrabold mt-1.5 ' + (net >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      }
+
+      const elRoi = document.getElementById('kpi-roi');
+      if (elRoi) elRoi.textContent = 'Retorno: ' + roi + '%';
+
+      const elBest = document.getElementById('kpi-best-hits');
+      if (elBest) elBest.textContent = maxHits + ' acertos 🎆';
+
+      const elCountAll = document.getElementById('count-all');
+      if (elCountAll) elCountAll.textContent = APP_STATE.history.length;
+      const elCountL7 = document.getElementById('count-lotto7');
+      if (elCountL7) elCountL7.textContent = APP_STATE.history.filter(function(i){ return i.type === 'ロト７'; }).length;
+      const elCountL6 = document.getElementById('count-lotto6');
+      if (elCountL6) elCountL6.textContent = APP_STATE.history.filter(function(i){ return i.type === 'ロト６'; }).length;
+      const elCountMl = document.getElementById('count-miniloto');
+      if (elCountMl) elCountMl.textContent = APP_STATE.history.filter(function(i){ return i.type === 'ミニロト'; }).length;
+    }
 
     function toggleDrawAccordion(idx) {
       const b = document.getElementById('body-draw-' + idx);
@@ -1574,6 +1566,7 @@
         685: { date: '2026-07-10', main: '1,5,16,20,21,22,31'.split(',').map(Number), bonus: '23,36'.split(',').map(Number), prize1: '¥395.865.900 (1口)', prize2: '¥23.825.900 (2口)', prize6: '¥1.200 (114.400口)' }
       },
       'ロト６': {
+        2138: { date: '2026-09-17', main: '9,16,21,26,38,40'.split(',').map(Number), bonus: '12'.split(',').map(Number), prize1: '0口 (Acumulou ¥284M)', prize2: '¥14.398.700 (6口)', prize5: '¥1.000 (188.420口)' },
         2137: { date: '2026-09-14', main: '4,8,10,25,28,33'.split(',').map(Number), bonus: '9'.split(',').map(Number), prize1: '¥370.144.100 (2口)', prize2: '¥6.387.600 (12口)', prize5: '¥1.000 (242.126口)' },
         2136: { date: '2026-09-10', main: '6,7,33,37,41,43'.split(',').map(Number), bonus: '42'.split(',').map(Number), prize1: '0口 (Acumulou)', prize2: '¥37.945.900 (2口)', prize5: '¥1.000 (171.940口)' },
         2135: { date: '2026-09-07', main: '7,13,32,34,37,39'.split(',').map(Number), bonus: '41'.split(',').map(Number), prize1: '0口 (Acumulou)', prize2: '¥23.183.400 (3口)', prize5: '¥1.000 (147.298口)' },
@@ -1959,14 +1952,16 @@
         }
       }
 
-      // Base oficial consolidada para sincronização imediata
+      // Base oficial consolidada com todas as apurações mais recentes
       const syncData = [
         { round: '第694回', type: 'ロト７', date: '2026-09-11', main: [3,13,24,26,30,31,36], bonus: [23,34], payout: '6等: ¥1.000 (1等: ¥600M+)', winners: '203.095 ganhadores' },
         { round: '第2136回', type: 'ロト６', date: '2026-09-10', main: [6,7,33,37,41,43], bonus: [42], payout: '5等: ¥1.000 (1等: ¥200M+)', winners: '171.940 ganhadores' },
         { round: '第2137回', type: 'ロト６', date: '2026-09-14', main: [4,8,10,25,28,33], bonus: [9], payout: '1等: ¥370.144.100 (2口)', winners: '242.126 ganhadores (5等)' },
-        { round: '第1404回', type: 'ミニロト', date: '2026-09-15', main: [2,3,4,9,31], bonus: [11], payout: '1等: ¥13.163.700 (12口)', winners: '69.453 ganhadores (4等)' }
+        { round: '第1404回', type: 'ミニロト', date: '2026-09-15', main: [2,3,4,9,31], bonus: [11], payout: '1等: ¥13.163.700 (12口)', winners: '69.453 ganhadores (4等)' },
+        { round: '第2138回', type: 'ロト６', date: '2026-09-17', main: [9,16,21,26,38,40], bonus: [12], payout: '1等: Acumulou ¥284M', winners: '188.420 ganhadores (5等)' }
       ];
 
+      let updatedCount = 0;
       syncData.forEach(function(s) {
         let item = APP_STATE.history.find(function(i){ return i.round === s.round && i.type === s.type; });
         if (item) {
@@ -1976,20 +1971,40 @@
           item.payout = s.payout;
           item.winners = s.winners;
           if (s.date) item.date = s.date;
+          updatedCount++;
         }
       });
+
+      // Também busca no BUILTIN_LOOKUP_DB qualquer concurso pendente com data passada
+      if (typeof BUILTIN_LOOKUP_DB === 'object') {
+        APP_STATE.history.forEach(function(item) {
+          if (item.status === 'pending' || !item.main || item.main.length === 0) {
+            const numRound = parseInt(item.round.replace(/\D/g, ''), 10);
+            const dbType = BUILTIN_LOOKUP_DB[item.type];
+            if (dbType && dbType[numRound]) {
+              const info = dbType[numRound];
+              item.main = info.main;
+              item.bonus = info.bonus;
+              item.status = 'drawn';
+              item.payout = info.prize1 || '-';
+              item.winners = info.prize5 || info.prize6 || 'Apurado';
+              updatedCount++;
+            }
+          }
+        });
+      }
 
       saveState();
 
       if (!silent) {
         setTimeout(function() {
           if (syncProgress) syncProgress.style.width = '70%';
-          if (syncLog) syncLog.innerHTML += '<br>&gt; Sorteios sincronizados: ロト６ (第2137回) e ミニロト (第1404回)...';
+          if (syncLog) syncLog.innerHTML += '<br>&gt; Sorteios atualizados: ロト６ (第2138回 apurado com sucesso!)...';
         }, 400);
 
         setTimeout(function() {
           if (syncProgress) syncProgress.style.width = '100%';
-          if (syncLog) syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">✓ Sucesso! Cruzamento de apostas atualizado e salvo.</span>';
+          if (syncLog) syncLog.innerHTML += '<br>&gt; <span class="text-emerald-400 font-bold">✓ Sucesso! Cruzamento de apostas realizado e salvo.</span>';
           if (syncActions) syncActions.style.display = 'flex';
           renderDraws();
           updateKPICards();
