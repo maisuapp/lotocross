@@ -112,6 +112,7 @@
 
       <!-- BOTÕES DE AÇÃO DO HEADER -->
       <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+<button onclick="openResetModal();" class="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-400 border border-slate-700 text-xs sm:text-sm font-semibold flex items-center gap-1.5 active:scale-95 transition" title="Diagnóstico e Reset"><i class="fa-solid fa-microchip"></i><span class="hidden lg:inline">Reset</span></button>
         <button id="btn-sync-lottolyzer" onclick="startSyncFlow(false);" class="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 active:scale-95 transition">
           <i class="fa-solid fa-arrows-rotate" id="sync-icon-hdr"></i>
           <span>Sincronizar</span>
@@ -696,6 +697,7 @@
         <span class="mt-0.5 font-medium">Apostar</span>
       </button>
       <button class="flex flex-col items-center text-slate-400 hover:text-amber-300 text-xs transition active:scale-95 px-2 py-1" id="m-btn-sync" onclick="startSyncFlow(false);">
+<button class="flex flex-col items-center text-slate-400 hover:text-rose-300 text-xs transition active:scale-95 px-2 py-1" onclick="openResetModal();"><i class="fa-solid fa-screwdriver-wrench text-base mb-0.5"></i><span>Reset</span></button>
         <i class="fa-solid fa-arrows-rotate text-base mb-0.5 text-amber-400"></i>
         <span>Sincronizar</span>
       </button>
@@ -706,6 +708,7 @@
   <!-- MODAL: SYNC COM ANIMAÇÃO -->
   <div id="modal-sync" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-700 shadow-2xl relative text-center">
+<button onclick="closeSyncModal();" class="absolute top-4 right-4 text-slate-500 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
       <div class="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
         <div class="absolute inset-0 rounded-full bg-emerald-500/20 pulse-ring-anim"></div>
         <div class="w-16 h-16 rounded-full bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-emerald-400 text-2xl shadow-lg">
@@ -722,7 +725,7 @@
       </div>
       <div class="flex justify-center gap-2" id="sync-actions" style="display: none;">
         <button id="btn-sync-finish" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg">
-          Concluir & Ver Resultados
+<button id="btn-sync-finish" onclick="closeSyncModal();" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg">
         </button>
       </div>
     </div>
@@ -825,6 +828,7 @@
       </div>
     </div>
   </div>
+<!-- MODAL: AUTO-RECUPERAÇÃO & RESET --><div id="modal-reset-system" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden"><div class="glass-panel w-full max-w-lg rounded-2xl p-6 border border-rose-500/30 shadow-2xl relative"><button onclick="document.getElementById('modal-reset-system').classList.add('hidden');" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button><div class="flex items-center gap-3 mb-6"><div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-2xl shadow-lg border border-rose-500/30"><i class="fa-solid fa-triangle-exclamation"></i></div><div><h3 class="text-lg font-black text-white">Painel de Emergência & Reset</h3><p class="text-xs text-slate-400">Ferramentas de diagnóstico e recuperação de dados.</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6"><button onclick="location.reload();" class="p-3 rounded-xl bg-slate-900 border border-slate-700 hover:border-blue-500/50 text-left transition"><div class="text-blue-400 font-bold text-xs">Soft Reset</div><div class="text-[10px] text-slate-500 mt-1">Recarregar interface preservando dados.</div></button><button onclick="localStorage.removeItem(STORAGE_KEY); location.reload();" class="p-3 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500/50 text-left transition"><div class="text-amber-400 font-bold text-xs">Limpar Cache</div><div class="text-[10px] text-slate-500 mt-1">Remove dados locais e sincroniza novamente.</div></button><button onclick="if(confirm('CUIDADO: Isso apagará permanentemente todas as suas apostas. Continuar?')){localStorage.clear(); location.reload();}" class="p-3 rounded-xl bg-rose-950/20 border border-rose-900/50 hover:bg-rose-900/30 text-left transition col-span-1 sm:col-span-2"><div class="text-rose-500 font-bold text-xs">Restauração de Fábrica</div><div class="text-[10px] text-slate-500 mt-1">Apaga todo o histórico e configurações do sistema.</div></button></div><div class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20"><div class="text-xs font-bold text-indigo-300 mb-2">Backup de Segurança (JSON)</div><div class="flex gap-2"><button onclick="const b=new Blob([JSON.stringify(APP_STATE)],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download='lotocross_backup.json'; a.click();" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold rounded-lg transition">Exportar Backup</button><button onclick="document.getElementById('input-import-backup').click();" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold rounded-lg transition">Importar Backup</button><input type="file" id="input-import-backup" class="hidden" accept=".json" onchange="const f=this.files[0]; if(f){const r=new FileReader(); r.onload=function(e){try{const p=JSON.parse(e.target.result); if(p.history){APP_STATE=p; saveState(); location.reload();}else{alert('Backup inválido');}}catch(err){alert('Erro na leitura');}}; r.readAsText(f);}"></div></div></div></div>
 
 
   <script>
@@ -2289,7 +2293,12 @@
           updateKPICards();
           renderFrequencyRanking();
           triggerSyncButtonAnimation(false);
-        }, 900);
+          triggerSyncButtonAnimation(false);
+          setTimeout(function() {
+            if (!document.getElementById('modal-sync').classList.contains('hidden')) {
+              closeSyncModal();
+            }
+          }, 3000);
       } else {
         renderDraws();
         updateKPICards();
@@ -2570,6 +2579,17 @@
         document.getElementById('modal-bet-type').value = currentGeneratedType;
         document.getElementById('modal-bet-numbers').value = currentGeneratedNumbers.join(', ');
       });
+    function closeSyncModal() {
+      const modal = document.getElementById('modal-sync');
+      if (modal) modal.classList.add('hidden');
+    }
+    window.closeSyncModal = closeSyncModal;
+
+    function openResetModal() {
+      const modal = document.getElementById('modal-reset-system');
+      if (modal) modal.classList.remove('hidden');
+    }
+    window.openResetModal = openResetModal;
 
 
 // startSyncFlow moved to top level
