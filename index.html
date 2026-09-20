@@ -39,6 +39,12 @@
     .pulse-ring-anim { animation: pulse-ring 2s infinite ease-in-out; }
     @keyframes roll-ball { 0% { transform: translateY(-20px) rotate(-180deg); opacity: 0; } 100% { transform: translateY(0) rotate(0); opacity: 1; } }
     .animate-roll { animation: roll-ball 0.35s ease-out forwards; }
+    @keyframes sequence-result-pop {
+      0% { opacity: 0; transform: translateY(8px) scale(0.96); }
+      65% { opacity: 1; transform: translateY(-2px) scale(1.02); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .sequence-result-animate { animation: sequence-result-pop 0.55s ease-out; }
   
     /* --- ANIMAÇÃO EXCLUSIVA DE CREDIBILIDADE: LOGO LOTOCROSS --- */
     @keyframes logoShimmer {
@@ -655,6 +661,31 @@
         <div id="ranking-top-cards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-7 gap-2.5"></div>
       </div>
 
+      <!-- CONSULTA DE SEQUÊNCIA HISTÓRICA -->
+      <div class="p-3.5 rounded-xl bg-slate-900/80 border border-amber-500/20 space-y-3">
+        <div>
+          <div class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
+            Conferir sequência apostada no histórico
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Verifique se esta combinação completa já saiu em algum concurso apurado.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <select id="sequence-search-type" class="bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs font-bold sm:w-44">
+            <option value="ロト６">ロト６ (6 dezenas)</option>
+            <option value="ロト７">ロト７ (7 dezenas)</option>
+            <option value="ミニロト">ミニロト (5 dezenas)</option>
+          </select>
+          <input type="text" id="sequence-search-input" placeholder="Ex: 2, 6, 21, 24, 31, 38" class="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 font-mono focus:border-amber-500 focus:outline-none">
+          <button id="btn-check-sequence" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-600/20 active:scale-95 transition">
+            <i class="fa-solid fa-magnifying-glass-chart"></i> Verificar sequência
+          </button>
+        </div>
+        <div id="sequence-search-result" class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs text-slate-400" aria-live="polite">
+          Informe as dezenas e clique em “Verificar sequência”.
+        </div>
+      </div>
+
       <!-- AÇÃO RÁPIDA: APOSTAR COM O TOP DE OURO -->
       <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div class="text-xs text-slate-300">
@@ -679,9 +710,6 @@
 <nav class="fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-slate-800/90 py-2 px-1 bg-slate-950/90 backdrop-blur-xl shadow-2xl">
 <div class="max-w-7xl w-full mx-auto flex items-center justify-between">
 <button class="flex-1 flex flex-col items-center text-emerald-400 text-[10px] font-bold transition active:scale-95" onclick="window.scrollTo({ top: 0, behavior: 'smooth' });"><i class="fa-solid fa-layer-group text-base mb-0.5"></i><span>Cruzamento</span></button>
-        <i class="fa-solid fa-layer-group text-base mb-0.5"></i>
-        <span>Cruzamento</span>
-      </button>
 <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-quickpick"><i class="fa-solid fa-wand-magic-sparkles text-base mb-0.5 text-blue-400"></i><span>Quick Pick</span></button>
 <button class="flex-1 flex flex-col items-center text-slate-300 text-[10px] font-bold transition active:scale-95" id="m-btn-add-bet" onclick="openModalAddBet();"><div class="w-10 h-10 -mt-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 text-lg"><i class="fa-solid fa-plus"></i></div><span class="mt-0.5">Apostar</span></button>
 <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" onclick="document.getElementById('section-strategies').scrollIntoView({ behavior: 'smooth' });"><i class="fa-solid fa-brain text-base mb-0.5 text-indigo-400"></i><span>Estratégias</span></button>
@@ -2078,8 +2106,101 @@
     let currentRankingType = 'ロト６';
     let currentTopRankingNumbers = [];
 
+    function getSequenceSearchConfig(type) {
+      if (type === 'ロト７') return { count: 7, max: 37, label: 'ロト７' };
+      if (type === 'ミニロト') return { count: 5, max: 31, label: 'ミニロト' };
+      return { count: 6, max: 43, label: 'ロト６' };
+    }
+
+    function getHistoricalDrawsForSequenceSearch(type) {
+      const draws = [];
+      const seen = new Set();
+      function addDraw(round, date, main) {
+        if (!Array.isArray(main) || !main.length || main.some(function(n){ return !Number.isInteger(n); })) return;
+        const normalized = main.slice().sort(function(a,b){ return a-b; });
+        const key = type + '|' + (round || '') + '|' + (date || '') + '|' + normalized.join(',');
+        if (seen.has(key)) return;
+        seen.add(key);
+        draws.push({ round: round || '-', date: date || '-', main: normalized });
+      }
+
+      (APP_STATE.history || []).forEach(function(item) {
+        if (item.type === type && item.main && item.main.length) addDraw(item.round, item.date, item.main);
+      });
+
+      const builtin = (typeof BUILTIN_LOOKUP_DB === 'object' && BUILTIN_LOOKUP_DB[type]) || {};
+      Object.keys(builtin).forEach(function(round) {
+        const item = builtin[round];
+        addDraw('第' + round + '回', item.date, item.main);
+      });
+
+      try {
+        const stored = localStorage.getItem('loto_csv_db_' + type);
+        const imported = stored ? JSON.parse(stored) : {};
+        Object.keys(imported).forEach(function(round) {
+          const item = imported[round] || {};
+          addDraw('第' + round + '回', item.date, item.main);
+        });
+      } catch (e) {
+        console.warn('Não foi possível ler o histórico CSV para a consulta:', e);
+      }
+
+      return draws;
+    }
+
+    function renderSequenceSearchResult(html, extraClass) {
+      const result = document.getElementById('sequence-search-result');
+      if (!result) return;
+      result.className = 'p-3 rounded-xl border text-xs sequence-result-animate ' + (extraClass || '');
+      result.innerHTML = html;
+    }
+
+    function checkSequenceAgainstHistory() {
+      const typeEl = document.getElementById('sequence-search-type');
+      const inputEl = document.getElementById('sequence-search-input');
+      if (!typeEl || !inputEl) return;
+
+      const type = typeEl.value;
+      const config = getSequenceSearchConfig(type);
+      const numbers = getNumList(inputEl.value.replace(/[;|\s]+/g, ','));
+      const uniqueNumbers = Array.from(new Set(numbers));
+
+      if (uniqueNumbers.length !== config.count || numbers.length !== uniqueNumbers.length || uniqueNumbers.some(function(n){ return n < 1 || n > config.max; })) {
+        renderSequenceSearchResult(
+          '<div class="flex items-center gap-2 text-amber-300"><i class="fa-solid fa-triangle-exclamation text-amber-400 animate-pulse"></i><strong>Sequência inválida.</strong></div>' +
+          '<div class="mt-1 text-slate-400">Informe exatamente ' + config.count + ' dezenas diferentes entre 1 e ' + config.max + '.</div>',
+          'bg-amber-950/30 border-amber-500/40'
+        );
+        return;
+      }
+
+      const target = uniqueNumbers.slice().sort(function(a,b){ return a-b; });
+      const match = getHistoricalDrawsForSequenceSearch(type).find(function(draw) {
+        return draw.main.length === target.length && draw.main.every(function(n, idx){ return n === target[idx]; });
+      });
+
+      if (match) {
+        renderSequenceSearchResult(
+          '<div class="flex items-center gap-2 text-emerald-300"><i class="fa-solid fa-circle-check text-emerald-400 animate-bounce"></i><strong>Sequência encontrada!</strong></div>' +
+          '<div class="mt-1 text-slate-300">Essa combinação já foi sorteada no <strong>' + match.round + '</strong> (' + match.date + ').</div>' +
+          '<div class="mt-2 flex flex-wrap gap-1">' + match.main.map(function(n){ return '<span class="ball ball-sm ball-hit font-mono">' + String(n).padStart(2, '0') + '</span>'; }).join('') + '</div>',
+          'bg-emerald-950/30 border-emerald-500/40'
+        );
+      } else {
+        renderSequenceSearchResult(
+          '<div class="flex items-center gap-2 text-slate-200"><i class="fa-solid fa-circle-xmark text-rose-400 animate-pulse"></i><strong>Nenhuma ocorrência encontrada.</strong></div>' +
+          '<div class="mt-1 text-slate-400">A sequência informada não aparece nos concursos apurados disponíveis para ' + config.label + '.</div>',
+          'bg-rose-950/20 border-rose-500/40'
+        );
+      }
+    }
+
+    window.checkSequenceAgainstHistory = checkSequenceAgainstHistory;
+
     function switchRankingType(type) {
       currentRankingType = type;
+      const sequenceType = document.getElementById('sequence-search-type');
+      if (sequenceType) sequenceType.value = type;
       const b6 = document.getElementById('btn-rank-lotto6');
       const b7 = document.getElementById('btn-rank-lotto7');
       const titleEl = document.getElementById('ranking-header-title');
@@ -2276,12 +2397,12 @@
           updateKPICards();
           renderFrequencyRanking();
           triggerSyncButtonAnimation(false);
-          triggerSyncButtonAnimation(false);
           setTimeout(function() {
             if (!document.getElementById('modal-sync').classList.contains('hidden')) {
               closeSyncModal();
             }
           }, 3000);
+        }, 3000);
       } else {
         renderDraws();
         updateKPICards();
@@ -2343,6 +2464,16 @@
           }
         });
       }
+
+      const btnCheckSequence = document.getElementById('btn-check-sequence');
+      const sequenceInput = document.getElementById('sequence-search-input');
+      if (btnCheckSequence) btnCheckSequence.addEventListener('click', checkSequenceAgainstHistory);
+      if (sequenceInput) sequenceInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          checkSequenceAgainstHistory();
+        }
+      });
 
       // Toggle para Concursos Anteriores Realizados
       const btnTogglePast = document.getElementById('btn-toggle-past-draws');
@@ -2571,9 +2702,13 @@
     }
     window.closeSyncModal = closeSyncModal;
 
-    function openResetModal() { const m = document.getElementById('modal-reset-system'); if (m) { m.classList.remove('hidden'); m.style.display = 'flex' text-align: center; } }
-      const modal = document.getElementById('modal-reset-system');
-      if (modal) modal.classList.remove('hidden');
+    function openResetModal() {
+      const m = document.getElementById('modal-reset-system');
+      if (m) {
+        m.classList.remove('hidden');
+        m.style.display = 'flex';
+      }
+    }
     window.openResetModal = openResetModal;
     function closeResetModal() { const m = document.getElementById('modal-reset-system'); if (m) { m.classList.add('hidden'); m.style.display = 'none'; } }
     window.closeResetModal = closeResetModal;
@@ -2603,7 +2738,8 @@
         });
       }
       document.getElementById('btn-sync-finish').addEventListener('click', function() {
-        modalSync.classList.add('hidden');
+        const modalSync = document.getElementById('modal-sync');
+        if (modalSync) modalSync.classList.add('hidden');
       });
 
 
@@ -2614,8 +2750,8 @@
       window.openModalAddBet = openModalAddBet;
       document.getElementById('btn-open-modal-add').addEventListener('click', openModalAddBet);
       document.getElementById('m-btn-add-bet').addEventListener('click', openModalAddBet);
-      document.getElementById('btn-close-modal-bet').addEventListener('click', function() { modalAdd.classList.add('hidden'); });
-      document.getElementById('btn-cancel-bet').addEventListener('click', function() { modalAdd.classList.add('hidden'); });
+      document.getElementById('btn-close-modal-bet').addEventListener('click', closeModalAddBet);
+      document.getElementById('btn-cancel-bet').addEventListener('click', closeModalAddBet);
 
 
       document.getElementById('btn-use-fixed').addEventListener('click', function() {
@@ -2656,7 +2792,7 @@
             hasBet: true, payout: 'Aguardando apuração', winners: 'Pendente'
           });
         }
-        modalAdd.classList.add('hidden');
+        closeModalAddBet();
         document.getElementById('form-new-bet').reset();
         saveState();
         init();
@@ -2700,3 +2836,4 @@
   </script>
 </body>
 </html>
+
