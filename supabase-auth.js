@@ -77,8 +77,13 @@
       button.innerHTML = '<i class="fa-solid fa-user"></i><span class="hidden sm:inline">Entrar</span>';
       return;
     }
-    button.innerHTML = '<i class="fa-solid fa-user-check"></i><span class="hidden sm:inline">' + escapeHtml(currentProfile.display_name || currentSession.user.email.split('@')[0]) + '</span>';
-    button.title = roleLabel(currentProfile.role);
+    if (currentProfile.role === 'admin') {
+      button.innerHTML = '<i class="fa-solid fa-users-gear"></i><span class="hidden sm:inline">Administração</span>';
+      button.title = 'Gerenciar usuários e perfis';
+    } else {
+      button.innerHTML = '<i class="fa-solid fa-user-check"></i><span class="hidden sm:inline">' + escapeHtml(currentProfile.display_name || currentSession.user.email.split('@')[0]) + '</span>';
+      button.title = roleLabel(currentProfile.role);
+    }
   }
 
   function renderAuthState() {
