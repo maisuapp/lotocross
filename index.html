@@ -1465,7 +1465,9 @@
     let stratAnimationTimer = null;
     let stratShufflerTimer = null;
 
-    function executeActiveStrategy() {
+    // Implementação antiga mantida apenas como referência histórica; o motor ativo abaixo
+    // executa a simulação em lotes reais e atualiza a telemetria durante o processamento.
+    function executeActiveStrategyLegacy() {
       const type = document.getElementById('strat-lotto-type').value;
       lastGeneratedStrategyType = type;
       const area = document.getElementById('strat-result-area');
@@ -1800,7 +1802,7 @@
         }
       }, 1850);
     }
-    window.executeActiveStrategy = executeActiveStrategy;
+    window.executeActiveStrategyLegacy = executeActiveStrategyLegacy;
 
     function copyStrategyGame(str) {
       navigator.clipboard.writeText(str);
@@ -2834,6 +2836,7 @@
       }
     });
   </script>
+  <script src="strategy-engine.js"></script>
 </body>
 </html>
 
