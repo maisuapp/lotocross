@@ -711,8 +711,9 @@
 <div class="max-w-7xl w-full mx-auto flex items-center justify-between">
 <button class="flex-1 flex flex-col items-center text-emerald-400 text-[10px] font-bold transition active:scale-95" onclick="window.scrollTo({ top: 0, behavior: 'smooth' });"><i class="fa-solid fa-layer-group text-base mb-0.5"></i><span>Cruzamento</span></button>
 <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-quickpick"><i class="fa-solid fa-wand-magic-sparkles text-base mb-0.5 text-blue-400"></i><span>Quick Pick</span></button>
-<button class="flex-1 flex flex-col items-center text-slate-300 text-[10px] font-bold transition active:scale-95" id="m-btn-add-bet" onclick="openModalAddBet();"><div class="w-10 h-10 -mt-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 text-lg"><i class="fa-solid fa-plus"></i></div><span class="mt-0.5">Apostar</span></button>
-<button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" onclick="document.getElementById('section-strategies').scrollIntoView({ behavior: 'smooth' });"><i class="fa-solid fa-brain text-base mb-0.5 text-indigo-400"></i><span>Estratégias</span></button>
+ <button class="flex-1 flex flex-col items-center text-slate-300 text-[10px] font-bold transition active:scale-95" id="m-btn-add-bet" onclick="openModalAddBet();"><div class="w-10 h-10 -mt-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 text-lg"><i class="fa-solid fa-plus"></i></div><span class="mt-0.5">Apostar</span></button>
+ <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-pool" type="button"><i class="fa-solid fa-people-group text-base mb-0.5 text-rose-400"></i><span>Bolão</span></button>
+ <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" onclick="document.getElementById('section-strategies').scrollIntoView({ behavior: 'smooth' });"><i class="fa-solid fa-brain text-base mb-0.5 text-indigo-400"></i><span>Estratégias</span></button>
 <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-sync" onclick="startSyncFlow(false);"><i class="fa-solid fa-arrows-rotate text-base mb-0.5 text-amber-400"></i><span>Sincronizar</span></button>
     </div>
   </nav>
@@ -2837,6 +2838,7 @@
     });
   </script>
   <script src="strategy-engine.js"></script>
+  <script src="pool-manager.js"></script>
 </body>
 </html>
 
