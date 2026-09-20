@@ -201,6 +201,16 @@
   }
 
   function openPoolManager() {
+    var profile = window.lotoCrossProfile;
+    if (!profile) {
+      alert('Entre na sua conta para administrar um bolão.');
+      if (window.openAuthModal) window.openAuthModal();
+      return;
+    }
+    if (profile.role !== 'admin' && profile.role !== 'organizer') {
+      alert('A administração de bolões está disponível apenas para Organizadores e Administradores.');
+      return;
+    }
     ensurePool();
     createModal();
     renderPoolModal();
