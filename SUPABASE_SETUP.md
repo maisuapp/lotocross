@@ -37,3 +37,8 @@ No Supabase, em **Authentication → URL Configuration**, configure:
 
 Nunca publique uma chave `service_role`. O site usa somente a chave pública do Supabase, protegida pelas políticas RLS.
 
+## Apostas vinculadas ao perfil
+
+As apostas cadastradas em **Nova Aposta** são gravadas na tabela privada por usuário `public.user_bets`. Quando a pessoa está autenticada, elas aparecem no bloco **Minhas apostas** dentro do perfil. O acesso é protegido por RLS: cada participante consulta apenas as próprias apostas, enquanto administradores podem consultar os registros para suporte.
+
+Se a pessoa cadastrar uma aposta sem entrar na conta, ela fica disponível somente neste dispositivo e o formulário informa essa limitação.
