@@ -29,6 +29,32 @@
     el.className = 'text-xs min-h-5 ' + (type === 'error' ? 'text-rose-300' : 'text-emerald-300');
   }
 
+  function showAuthRedirectBanner(text, type) {
+    var existing = document.getElementById('auth-redirect-banner');
+    if (existing) existing.remove();
+    var banner = document.createElement('div');
+    banner.id = 'auth-redirect-banner';
+    banner.className = 'fixed top-20 left-4 right-4 z-[90] mx-auto max-w-xl rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-sm ' + (type === 'error' ? 'border-rose-500/50 bg-rose-950/95 text-rose-100' : 'border-emerald-500/50 bg-emerald-950/95 text-emerald-100');
+    var row = document.createElement('div');
+    row.className = 'flex items-start gap-3';
+    var icon = document.createElement('i');
+    icon.className = type === 'error' ? 'fa-solid fa-circle-exclamation mt-0.5 text-rose-300' : 'fa-solid fa-circle-check mt-0.5 text-emerald-300';
+    var message = document.createElement('div');
+    message.className = 'text-sm font-semibold flex-1';
+    message.textContent = text;
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'text-slate-300 hover:text-white px-1';
+    close.setAttribute('aria-label', 'Fechar aviso');
+    close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    close.addEventListener('click', function() { banner.remove(); });
+    row.appendChild(icon);
+    row.appendChild(message);
+    row.appendChild(close);
+    banner.appendChild(row);
+    document.body.appendChild(banner);
+  }
+
   function readAuthRedirectState() {
     var hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
     var queryParams = new URLSearchParams(window.location.search || '');
@@ -56,11 +82,15 @@
     var authModal = document.getElementById('modal-auth');
     if (authModal) authModal.classList.remove('hidden');
     if (state.error) {
-      setMessage('Não foi possível confirmar o e-mail. Solicite um novo link e tente novamente.', 'error');
+      var errorText = 'Não foi possível confirmar o e-mail. Solicite um novo link e tente novamente.';
+      setMessage(errorText, 'error');
+      showAuthRedirectBanner(errorText, 'error');
       return;
     }
     if (state.confirmed) {
-      setMessage(currentSession ? 'E-mail confirmado. Sua conta já está pronta para uso.' : 'E-mail confirmado. Agora entre para acessar sua conta.', 'success');
+      var successText = currentSession ? 'E-mail confirmado. Sua conta já está pronta para uso.' : 'E-mail confirmado. Agora entre para acessar sua conta.';
+      setMessage(successText, 'success');
+      showAuthRedirectBanner(successText, 'success');
     }
   }
 
