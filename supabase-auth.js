@@ -52,6 +52,7 @@
   function showAuthRedirectMessage(state) {
     if (!state || !state.hasAuthResponse) return;
     createAuthModal();
+    openAuthModal();
     if (state.error) {
       setMessage('Não foi possível confirmar o e-mail. Solicite um novo link e tente novamente.', 'error');
       return;
