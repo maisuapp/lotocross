@@ -2773,7 +2773,7 @@
       });
 
 
-      document.getElementById('form-new-bet').addEventListener('submit', function(e) {
+      document.getElementById('form-new-bet').addEventListener('submit', async function(e) {
         e.preventDefault();
         const type = document.getElementById('modal-bet-type').value;
         let round = document.getElementById('modal-bet-round').value.trim();
@@ -2783,6 +2783,15 @@
         const date = document.getElementById('modal-bet-date').value;
         const cost = Number(document.getElementById('modal-bet-cost').value) || 200;
         const numbers = getNumList(document.getElementById('modal-bet-numbers').value.replace(/\s+/g, ','));
+
+        const remoteSave = window.saveBetToSupabase ? await window.saveBetToSupabase({
+          type: type, round: round, date: date, cost: cost, numbers: numbers,
+          status: 'pending', main: [], bonus: [], prize: '-', amount: 0
+        }) : { ok: false, skipped: true };
+        if (remoteSave && remoteSave.error) {
+          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + (remoteSave.error.message || 'Erro de conexão.'));
+          return;
+        }
 
 
         const exist = APP_STATE.history.find(function(i){ return i.round === round && i.type === type; });
@@ -2795,14 +2804,14 @@
           APP_STATE.history.unshift({
             round: round, date: date, type: type, cost: cost, userBet: numbers,
             main: [], bonus: [], prize: '-', amount: 0, status: 'pending',
-            hasBet: true, payout: 'Aguardando apuração', winners: 'Pendente'
+            hasBet: true, payout: 'Aguardando apuração', winners: 'Pendente', source: 'user'
           });
         }
         closeModalAddBet();
         document.getElementById('form-new-bet').reset();
         saveState();
         init();
-        alert('Aposta registrada com sucesso para ' + round + ' (' + type + ')!');
+        alert('Aposta registrada com sucesso para ' + round + ' (' + type + ')' + (remoteSave && remoteSave.skipped ? '. Entre na sua conta para que ela também apareça no perfil.' : ' e vinculada ao seu perfil.') + '!');
       });
 
 
