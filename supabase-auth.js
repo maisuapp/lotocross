@@ -53,6 +53,8 @@
     if (!state || !state.hasAuthResponse) return;
     createAuthModal();
     openAuthModal();
+    var authModal = document.getElementById('modal-auth');
+    if (authModal) authModal.classList.remove('hidden');
     if (state.error) {
       setMessage('Não foi possível confirmar o e-mail. Solicite um novo link e tente novamente.', 'error');
       return;
