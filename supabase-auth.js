@@ -6,6 +6,7 @@
   var supabaseClient = null;
   var currentSession = null;
   var currentProfile = null;
+  var pendingAuthFlow = '';
   window.lotoCrossProfile = null;
 
   function escapeHtml(value) {
@@ -26,6 +27,38 @@
     if (!el) return;
     el.textContent = text || '';
     el.className = 'text-xs min-h-5 ' + (type === 'error' ? 'text-rose-300' : 'text-emerald-300');
+  }
+
+  function readAuthRedirectState() {
+    var hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+    var queryParams = new URLSearchParams(window.location.search || '');
+    var errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
+    var flowType = hashParams.get('type') || queryParams.get('type');
+    return {
+      confirmed: queryParams.get('auth') === 'confirmed' || flowType === 'signup',
+      hasAuthResponse: Boolean(errorDescription || hashParams.get('access_token') || hashParams.get('code') || queryParams.get('auth')),
+      error: errorDescription,
+      errorCode: hashParams.get('error_code') || queryParams.get('error_code')
+    };
+  }
+
+  function cleanAuthRedirectUrl() {
+    if (!window.history || !window.history.replaceState) return;
+    if (window.location.hash || window.location.search.indexOf('auth=') !== -1) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
+  function showAuthRedirectMessage(state) {
+    if (!state || !state.hasAuthResponse) return;
+    createAuthModal();
+    if (state.error) {
+      setMessage('Não foi possível confirmar o e-mail. Solicite um novo link e tente novamente.', 'error');
+      return;
+    }
+    if (state.confirmed) {
+      setMessage(currentSession ? 'E-mail confirmado. Sua conta já está pronta para uso.' : 'E-mail confirmado. Agora entre para acessar sua conta.', 'success');
+    }
   }
 
   function createAuthModal() {
@@ -184,11 +217,15 @@
   async function signUp(event) {
     event.preventDefault();
     setMessage('Criando conta...');
+    pendingAuthFlow = 'signup';
     var name = document.getElementById('auth-signup-name').value.trim();
     var redirectTo = (location.protocol === 'http:' || location.protocol === 'https:') ? location.origin : 'https://baito.online';
     var result = await supabaseClient.auth.signUp({ email: document.getElementById('auth-signup-email').value.trim(), password: document.getElementById('auth-signup-password').value, options: { data: { display_name: name }, emailRedirectTo: redirectTo } });
-    if (result.error) return setMessage(result.error.message, 'error');
-    setMessage(result.data.session ? 'Conta criada e conectada.' : 'Conta criada. Verifique seu e-mail para confirmar o acesso.');
+    if (result.error) {
+      pendingAuthFlow = '';
+      return setMessage(result.error.message, 'error');
+    }
+    setMessage(result.data.session ? 'Conta criada e conectada.' : 'Cadastro concluído. Verifique seu e-mail e clique no link de confirmação.');
   }
 
   async function signOut() {
@@ -232,19 +269,35 @@
 
   async function initAuth() {
     if (!window.supabase || !window.supabase.createClient) return;
+    var redirectState = readAuthRedirectState();
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
     var initial = await supabaseClient.auth.getSession();
     currentSession = initial.data.session;
     if (currentSession) {
       try { await loadProfile(currentSession.user.id); } catch (error) { console.warn('Perfil ainda não disponível:', error.message); }
     }
+    showAuthRedirectMessage(redirectState);
+    cleanAuthRedirectUrl();
     updateEntryButton();
     var button = document.getElementById('auth-entry-button');
     if (button) button.addEventListener('click', openAuthModal);
     supabaseClient.auth.onAuthStateChange(function(event, session) {
       currentSession = session;
       currentProfile = null;
-      if (session) setTimeout(function() { loadProfile(session.user.id).catch(function(error) { setMessage(error.message, 'error'); }); }, 0);
+      if (session) setTimeout(function() {
+        loadProfile(session.user.id).then(function() {
+          if (pendingAuthFlow === 'signup') setMessage('Cadastro concluído e conta confirmada com sucesso.', 'success');
+          pendingAuthFlow = '';
+        }).catch(function(error) {
+          console.warn('Perfil ainda não disponível:', error.message);
+          if (pendingAuthFlow === 'signup') {
+            setMessage('Cadastro concluído. Sua conta já existe; atualize a página para carregar o perfil.', 'success');
+            pendingAuthFlow = '';
+          } else {
+            setMessage('Não foi possível carregar o perfil. Tente atualizar a página.', 'error');
+          }
+        });
+      }, 0);
       else { window.lotoCrossProfile = null; updateEntryButton(); }
     });
   }
