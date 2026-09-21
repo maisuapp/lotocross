@@ -2784,10 +2784,16 @@
         const cost = Number(document.getElementById('modal-bet-cost').value) || 200;
         const numbers = getNumList(document.getElementById('modal-bet-numbers').value.replace(/\s+/g, ','));
 
-        const remoteSave = window.saveBetToSupabase ? await window.saveBetToSupabase({
-          type: type, round: round, date: date, cost: cost, numbers: numbers,
-          status: 'pending', main: [], bonus: [], prize: '-', amount: 0
-        }) : { ok: false, skipped: true };
+        let remoteSave = { ok: false, skipped: true };
+        try {
+          remoteSave = window.saveBetToSupabase ? await window.saveBetToSupabase({
+            type: type, round: round, date: date, cost: cost, numbers: numbers,
+            status: 'pending', main: [], bonus: [], prize: '-', amount: 0
+          }) : remoteSave;
+        } catch (error) {
+          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + (error.message || 'Erro de conexão.'));
+          return;
+        }
         if (remoteSave && remoteSave.error) {
           alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + (remoteSave.error.message || 'Erro de conexão.'));
           return;
