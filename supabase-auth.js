@@ -42,7 +42,7 @@
           '<form id="auth-login-form" class="space-y-3"><div><label class="block text-xs text-slate-300 mb-1">E-mail</label><input id="auth-login-email" required type="email" autocomplete="email" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm"></div><div><label class="block text-xs text-slate-300 mb-1">Senha</label><input id="auth-login-password" required type="password" autocomplete="current-password" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm"></div><button class="w-full px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold" type="submit">Entrar</button></form>' +
           '<form id="auth-signup-form" class="space-y-3 hidden"><div><label class="block text-xs text-slate-300 mb-1">Nome de exibição</label><input id="auth-signup-name" required type="text" autocomplete="name" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm"></div><div><label class="block text-xs text-slate-300 mb-1">E-mail</label><input id="auth-signup-email" required type="email" autocomplete="email" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm"></div><div><label class="block text-xs text-slate-300 mb-1">Senha</label><input id="auth-signup-password" required minlength="8" type="password" autocomplete="new-password" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm"><span class="text-[11px] text-slate-500 mt-1 block">Mínimo de 8 caracteres. Novas contas começam como Participante.</span></div><button class="w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold" type="submit">Criar conta</button></form>' +
         '</div>' +
-        '<div id="auth-logged-in" class="hidden space-y-4"><div id="auth-profile-card" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800"></div><div id="auth-admin-panel" class="hidden"><div class="flex items-center justify-between mb-2"><h4 class="text-xs font-bold text-white"><i class="fa-solid fa-users-gear text-violet-300 mr-1"></i>Perfis cadastrados</h4><button type="button" id="auth-refresh-profiles" class="text-[11px] text-blue-300 hover:text-white">Atualizar</button></div><div id="auth-profiles-list" class="space-y-2 max-h-64 overflow-y-auto"></div></div><div class="flex flex-wrap gap-2"><button type="button" id="auth-signout" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Sair</button></div></div>' +
+        '<div id="auth-logged-in" class="hidden space-y-4"><div id="auth-profile-card" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800"></div><div id="auth-user-bets-section" class="p-3 rounded-xl bg-slate-900/60 border border-slate-800"><div class="flex items-center justify-between mb-2"><h4 class="text-xs font-bold text-white"><i class="fa-solid fa-ticket text-emerald-300 mr-1"></i>Minhas apostas</h4><button type="button" id="auth-refresh-bets" class="text-[11px] text-blue-300 hover:text-white">Atualizar</button></div><div id="auth-user-bets-list" class="space-y-2 max-h-64 overflow-y-auto"></div></div><div id="auth-admin-panel" class="hidden"><div class="flex items-center justify-between mb-2"><h4 class="text-xs font-bold text-white"><i class="fa-solid fa-users-gear text-violet-300 mr-1"></i>Perfis cadastrados</h4><button type="button" id="auth-refresh-profiles" class="text-[11px] text-blue-300 hover:text-white">Atualizar</button></div><div id="auth-profiles-list" class="space-y-2 max-h-64 overflow-y-auto"></div></div><div class="flex flex-wrap gap-2"><button type="button" id="auth-signout" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">Sair</button></div></div>' +
         '<div id="auth-message" class="text-xs min-h-5 mt-4"></div>' +
       '</div>';
     document.body.appendChild(modal);
@@ -55,6 +55,7 @@
     document.getElementById('auth-signup-form').addEventListener('submit', signUp);
     document.getElementById('auth-signout').addEventListener('click', signOut);
     document.getElementById('auth-refresh-profiles').addEventListener('click', loadProfilesForAdmin);
+    document.getElementById('auth-refresh-bets').addEventListener('click', loadMyBets);
   }
 
   function switchAuthTab(tab) {
@@ -100,6 +101,7 @@
     loggedOut.classList.add('hidden');
     loggedIn.classList.remove('hidden');
     document.getElementById('auth-profile-card').innerHTML = '<div class="text-[11px] text-slate-400">Usuário autenticado</div><div class="text-sm text-white font-bold mt-1">' + escapeHtml(currentProfile.display_name || currentSession.user.email) + '</div><div class="text-xs text-slate-400 mt-1">' + escapeHtml(currentSession.user.email) + '</div><span class="inline-flex mt-2 px-2 py-1 rounded-lg bg-violet-500/15 text-violet-200 border border-violet-500/30 text-[11px] font-bold">' + roleLabel(currentProfile.role) + '</span>';
+    loadMyBets();
     if (currentProfile.role === 'admin') {
       adminPanel.classList.remove('hidden');
       loadProfilesForAdmin();
@@ -116,6 +118,60 @@
     updateEntryButton();
     renderAuthState();
   }
+
+  function renderMyBets(rows) {
+    var list = document.getElementById('auth-user-bets-list');
+    if (!list) return;
+    if (!rows || !rows.length) {
+      list.innerHTML = '<div class="text-xs text-slate-500">Nenhuma aposta salva neste perfil ainda.</div>';
+      return;
+    }
+    list.innerHTML = rows.map(function(bet) {
+      var numbers = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : '-';
+      var drawDate = bet.draw_date ? new Date(bet.draw_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data não informada';
+      return '<div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800"><div class="flex items-center justify-between gap-2"><div class="text-xs text-white font-semibold">' + escapeHtml(bet.lottery_type) + ' · ' + escapeHtml(bet.round) + '</div><span class="text-[10px] text-emerald-300">' + escapeHtml(bet.status === 'pending' ? 'Aguardando apuração' : bet.status) + '</span></div><div class="text-[11px] text-slate-300 mt-1">Dezenas: ' + escapeHtml(numbers) + '</div><div class="text-[10px] text-slate-500 mt-1">Sorteio: ' + escapeHtml(drawDate) + ' · R$ ' + escapeHtml(Number(bet.cost || 0).toFixed(2).replace('.', ',')) + '</div></div>';
+    }).join('');
+  }
+
+  async function loadMyBets() {
+    var list = document.getElementById('auth-user-bets-list');
+    if (!list) return;
+    if (!currentSession || !supabaseClient) {
+      list.innerHTML = '<div class="text-xs text-slate-500">Entre para consultar suas apostas.</div>';
+      return;
+    }
+    list.innerHTML = '<div class="text-xs text-slate-500">Carregando suas apostas...</div>';
+    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers, status, created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
+    if (result.error) {
+      list.innerHTML = '<div class="text-xs text-rose-300">Não foi possível carregar suas apostas: ' + escapeHtml(result.error.message) + '</div>';
+      return;
+    }
+    renderMyBets(result.data || []);
+  }
+
+  window.saveBetToSupabase = async function(bet) {
+    if (!supabaseClient || !currentSession) return { ok: false, skipped: true };
+    var payload = {
+      user_id: currentSession.user.id,
+      lottery_type: bet.type,
+      round: bet.round,
+      draw_date: bet.date || null,
+      cost: Number(bet.cost || 0),
+      numbers: Array.isArray(bet.numbers) ? bet.numbers : [],
+      status: bet.status || 'pending',
+      main_numbers: Array.isArray(bet.main) ? bet.main : [],
+      bonus_numbers: Array.isArray(bet.bonus) ? bet.bonus : [],
+      prize: bet.prize || '-',
+      amount: Number(bet.amount || 0),
+      updated_at: new Date().toISOString()
+    };
+    var result = await supabaseClient.from('user_bets').upsert(payload, { onConflict: 'user_id,lottery_type,round' });
+    if (result.error) return { ok: false, error: result.error };
+    await loadMyBets();
+    return { ok: true };
+  };
+
+  window.refreshMyBets = loadMyBets;
 
   async function signIn(event) {
     event.preventDefault();
