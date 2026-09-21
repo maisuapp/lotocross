@@ -215,6 +215,31 @@
     renderMyBets(result.data || []);
   }
 
+  async function loadDefaultBetsFromSupabase() {
+    if (!currentSession || !supabaseClient) return;
+    var result = await supabaseClient.from('user_default_bets').select('lottery_type, numbers, updated_at').eq('user_id', currentSession.user.id);
+    if (result.error) {
+      console.warn('Não foi possível carregar as cartelas padrão do perfil:', result.error.message);
+      return;
+    }
+    if (typeof window.applySupabaseDefaultBets === 'function') window.applySupabaseDefaultBets(result.data || []);
+  }
+
+  window.saveDefaultBetsToSupabase = async function(defaultBets) {
+    if (!supabaseClient || !currentSession) return { ok: false, skipped: true };
+    var rows = Object.keys(defaultBets || {}).map(function(type) {
+      return {
+        user_id: currentSession.user.id,
+        lottery_type: type,
+        numbers: Array.isArray(defaultBets[type]) ? defaultBets[type] : [],
+        updated_at: new Date().toISOString()
+      };
+    }).filter(function(row) { return row.numbers.length > 0; });
+    var result = await supabaseClient.from('user_default_bets').upsert(rows, { onConflict: 'user_id,lottery_type' });
+    if (result.error) return { ok: false, error: result.error };
+    return { ok: true };
+  };
+
   window.saveBetToSupabase = async function(bet) {
     if (!supabaseClient || !currentSession) return { ok: false, skipped: true };
     var payload = {
@@ -308,6 +333,7 @@
     currentSession = initial.data.session;
     if (currentSession) {
       try { await loadProfile(currentSession.user.id); } catch (error) { console.warn('Perfil ainda não disponível:', error.message); }
+      try { await loadDefaultBetsFromSupabase(); } catch (error) { console.warn('Cartelas padrão ainda não disponíveis:', error.message); }
     }
     showAuthRedirectMessage(redirectState);
     cleanAuthRedirectUrl();
