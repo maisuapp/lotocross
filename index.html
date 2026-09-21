@@ -1007,6 +1007,18 @@
 
     let APP_STATE = loadState();
 
+    window.applySupabaseDefaultBets = function(rows) {
+      if (!Array.isArray(rows) || !rows.length) return;
+      rows.forEach(function(row) {
+        if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type)) return;
+        const numbers = Array.isArray(row.numbers) ? row.numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        if (numbers.length) APP_STATE.bets[row.lottery_type] = numbers;
+      });
+      saveState();
+      renderFixedBetsPreview();
+      renderCharts();
+    };
+
 
     let currentLotteryFilter = 'ALL';
     let currentStatusFilter = 'ALL';
@@ -2474,6 +2486,9 @@
     }
 
     function setupEventListeners() {
+      if (window.__lotoCrossEventsBound) return;
+      window.__lotoCrossEventsBound = true;
+
 
       // Botão Apostar com as Dezenas Mais Frequentes do Ranking
       const btnBetRank = document.getElementById('btn-bet-ranking-top');
@@ -2889,14 +2904,36 @@
       document.getElementById('btn-cancel-fixed').addEventListener('click', function() { modalFixed.classList.add('hidden'); });
 
 
-      document.getElementById('btn-save-fixed-bets').addEventListener('click', function() {
+      document.getElementById('btn-save-fixed-bets').addEventListener('click', async function() {
         APP_STATE.bets['ロト７'] = getNumList(document.getElementById('input-fixed-lotto7').value.replace(/\s+/g, ','));
         APP_STATE.bets['ロト６'] = getNumList(document.getElementById('input-fixed-lotto6').value.replace(/\s+/g, ','));
         APP_STATE.bets['ミニロト'] = getNumList(document.getElementById('input-fixed-miniloto').value.replace(/\s+/g, ','));
+        const saveButton = document.getElementById('btn-save-fixed-bets');
+        if (saveButton) { saveButton.disabled = true; saveButton.textContent = 'Salvando...'; }
+        let remoteSave = { ok: false, skipped: true };
+        try {
+          remoteSave = window.saveDefaultBetsToSupabase ? await window.saveDefaultBetsToSupabase(APP_STATE.bets) : remoteSave;
+        } catch (error) {
+          if (saveButton) { saveButton.disabled = false; saveButton.textContent = 'Salvar Cartelas'; }
+          alert('As cartelas foram salvas neste aparelho, mas não foi possível sincronizá-las com seu perfil.\n\n' + (error.message || 'Erro de conexão.'));
+          saveState();
+          modalFixed.classList.add('hidden');
+          renderFixedBetsPreview();
+          return;
+        }
+        if (remoteSave && remoteSave.error) {
+          if (saveButton) { saveButton.disabled = false; saveButton.textContent = 'Salvar Cartelas'; }
+          alert('As cartelas foram salvas neste aparelho, mas não foi possível sincronizá-las com seu perfil.\n\n' + (remoteSave.error.message || 'Erro de conexão.'));
+          saveState();
+          modalFixed.classList.add('hidden');
+          renderFixedBetsPreview();
+          return;
+        }
         modalFixed.classList.add('hidden');
         saveState();
         init();
-        alert('Cartelas padrão atualizadas com sucesso!');
+        if (saveButton) { saveButton.disabled = false; saveButton.textContent = 'Salvar Cartelas'; }
+        alert('Cartelas padrão atualizadas com sucesso!' + (remoteSave && remoteSave.skipped ? '\nEntre na sua conta para sincronizá-las com seu perfil.' : '\nTambém sincronizadas com seu perfil.'));
       });
     }
 
