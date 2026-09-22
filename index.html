@@ -1036,6 +1036,52 @@
     };
 
 
+    window.applySupabaseUserBets = function(rows) {
+      if (!Array.isArray(rows) || !rows.length) return;
+      rows.forEach(function(row) {
+        if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type)) return;
+        const numbers = Array.isArray(row.numbers) ? row.numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        if (!numbers.length) return;
+
+        const existing = APP_STATE.history.find(function(item) {
+          return item.round === row.round && item.type === row.lottery_type;
+        });
+        const main = Array.isArray(row.main_numbers) ? row.main_numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        const bonus = Array.isArray(row.bonus_numbers) ? row.bonus_numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        const resolvedMain = main.length ? main : (existing && existing.main ? existing.main : []);
+        const resolvedBonus = bonus.length ? bonus : (existing && existing.bonus ? existing.bonus : []);
+        const resolvedAmount = Number(row.amount || 0) || Number(existing && existing.amount || 0);
+        const normalized = {
+          round: row.round, date: row.draw_date || '', type: row.lottery_type, cost: Number(row.cost || 0),
+          userBet: numbers, main: resolvedMain, bonus: resolvedBonus,
+          prize: row.prize && row.prize !== '-' ? row.prize : (existing && existing.prize ? existing.prize : '-'),
+          amount: resolvedAmount, status: resolvedMain.length ? 'drawn' : (row.status || 'pending'),
+          hasBet: true, betSource: 'specific', source: 'user',
+          payout: resolvedAmount > 0 ? formatYen(resolvedAmount) : (existing && existing.payout ? existing.payout : 'Aguardando apuração'),
+          winners: resolvedMain.length ? (existing && existing.winners ? existing.winners : 'Apurado') : 'Pendente'
+        };
+        if (existing) Object.assign(existing, normalized);
+        else APP_STATE.history.unshift(normalized);
+      });
+
+      const latestByType = {};
+      rows.forEach(function(row) {
+        if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type) || !Array.isArray(row.numbers) || !row.numbers.length) return;
+        const current = latestByType[row.lottery_type];
+        const currentDate = current ? new Date(current.updated_at || current.created_at || 0).getTime() : -1;
+        const rowDate = new Date(row.updated_at || row.created_at || 0).getTime();
+        if (!current || rowDate >= currentDate) latestByType[row.lottery_type] = row;
+      });
+      Object.keys(latestByType).forEach(function(type) {
+        APP_STATE.bets[type] = latestByType[type].numbers.map(Number).filter(function(n) { return Number.isFinite(n); });
+        PROFILE_BET_TYPES[type] = true;
+      });
+      saveState();
+      renderFixedBetsPreview();
+      renderDraws();
+      updateKPICards();
+      renderCharts();
+    };
     let currentLotteryFilter = 'ALL';
     let currentStatusFilter = 'ALL';
     let freqChart = null;

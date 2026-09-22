@@ -207,12 +207,14 @@
       return;
     }
     list.innerHTML = '<div class="text-xs text-slate-500">Carregando suas apostas...</div>';
-    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers, status, created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
+    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers, status, main_numbers, bonus_numbers, prize, amount, created_at, updated_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
     if (result.error) {
       list.innerHTML = '<div class="text-xs text-rose-300">Não foi possível carregar suas apostas: ' + escapeHtml(result.error.message) + '</div>';
       return;
     }
-    renderMyBets(result.data || []);
+    var rows = result.data || [];
+    renderMyBets(rows);
+    if (typeof window.applySupabaseUserBets === 'function') window.applySupabaseUserBets(rows);
   }
 
   async function loadDefaultBetsFromSupabase() {
