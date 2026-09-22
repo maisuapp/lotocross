@@ -200,19 +200,31 @@
   }
 
   async function loadMyBets() {
-    var list = document.getElementById('auth-user-bets-list');
-    if (!list) return;
     if (!currentSession || !supabaseClient) {
-      list.innerHTML = '<div class="text-xs text-slate-500">Entre para consultar suas apostas.</div>';
+      var emptyList = document.getElementById('auth-user-bets-list');
+      if (emptyList) emptyList.innerHTML = '<div class="text-xs text-slate-500">Entre para consultar suas apostas.</div>';
       return;
     }
+    createAuthModal();
+    var list = document.getElementById('auth-user-bets-list');
+    if (!list) return;
     list.innerHTML = '<div class="text-xs text-slate-500">Carregando suas apostas...</div>';
-    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers, status, main_numbers, bonus_numbers, prize, amount, created_at, updated_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
+    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers, status, created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
     if (result.error) {
       list.innerHTML = '<div class="text-xs text-rose-300">Não foi possível carregar suas apostas: ' + escapeHtml(result.error.message) + '</div>';
       return;
     }
     var rows = result.data || [];
+    try {
+      var details = await supabaseClient.from('user_bets').select('id, main_numbers, bonus_numbers, prize, amount, updated_at').eq('user_id', currentSession.user.id);
+      if (!details.error) {
+        var detailsById = {};
+        (details.data || []).forEach(function(row) { detailsById[row.id] = row; });
+        rows = rows.map(function(row) { return Object.assign({}, row, detailsById[row.id] || {}); });
+      }
+    } catch (error) {
+      console.warn('Detalhes opcionais das apostas ainda não disponíveis:', error.message);
+    }
     renderMyBets(rows);
     if (typeof window.applySupabaseUserBets === 'function') window.applySupabaseUserBets(rows);
   }
