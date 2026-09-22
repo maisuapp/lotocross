@@ -336,6 +336,7 @@
     if (currentSession) {
       try { await loadProfile(currentSession.user.id); } catch (error) { console.warn('Perfil ainda não disponível:', error.message); }
       try { await loadDefaultBetsFromSupabase(); } catch (error) { console.warn('Cartelas padrão ainda não disponíveis:', error.message); }
+      try { await loadMyBets(); } catch (error) { console.warn('Apostas do perfil ainda não disponíveis:', error.message); }
     }
     showAuthRedirectMessage(redirectState);
     cleanAuthRedirectUrl();
@@ -347,6 +348,8 @@
       currentProfile = null;
       if (session) setTimeout(function() {
         loadProfile(session.user.id).then(function() {
+          return loadDefaultBetsFromSupabase().then(loadMyBets);
+        }).then(function() {
           if (pendingAuthFlow === 'signup') setMessage('Cadastro concluído e conta confirmada com sucesso.', 'success');
           pendingAuthFlow = '';
         }).catch(function(error) {
@@ -369,4 +372,3 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAuth);
   else initAuth();
 }());
-
