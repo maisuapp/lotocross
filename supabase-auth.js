@@ -193,7 +193,7 @@
       return;
     }
     list.innerHTML = rows.map(function(bet) {
-      var numbers = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : '-';
+      var numbers = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : (bet.numbers || '-');
       var drawDate = bet.draw_date ? new Date(bet.draw_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data não informada';
       return '<div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800"><div class="flex items-center justify-between gap-2"><div class="text-xs text-white font-semibold">' + escapeHtml(bet.lottery_type) + ' · ' + escapeHtml(bet.round) + '</div><span class="text-[10px] text-emerald-300">' + escapeHtml(bet.status === 'pending' ? 'Aguardando apuração' : bet.status) + '</span></div><div class="text-[11px] text-slate-300 mt-1">Dezenas: ' + escapeHtml(numbers) + '</div><div class="text-[10px] text-slate-500 mt-1">Sorteio: ' + escapeHtml(drawDate) + ' · R$ ' + escapeHtml(Number(bet.cost || 0).toFixed(2).replace('.', ',')) + '</div></div>';
     }).join('');
@@ -207,12 +207,14 @@
       return;
     }
     list.innerHTML = '<div class="text-xs text-slate-500">Carregando suas apostas...</div>';
-    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers, status, created_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
+    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers, status, main_numbers, bonus_numbers, prize, amount, created_at, updated_at').eq('user_id', currentSession.user.id).order('created_at', { ascending: false });
     if (result.error) {
       list.innerHTML = '<div class="text-xs text-rose-300">Não foi possível carregar suas apostas: ' + escapeHtml(result.error.message) + '</div>';
       return;
     }
-    renderMyBets(result.data || []);
+    var rows = result.data || [];
+    renderMyBets(rows);
+    if (typeof window.applySupabaseUserBets === 'function') window.applySupabaseUserBets(rows);
   }
 
   async function loadDefaultBetsFromSupabase() {
@@ -334,6 +336,7 @@
     if (currentSession) {
       try { await loadProfile(currentSession.user.id); } catch (error) { console.warn('Perfil ainda não disponível:', error.message); }
       try { await loadDefaultBetsFromSupabase(); } catch (error) { console.warn('Cartelas padrão ainda não disponíveis:', error.message); }
+      try { await loadMyBets(); } catch (error) { console.warn('Apostas do perfil ainda não disponíveis:', error.message); }
     }
     showAuthRedirectMessage(redirectState);
     cleanAuthRedirectUrl();
@@ -345,6 +348,8 @@
       currentProfile = null;
       if (session) setTimeout(function() {
         loadProfile(session.user.id).then(function() {
+          return loadDefaultBetsFromSupabase().then(loadMyBets);
+        }).then(function() {
           if (pendingAuthFlow === 'signup') setMessage('Cadastro concluído e conta confirmada com sucesso.', 'success');
           pendingAuthFlow = '';
         }).catch(function(error) {
@@ -367,4 +372,3 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAuth);
   else initAuth();
 }());
-
