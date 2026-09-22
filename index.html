@@ -879,6 +879,16 @@
       return str ? str.split(',').map(function(n){ return parseInt(n.trim(), 10); }).filter(function(x){ return !isNaN(x); }) : [];
     }
 
+    function normalizeBetNumbers(value) {
+      if (Array.isArray(value)) return value.map(Number).filter(function(n) { return Number.isFinite(n); });
+      if (typeof value !== 'string') return [];
+      try {
+        var parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed.map(Number).filter(function(n) { return Number.isFinite(n); });
+      } catch (e) {}
+      return getNumList(value);
+    }
+
 
     const RAW_RECORDS = `第2141回|2026-09-28|ロト６|200|||-|0|pending|1
 第696回|2026-09-25|ロト７|300|||-|0|pending|1
@@ -1022,12 +1032,13 @@
     }
 
     let APP_STATE = loadState();
+    const PROFILE_BET_TYPES = {};
 
     window.applySupabaseDefaultBets = function(rows) {
       if (!Array.isArray(rows) || !rows.length) return;
       rows.forEach(function(row) {
         if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type)) return;
-        const numbers = Array.isArray(row.numbers) ? row.numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        const numbers = normalizeBetNumbers(row.numbers);
         if (numbers.length) APP_STATE.bets[row.lottery_type] = numbers;
       });
       saveState();
@@ -1040,14 +1051,14 @@
       if (!Array.isArray(rows) || !rows.length) return;
       rows.forEach(function(row) {
         if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type)) return;
-        const numbers = Array.isArray(row.numbers) ? row.numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        const numbers = normalizeBetNumbers(row.numbers);
         if (!numbers.length) return;
 
         const existing = APP_STATE.history.find(function(item) {
           return item.round === row.round && item.type === row.lottery_type;
         });
-        const main = Array.isArray(row.main_numbers) ? row.main_numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
-        const bonus = Array.isArray(row.bonus_numbers) ? row.bonus_numbers.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        const main = normalizeBetNumbers(row.main_numbers);
+        const bonus = normalizeBetNumbers(row.bonus_numbers);
         const resolvedMain = main.length ? main : (existing && existing.main ? existing.main : []);
         const resolvedBonus = bonus.length ? bonus : (existing && existing.bonus ? existing.bonus : []);
         const resolvedAmount = Number(row.amount || 0) || Number(existing && existing.amount || 0);
@@ -1066,14 +1077,14 @@
 
       const latestByType = {};
       rows.forEach(function(row) {
-        if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type) || !Array.isArray(row.numbers) || !row.numbers.length) return;
+        if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type) || !normalizeBetNumbers(row.numbers).length) return;
         const current = latestByType[row.lottery_type];
         const currentDate = current ? new Date(current.updated_at || current.created_at || 0).getTime() : -1;
         const rowDate = new Date(row.updated_at || row.created_at || 0).getTime();
         if (!current || rowDate >= currentDate) latestByType[row.lottery_type] = row;
       });
       Object.keys(latestByType).forEach(function(type) {
-        APP_STATE.bets[type] = latestByType[type].numbers.map(Number).filter(function(n) { return Number.isFinite(n); });
+        APP_STATE.bets[type] = normalizeBetNumbers(latestByType[type].numbers);
         PROFILE_BET_TYPES[type] = true;
       });
       saveState();
@@ -3030,7 +3041,6 @@
   <script src="strategy-engine.js"></script>
   <script src="pool-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-auth.js?v=20260921-1745"></script>
+  <script src="supabase-auth.js?v=20260924-1200"></script>
 </body>
 </html>
-

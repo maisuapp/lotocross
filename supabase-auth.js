@@ -193,7 +193,7 @@
       return;
     }
     list.innerHTML = rows.map(function(bet) {
-      var numbers = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : '-';
+      var numbers = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : (bet.numbers || '-');
       var drawDate = bet.draw_date ? new Date(bet.draw_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data não informada';
       return '<div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800"><div class="flex items-center justify-between gap-2"><div class="text-xs text-white font-semibold">' + escapeHtml(bet.lottery_type) + ' · ' + escapeHtml(bet.round) + '</div><span class="text-[10px] text-emerald-300">' + escapeHtml(bet.status === 'pending' ? 'Aguardando apuração' : bet.status) + '</span></div><div class="text-[11px] text-slate-300 mt-1">Dezenas: ' + escapeHtml(numbers) + '</div><div class="text-[10px] text-slate-500 mt-1">Sorteio: ' + escapeHtml(drawDate) + ' · R$ ' + escapeHtml(Number(bet.cost || 0).toFixed(2).replace('.', ',')) + '</div></div>';
     }).join('');
