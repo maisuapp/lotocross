@@ -122,7 +122,7 @@
         <button id="auth-entry-button" class="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30 text-xs sm:text-sm font-semibold flex items-center gap-1.5 active:scale-95 transition" title="Entrar ou criar conta">
           <i class="fa-solid fa-user"></i><span class="hidden sm:inline">Entrar</span>
         </button>
-         <button id="btn-sync-lottolyzer" onclick="startSyncFlow(false);" class="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 active:scale-95 transition">
+         <button id="btn-sync-lottolyzer" class="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 active:scale-95 transition">
           <i class="fa-solid fa-arrows-rotate" id="sync-icon-hdr"></i>
           <span>Sincronizar</span>
         </button>
@@ -718,7 +718,7 @@
  <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-pool" type="button"><i class="fa-solid fa-people-group text-base mb-0.5 text-rose-400"></i><span>Bolão</span></button>
 <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" onclick="document.getElementById('section-strategies').scrollIntoView({ behavior: 'smooth' });"><i class="fa-solid fa-brain text-base mb-0.5 text-indigo-400"></i><span>Estratégias</span></button>
 <button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-donate" type="button"><i class="fa-solid fa-heart text-base mb-0.5 text-pink-400"></i><span>Apoiar</span></button>
-<button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-sync" onclick="startSyncFlow(false);"><i class="fa-solid fa-arrows-rotate text-base mb-0.5 text-amber-400"></i><span>Sincronizar</span></button>
+<button class="flex-1 flex flex-col items-center text-slate-400 text-[10px] font-bold transition active:scale-95" id="m-btn-sync"><i class="fa-solid fa-arrows-rotate text-base mb-0.5 text-amber-400"></i><span>Sincronizar</span></button>
     </div>
   </nav>
 
@@ -966,16 +966,31 @@
         const amount = Number(p.shift()) || 0;
         const status = p.shift() || 'drawn';
         const hasBet = p.shift() === '1';
-        const userBet = hasBet ? (FIXED_BETS_MAP[type] || []) : [];
+        const userBet = [];
         const info = getPayoutInfo({ type: type, amount: amount, status: status });
         return {
           round: round, date: date, type: type, cost: cost, userBet: userBet,
           main: main, bonus: bonus, prize: prize, amount: amount, status: status,
-          hasBet: hasBet, payout: info.payout, winners: info.winners
+          hasBet: hasBet, betSource: 'default', payout: info.payout, winners: info.winners
         };
       });
     }
 
+
+    function normalizeHistory(history) {
+      return (Array.isArray(history) ? history : []).map(function(item) {
+        const normalized = Object.assign({}, item);
+        const storedBet = Array.isArray(normalized.userBet) ? normalized.userBet.map(Number).filter(function(n) { return Number.isFinite(n); }) : [];
+        const defaultBet = FIXED_BETS_MAP[normalized.type] || [];
+        const matchesDefault = storedBet.length === defaultBet.length && storedBet.every(function(n, index) { return n === defaultBet[index]; });
+
+        if (normalized.betSource !== 'specific' && normalized.betSource !== 'default') {
+          normalized.betSource = normalized.source === 'user' || (storedBet.length > 0 && !matchesDefault) ? 'specific' : 'default';
+        }
+        normalized.userBet = normalized.betSource === 'specific' ? storedBet : [];
+        return normalized;
+      });
+    }
 
     const STORAGE_KEY = 'lotocross_state_v9_6';
 
@@ -993,6 +1008,7 @@
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && parsed.bets && parsed.history && parsed.history.length) {
+            parsed.history = normalizeHistory(parsed.history);
             return parsed;
           }
         }
@@ -1001,7 +1017,7 @@
       }
       return {
         bets: JSON.parse(JSON.stringify(FIXED_BETS_MAP)),
-        history: parseRawHistory(RAW_RECORDS)
+        history: normalizeHistory(parseRawHistory(RAW_RECORDS))
       };
     }
 
@@ -1072,7 +1088,8 @@
 
     function evaluateDraw(item) {
       const hasBet = item.hasBet !== false;
-      const userBet = hasBet ? (item.userBet && item.userBet.length ? item.userBet : (APP_STATE.bets[item.type] || [])) : [];
+      const isSpecificBet = item.betSource === 'specific' || item.source === 'user';
+      const userBet = hasBet ? (isSpecificBet ? (item.userBet || []) : (APP_STATE.bets[item.type] || [])) : [];
       const isDrawn = item.main && item.main.length > 0;
       if (!hasBet || !isDrawn) {
         return { hasBet: hasBet, isDrawn: isDrawn, userBet: userBet, mainHits: [], bonusHits: [], hitCount: 0 };
@@ -2391,7 +2408,8 @@
         { round: '第2136回', type: 'ロト６', date: '2026-09-10', main: [6,7,33,37,41,43], bonus: [42], payout: '5等: ¥1.000 (1等: ¥200M+)', winners: '171.940 ganhadores' },
         { round: '第2137回', type: 'ロト６', date: '2026-09-14', main: [4,8,10,25,28,33], bonus: [9], payout: '1等: ¥370.144.100 (2口)', winners: '242.126 ganhadores (5等)' },
         { round: '第1404回', type: 'ミニロト', date: '2026-09-15', main: [2,3,4,9,31], bonus: [11], payout: '1等: ¥13.163.700 (12口)', winners: '69.453 ganhadores (4等)' },
-        { round: '第2138回', type: 'ロト６', date: '2026-09-17', main: [9,16,21,26,38,40], bonus: [12], payout: '1等: Acumulou ¥284M', winners: '188.420 ganhadores (5等)' }
+        { round: '第2138回', type: 'ロト６', date: '2026-09-17', main: [9,16,21,26,38,40], bonus: [12], payout: '1等: Acumulou ¥284M', winners: '188.420 ganhadores (5等)' },
+        { round: '第2139回', type: 'ロト６', date: '2026-09-21', main: [3,6,23,34,36,43], bonus: [29], payout: '1等: ¥451.342.500 (1 cota)', winners: '180.788 ganhadores (5º prêmio)' }
       ];
 
       let updatedCount = 0;
@@ -2404,6 +2422,13 @@
           item.payout = s.payout;
           item.winners = s.winners;
           if (s.date) item.date = s.date;
+          updatedCount++;
+        } else {
+          APP_STATE.history.unshift({
+            round: s.round, date: s.date, type: s.type, cost: s.type === 'ロト７' ? 300 : 200,
+            userBet: [], main: s.main, bonus: s.bonus, prize: '-', amount: 0, status: 'drawn',
+            hasBet: true, betSource: 'default', payout: s.payout, winners: s.winners, source: 'sync'
+          });
           updatedCount++;
         }
       });
@@ -2881,13 +2906,15 @@
         if (exist) {
           exist.hasBet = true;
           exist.userBet = numbers;
+          exist.betSource = 'specific';
+          exist.source = 'user';
           exist.cost = cost;
           if (date) exist.date = date;
         } else {
           APP_STATE.history.unshift({
             round: round, date: date, type: type, cost: cost, userBet: numbers,
             main: [], bonus: [], prize: '-', amount: 0, status: 'pending',
-            hasBet: true, payout: 'Aguardando apuração', winners: 'Pendente', source: 'user'
+            hasBet: true, betSource: 'specific', payout: 'Aguardando apuração', winners: 'Pendente', source: 'user'
           });
         }
         closeModalAddBet();
