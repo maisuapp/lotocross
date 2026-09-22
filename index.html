@@ -1032,8 +1032,6 @@
     }
 
     let APP_STATE = loadState();
-    const PROFILE_BET_TYPES = {};
-
     window.applySupabaseDefaultBets = function(rows) {
       if (!Array.isArray(rows) || !rows.length) return;
       rows.forEach(function(row) {
@@ -1080,18 +1078,6 @@
         else APP_STATE.history.unshift(normalized);
       });
 
-      const latestByType = {};
-      rows.forEach(function(row) {
-        if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type) || !normalizeBetNumbers(row.numbers).length) return;
-        const current = latestByType[row.lottery_type];
-        const currentDate = current ? new Date(current.updated_at || current.created_at || 0).getTime() : -1;
-        const rowDate = new Date(row.updated_at || row.created_at || 0).getTime();
-        if (!current || rowDate >= currentDate) latestByType[row.lottery_type] = row;
-      });
-      Object.keys(latestByType).forEach(function(type) {
-        APP_STATE.bets[type] = normalizeBetNumbers(latestByType[type].numbers);
-        PROFILE_BET_TYPES[type] = true;
-      });
       saveState();
       renderFixedBetsPreview();
       renderDraws();
@@ -2497,14 +2483,16 @@
 
       let updatedCount = 0;
       syncData.forEach(function(s) {
-        let item = APP_STATE.history.find(function(i){ return i.round === s.round && i.type === s.type; });
-        if (item) {
+        let items = APP_STATE.history.filter(function(i){ return i.round === s.round && i.type === s.type; });
+        if (items.length) {
+          items.forEach(function(item) {
           item.main = s.main;
           item.bonus = s.bonus;
           item.status = 'drawn';
           item.payout = s.payout;
           item.winners = s.winners;
           if (s.date) item.date = s.date;
+          });
           updatedCount++;
         } else {
           APP_STATE.history.unshift({
