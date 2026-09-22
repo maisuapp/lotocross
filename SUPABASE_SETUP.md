@@ -42,3 +42,12 @@ Nunca publique uma chave `service_role`. O site usa somente a chave pública do 
 As apostas cadastradas em **Nova Aposta** são gravadas na tabela privada por usuário `public.user_bets`. Quando a pessoa está autenticada, elas aparecem no bloco **Minhas apostas** dentro do perfil. O acesso é protegido por RLS: cada participante consulta apenas as próprias apostas, enquanto administradores podem consultar os registros para suporte.
 
 Se a pessoa cadastrar uma aposta sem entrar na conta, ela fica disponível somente neste dispositivo e o formulário informa essa limitação.
+
+Cada linha de `user_bets` representa uma cartela individual. Para permitir mais de uma cartela no mesmo concurso, remova a restrição antiga que tornava `user_id + lottery_type + round` único (o campo `id` continua sendo a identidade da aposta):
+
+```sql
+alter table public.user_bets
+  drop constraint if exists user_bets_user_id_lottery_type_round_key;
+```
+
+Depois dessa alteração, novas apostas são inseridas separadamente e podem ser editadas ou excluídas individualmente no perfil.

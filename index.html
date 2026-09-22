@@ -1055,12 +1055,16 @@
         if (!numbers.length) return;
 
         const existing = APP_STATE.history.find(function(item) {
-          return item.round === row.round && item.type === row.lottery_type;
+          return row.id && item.profileBetId === row.id;
+        });
+        const official = APP_STATE.history.find(function(item) {
+          return item.round === row.round && item.type === row.lottery_type &&
+            !item.profileBetId && item.main && item.main.length;
         });
         const main = normalizeBetNumbers(row.main_numbers);
         const bonus = normalizeBetNumbers(row.bonus_numbers);
-        const resolvedMain = main.length ? main : (existing && existing.main ? existing.main : []);
-        const resolvedBonus = bonus.length ? bonus : (existing && existing.bonus ? existing.bonus : []);
+        const resolvedMain = main.length ? main : (existing && existing.main && existing.main.length ? existing.main : (official ? official.main : []));
+        const resolvedBonus = bonus.length ? bonus : (existing && existing.bonus && existing.bonus.length ? existing.bonus : (official ? official.bonus : []));
         const resolvedAmount = Number(row.amount || 0) || Number(existing && existing.amount || 0);
         const normalized = {
           round: row.round, date: row.draw_date || '', type: row.lottery_type, cost: Number(row.cost || 0),
@@ -1071,6 +1075,7 @@
           payout: resolvedAmount > 0 ? formatYen(resolvedAmount) : (existing && existing.payout ? existing.payout : 'Aguardando apuração'),
           winners: resolvedMain.length ? (existing && existing.winners ? existing.winners : 'Apurado') : 'Pendente'
         };
+        normalized.profileBetId = row.id || null;
         if (existing) Object.assign(existing, normalized);
         else APP_STATE.history.unshift(normalized);
       });
@@ -1956,8 +1961,29 @@
     function closeModalAddBet() {
       const modal = document.getElementById('modal-add-bet');
       if (modal) modal.classList.add('hidden');
+      window.editingProfileBetId = null;
     }
     window.closeModalAddBet = closeModalAddBet;
+
+    window.openBetEditor = function(bet) {
+      if (!bet) return;
+      window.editingProfileBetId = bet.id;
+      document.getElementById('modal-bet-type').value = bet.lottery_type || 'ロト７';
+      document.getElementById('modal-bet-round').value = bet.round || '';
+      document.getElementById('modal-bet-date').value = bet.draw_date || '';
+      document.getElementById('modal-bet-cost').value = Number(bet.cost || 0);
+      document.getElementById('modal-bet-numbers').value = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : (bet.numbers || '');
+      openModalAddBet();
+    };
+
+    window.removeProfileBet = function(id) {
+      if (!id) return;
+      APP_STATE.history = APP_STATE.history.filter(function(item) { return item.profileBetId !== id; });
+      saveState();
+      renderDraws();
+      updateKPICards();
+      renderCharts();
+    };
 
 
     // ====================================================
@@ -2946,6 +2972,7 @@
         let remoteSave = { ok: false, skipped: true };
         try {
           remoteSave = window.saveBetToSupabase ? await window.saveBetToSupabase({
+            id: window.editingProfileBetId,
             type: type, round: round, date: date, cost: cost, numbers: numbers,
             status: 'pending', main: [], bonus: [], prize: '-', amount: 0
           }) : remoteSave;
@@ -2959,19 +2986,21 @@
         }
 
 
-        const exist = APP_STATE.history.find(function(i){ return i.round === round && i.type === type; });
-        if (exist) {
-          exist.hasBet = true;
-          exist.userBet = numbers;
-          exist.betSource = 'specific';
-          exist.source = 'user';
-          exist.cost = cost;
-          if (date) exist.date = date;
+        const localBet = APP_STATE.history.find(function(item) {
+          return window.editingProfileBetId && item.profileBetId === window.editingProfileBetId;
+        });
+        if (localBet) {
+          localBet.round = round;
+          localBet.date = date;
+          localBet.type = type;
+          localBet.cost = cost;
+          localBet.userBet = numbers;
         } else {
           APP_STATE.history.unshift({
             round: round, date: date, type: type, cost: cost, userBet: numbers,
             main: [], bonus: [], prize: '-', amount: 0, status: 'pending',
-            hasBet: true, betSource: 'specific', payout: 'Aguardando apuração', winners: 'Pendente', source: 'user'
+            hasBet: true, betSource: 'specific', payout: 'Aguardando apuração', winners: 'Pendente', source: 'user',
+            profileBetId: remoteSave.id || null
           });
         }
         closeModalAddBet();

@@ -195,7 +195,8 @@
     list.innerHTML = rows.map(function(bet) {
       var numbers = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : (bet.numbers || '-');
       var drawDate = bet.draw_date ? new Date(bet.draw_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data não informada';
-      return '<div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800"><div class="flex items-center justify-between gap-2"><div class="text-xs text-white font-semibold">' + escapeHtml(bet.lottery_type) + ' · ' + escapeHtml(bet.round) + '</div><span class="text-[10px] text-emerald-300">' + escapeHtml(bet.status === 'pending' ? 'Aguardando apuração' : bet.status) + '</span></div><div class="text-[11px] text-slate-300 mt-1">Dezenas: ' + escapeHtml(numbers) + '</div><div class="text-[10px] text-slate-500 mt-1">Sorteio: ' + escapeHtml(drawDate) + ' · R$ ' + escapeHtml(Number(bet.cost || 0).toFixed(2).replace('.', ',')) + '</div></div>';
+      var id = escapeHtml(bet.id);
+      return '<div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800"><div class="flex items-center justify-between gap-2"><div class="text-xs text-white font-semibold">' + escapeHtml(bet.lottery_type) + ' · ' + escapeHtml(bet.round) + '</div><span class="text-[10px] text-emerald-300">' + escapeHtml(bet.status === 'pending' ? 'Aguardando apuração' : bet.status) + '</span></div><div class="text-[11px] text-slate-300 mt-1">Dezenas: ' + escapeHtml(numbers) + '</div><div class="text-[10px] text-slate-500 mt-1">Sorteio: ' + escapeHtml(drawDate) + ' · R$ ' + escapeHtml(Number(bet.cost || 0).toFixed(2).replace('.', ',')) + '</div><div class="flex gap-2 mt-2"><button type="button" class="text-[11px] text-blue-300 hover:text-white" onclick="window.editProfileBet(\'' + id + '\')"><i class="fa-solid fa-pen mr-1"></i>Editar</button><button type="button" class="text-[11px] text-rose-300 hover:text-rose-200" onclick="window.deleteProfileBet(\'' + id + '\')"><i class="fa-solid fa-trash mr-1"></i>Excluir</button></div></div>';
     }).join('');
   }
 
@@ -215,6 +216,7 @@
       return;
     }
     var rows = result.data || [];
+    rows.forEach(function(row) { row.profileBetId = row.id; });
     try {
       var details = await supabaseClient.from('user_bets').select('id, main_numbers, bonus_numbers, prize, amount, updated_at').eq('user_id', currentSession.user.id);
       if (!details.error) {
@@ -270,13 +272,46 @@
       amount: Number(bet.amount || 0),
       updated_at: new Date().toISOString()
     };
-    var result = await supabaseClient.from('user_bets').upsert(payload, { onConflict: 'user_id,lottery_type,round' });
-    if (result.error) return { ok: false, error: result.error };
+    var result;
+    if (bet.id) {
+      result = await supabaseClient.from('user_bets').update(payload).eq('id', bet.id).eq('user_id', currentSession.user.id);
+    } else {
+      result = await supabaseClient.from('user_bets').insert(payload).select('id').single();
+    }
+    if (result.error) {
+      var message = result.error.message || '';
+      if (message.toLowerCase().indexOf('duplicate') !== -1 || message.toLowerCase().indexOf('unique') !== -1) {
+        result.error.message = 'O banco ainda limita uma aposta por concurso. Execute a migração indicada em SUPABASE_SETUP.md.';
+      }
+      return { ok: false, error: result.error };
+    }
     await loadMyBets();
-    return { ok: true };
+    return { ok: true, id: result.data && result.data.id ? result.data.id : bet.id };
   };
 
   window.refreshMyBets = loadMyBets;
+
+  window.deleteProfileBet = async function(id) {
+    if (!supabaseClient || !currentSession || !id) return;
+    if (!window.confirm('Excluir esta aposta do perfil?')) return;
+    var result = await supabaseClient.from('user_bets').delete().eq('id', id).eq('user_id', currentSession.user.id);
+    if (result.error) {
+      setMessage('Não foi possível excluir a aposta: ' + result.error.message, 'error');
+      return;
+    }
+    if (typeof window.removeProfileBet === 'function') window.removeProfileBet(id);
+    await loadMyBets();
+  };
+
+  window.editProfileBet = async function(id) {
+    if (!supabaseClient || !currentSession || !id) return;
+    var result = await supabaseClient.from('user_bets').select('id, lottery_type, round, draw_date, cost, numbers').eq('id', id).eq('user_id', currentSession.user.id).single();
+    if (result.error) {
+      setMessage('Não foi possível carregar a aposta para edição: ' + result.error.message, 'error');
+      return;
+    }
+    if (typeof window.openBetEditor === 'function') window.openBetEditor(result.data);
+  };
 
   async function signIn(event) {
     event.preventDefault();
