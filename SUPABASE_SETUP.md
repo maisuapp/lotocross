@@ -46,10 +46,30 @@ Se a pessoa cadastrar uma aposta sem entrar na conta, ela fica disponível somen
 Cada linha de `user_bets` representa uma cartela individual. Para permitir mais de uma cartela no mesmo concurso, remova a restrição antiga que tornava `user_id + lottery_type + round` único (o campo `id` continua sendo a identidade da aposta):
 
 ```sql
-alter table public.user_bets
-  drop constraint if exists user_bets_user_id_lottery_type_round_key;
-
-drop index if exists public.user_bets_user_id_lottery_type_round_key;
+do $$
+declare
+  constraint_name text;
+  index_name text;
+begin
+  for constraint_name in
+    select c.conname from pg_constraint c
+    where c.conrelid = 'public.user_bets'::regclass
+      and c.contype = 'u'
+      and array(select a.attname from pg_attribute a where a.attrelid = c.conrelid and a.attnum = any(c.conkey) order by a.attname)
+        = array['lottery_type', 'round', 'user_id']::name[]
+  loop
+    execute format('alter table public.user_bets drop constraint %I', constraint_name);
+  end loop;
+  for index_name in
+    select i.indexrelid::regclass::text from pg_index i
+    where i.indrelid = 'public.user_bets'::regclass
+      and i.indisunique
+      and array(select a.attname from pg_attribute a where a.attrelid = i.indrelid and a.attnum = any(i.indkey) order by a.attname)
+        = array['lottery_type', 'round', 'user_id']::name[]
+  loop
+    execute format('drop index if exists %s', index_name);
+  end loop;
+end $$;
 ```
 
 Essa migração está versionada em `supabase/migrations/20260923_remove_user_bets_unique_round.sql`. Execute-a no SQL Editor do Supabase (ou aplique-a pelo Supabase CLI) antes de cadastrar várias cartelas no mesmo concurso. Depois disso, não existe limite de quantidade por concurso: novas apostas são inseridas separadamente e podem ser editadas ou excluídas individualmente no perfil.
