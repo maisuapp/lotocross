@@ -773,7 +773,7 @@
 
 
   <!-- MODAL: ADICIONAR APOSTA -->
-  <div id="modal-add-bet" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target===this) closeModalAddBet();">
+  <div id="modal-add-bet" class="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target===this) closeModalAddBet();">
     <div class="glass-panel w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 border border-slate-700 shadow-2xl relative max-h-screen overflow-y-auto">
       <button type="button" id="btn-close-modal-bet" onclick="closeModalAddBet();" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg p-2 z-10 cursor-pointer">
         <i class="fa-solid fa-xmark"></i>
@@ -1047,10 +1047,15 @@
 
     window.applySupabaseUserBets = function(rows) {
       if (!Array.isArray(rows) || !rows.length) return;
+      const latestByType = {};
       rows.forEach(function(row) {
         if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type)) return;
         const numbers = normalizeBetNumbers(row.numbers);
         if (!numbers.length) return;
+        const current = latestByType[row.lottery_type];
+        const currentDate = current ? new Date(current.updated_at || current.created_at || 0).getTime() : -1;
+        const rowDate = new Date(row.updated_at || row.created_at || 0).getTime();
+        if (!current || rowDate > currentDate) latestByType[row.lottery_type] = row;
 
         const existing = APP_STATE.history.find(function(item) {
           return row.id && item.profileBetId === row.id;
@@ -1078,6 +1083,12 @@
         else APP_STATE.history.unshift(normalized);
       });
 
+      // The profile's latest registered ticket is the visible default for that lottery.
+      // Every profile ticket remains in history and is still evaluated individually.
+      Object.keys(latestByType).forEach(function(type) {
+        const numbers = normalizeBetNumbers(latestByType[type].numbers);
+        if (numbers.length) APP_STATE.bets[type] = numbers;
+      });
       saveState();
       renderFixedBetsPreview();
       renderDraws();
@@ -1233,8 +1244,20 @@
 
       let activeCount = 0;
       let pastCount = 0;
+      const groupedHistory = [];
+      const groupsByDraw = {};
+      APP_STATE.history.forEach(function(historyItem) {
+        const groupKey = historyItem.round + '|' + historyItem.type;
+        if (!groupsByDraw[groupKey]) {
+          groupsByDraw[groupKey] = { item: historyItem, items: [] };
+          groupedHistory.push(groupsByDraw[groupKey]);
+        }
+        groupsByDraw[groupKey].items.push(historyItem);
+      });
 
-      APP_STATE.history.forEach(function(item, idx) {
+      groupedHistory.forEach(function(group, idx) {
+        const item = group.item;
+        const groupItems = group.items;
         if (currentLotteryFilter !== 'ALL' && item.type !== currentLotteryFilter) return;
 
         const match = item.round.toLowerCase().includes(searchVal) || item.type.toLowerCase().includes(searchVal) || item.date.includes(searchVal);
@@ -1243,7 +1266,7 @@
         const hasBet = item.hasBet !== false;
         const isDrawn = Boolean(item.status === 'drawn' || (item.main && item.main.length > 0));
         const isPending = !isDrawn;
-        const isWon = item.amount > 0;
+        const isWon = groupItems.some(function(groupItem) { return Number(groupItem.amount || 0) > 0; });
 
         // REGRA ESSENCIAL: Ocultar sorteios sem aposta (deixar apenas sorteios com apostas)
         if (!hasBet && currentStatusFilter !== 'NO_BET') return;
@@ -1273,12 +1296,15 @@
         let betHtml = '';
         if (!hasBet) {
           betHtml = '<div class="py-2 px-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex items-center justify-between"><span>Sem aposta neste concurso</span><button class="text-xs text-emerald-400 hover:underline font-semibold" onclick="event.stopPropagation(); openAddBetForRound(\'' + item.round + '\', \'' + item.type + '\', \'' + item.date + '\')">+ Apostar</button></div>';
-        } else if (ev.userBet.length) {
-          betHtml = '<div><div class="text-xs text-slate-400 mb-1 flex justify-between"><span>Sua Aposta:</span><span class="text-xs text-slate-500">Custo: ' + formatYen(item.cost) + '</span></div><div class="flex flex-wrap gap-1">' +
-            ev.userBet.map(function(n){
-              const cls = ev.mainHits.includes(n) ? 'ball-hit' : (ev.bonusHits.includes(n) ? 'ball-bonus' : 'ball-miss');
-              return '<span class="ball ball-sm ' + cls + ' font-mono">' + String(n).padStart(2,'0') + '</span>';
-            }).join('') + '</div></div>';
+        } else if (ev.userBet.length || groupItems.length > 1) {
+          betHtml = groupItems.filter(function(groupItem) { return groupItem.hasBet !== false; }).map(function(groupItem, betIndex) {
+            const groupEv = evaluateDraw(groupItem);
+            return '<div><div class="text-xs text-slate-400 mb-1 flex justify-between"><span>Sua Aposta' + (groupItems.length > 1 ? ' ' + (betIndex + 1) : '') + ':</span><span class="text-xs text-slate-500">Custo: ' + formatYen(groupItem.cost) + '</span></div><div class="flex flex-wrap gap-1">' +
+              groupEv.userBet.map(function(n){
+                const cls = groupEv.mainHits.includes(n) ? 'ball-hit' : (groupEv.bonusHits.includes(n) ? 'ball-bonus' : 'ball-miss');
+                return '<span class="ball ball-sm ' + cls + ' font-mono">' + String(n).padStart(2,'0') + '</span>';
+              }).join('') + '</div></div>';
+          }).join('');
         }
 
         let resHtml = '';
@@ -2001,6 +2027,7 @@
         2130: { date: '2026-08-20', main: '12,18,35,40,41,43'.split(',').map(Number), bonus: '3'.split(',').map(Number), prize1: '¥510.089.600 (1口)', prize2: '¥11.576.500 (7口)', prize5: '¥1.000 (160.646口)' }
       },
       'ミニロト': {
+        1405: { date: '2026-09-22', main: '5,17,24,27,30'.split(',').map(Number), bonus: '6'.split(',').map(Number), prize1: '¥20.888.700 (7口)', prize2: '¥138.200 (76口)', prize4: '¥900 (48.010口)' },
         1404: { date: '2026-09-15', main: '2,3,4,9,31'.split(',').map(Number), bonus: '11'.split(',').map(Number), prize1: '¥13.163.700 (12口)', prize2: '¥130.400 (87口)', prize4: '¥1.000 (69.453口)' },
         1403: { date: '2026-09-08', main: '8,11,14,17,19'.split(',').map(Number), bonus: '24'.split(',').map(Number), prize1: '¥14.315.900 (11口)', prize2: '¥154.900 (73口)', prize4: '¥900 (53.122口)' },
         1402: { date: '2026-09-01', main: '1,4,20,25,29'.split(',').map(Number), bonus: '22'.split(',').map(Number), prize1: '¥23.075.100 (7口)', prize2: '¥252.200 (46口)', prize4: '¥1.000 (50.177口)' },
@@ -2477,6 +2504,7 @@
         { round: '第2136回', type: 'ロト６', date: '2026-09-10', main: [6,7,33,37,41,43], bonus: [42], payout: '5等: ¥1.000 (1等: ¥200M+)', winners: '171.940 ganhadores' },
         { round: '第2137回', type: 'ロト６', date: '2026-09-14', main: [4,8,10,25,28,33], bonus: [9], payout: '1等: ¥370.144.100 (2口)', winners: '242.126 ganhadores (5等)' },
         { round: '第1404回', type: 'ミニロト', date: '2026-09-15', main: [2,3,4,9,31], bonus: [11], payout: '1等: ¥13.163.700 (12口)', winners: '69.453 ganhadores (4等)' },
+        { round: '第1405回', type: 'ミニロト', date: '2026-09-22', main: [5,17,24,27,30], bonus: [6], payout: '1等: ¥20.888.700 (7口)', winners: '48.010 ganhadores (4º prêmio)' },
         { round: '第2138回', type: 'ロト６', date: '2026-09-17', main: [9,16,21,26,38,40], bonus: [12], payout: '1等: Acumulou ¥284M', winners: '188.420 ganhadores (5等)' },
         { round: '第2139回', type: 'ロト６', date: '2026-09-21', main: [3,6,23,34,36,43], bonus: [29], payout: '1等: ¥451.342.500 (1 cota)', winners: '180.788 ganhadores (5º prêmio)' }
       ];
