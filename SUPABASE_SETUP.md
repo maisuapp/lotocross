@@ -48,6 +48,8 @@ Cada linha de `user_bets` representa uma cartela individual. Para permitir mais 
 ```sql
 alter table public.user_bets
   drop constraint if exists user_bets_user_id_lottery_type_round_key;
+
+drop index if exists public.user_bets_user_id_lottery_type_round_key;
 ```
 
-Depois dessa alteração, novas apostas são inseridas separadamente e podem ser editadas ou excluídas individualmente no perfil.
+Essa migração está versionada em `supabase/migrations/20260923_remove_user_bets_unique_round.sql`. Execute-a no SQL Editor do Supabase (ou aplique-a pelo Supabase CLI) antes de cadastrar várias cartelas no mesmo concurso. Depois disso, não existe limite de quantidade por concurso: novas apostas são inseridas separadamente e podem ser editadas ou excluídas individualmente no perfil.
