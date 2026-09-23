@@ -2993,11 +2993,19 @@
             status: 'pending', main: [], bonus: [], prize: '-', amount: 0
           }) : remoteSave;
         } catch (error) {
-          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + (error.message || 'Erro de conexão.'));
+          var saveMessage = error.message || 'Erro de conexão.';
+          if (saveMessage.indexOf('user_bets_user_id_lottery_type_round_key') !== -1) {
+            saveMessage += '\n\nA migração 20260923_remove_user_bets_unique_round.sql ainda não foi aplicada no Supabase.';
+          }
+          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + saveMessage);
           return;
         }
         if (remoteSave && remoteSave.error) {
-          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + (remoteSave.error.message || 'Erro de conexão.'));
+          var remoteMessage = remoteSave.error.message || 'Erro de conexão.';
+          if (remoteMessage.indexOf('user_bets_user_id_lottery_type_round_key') !== -1) {
+            remoteMessage += '\n\nA migração 20260923_remove_user_bets_unique_round.sql ainda não foi aplicada no Supabase.';
+          }
+          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + remoteMessage);
           return;
         }
 
@@ -3086,6 +3094,6 @@
   <script src="strategy-engine.js"></script>
   <script src="pool-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-auth.js?v=20260923-1519"></script>
+  <script src="supabase-auth.js?v=20260923-1526"></script>
 </body>
 </html>
