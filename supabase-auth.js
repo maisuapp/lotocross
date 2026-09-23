@@ -279,10 +279,6 @@
       result = await supabaseClient.from('user_bets').insert(payload).select('id').single();
     }
     if (result.error) {
-      var message = result.error.message || '';
-      if (message.toLowerCase().indexOf('duplicate') !== -1 || message.toLowerCase().indexOf('unique') !== -1) {
-        result.error.message = 'O banco ainda limita uma aposta por concurso. Execute a migração indicada em SUPABASE_SETUP.md.';
-      }
       return { ok: false, error: result.error };
     }
     await loadMyBets();
