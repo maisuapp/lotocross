@@ -51,6 +51,9 @@ declare
   constraint_name text;
   index_name text;
 begin
+  alter table public.user_bets
+    drop constraint if exists user_bets_user_id_lottery_type_round_key;
+
   for constraint_name in
     select c.conname from pg_constraint c
     where c.conrelid = 'public.user_bets'::regclass
