@@ -1,0 +1,38 @@
+name: Sincronizador Automatico de Loterias
+
+on:
+  schedule:
+    # Executa de segunda a sexta-feira às 20:05 (Horário do Japão / 11:05 UTC)
+    - cron: '5 11 * * 1-5'
+  workflow_dispatch: # Permite rodar o robô manualmente com 1 clique a qualquer momento
+
+jobs:
+  sync-lottery:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Permissão para salvar o arquivo latest-draws.json atualizado
+
+    steps:
+      - name: Baixar o projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar o Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar bibliotecas necessárias
+        run: |
+          pip install requests beautifulsoup4 supabase python-dotenv
+
+      - name: Executar o robô de extração
+        run: |
+          python sync_lottery.py
+
+      - name: Gravar o latest-draws.json atualizado no GitHub
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add latest-draws.json
+          git commit -m "chore: atualizacao automatica dos sorteios [skip ci]" || exit 0
+          git push
