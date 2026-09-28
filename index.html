@@ -928,10 +928,11 @@
     window.isUniqueRoundConstraintError = isUniqueRoundConstraintError;
 
 
-    const RAW_RECORDS = `第2142回|2026-10-01|ロト６|200|||-|0|pending|1
+    const RAW_RECORDS = `第2143回|2026-10-05|ロト６|200|||-|0|pending|1
 第697回|2026-10-02|ロト７|300|||-|0|pending|1
+第2142回|2026-10-01|ロト６|200|||-|0|pending|1
 第1406回|2026-09-29|ミニロト|200|||-|0|pending|1
-第2141回|2026-09-28|ロト６|200|||-|0|pending|1
+第2141回|2026-09-28|ロト６|200|14,15,22,32,37,41|1|-|0|drawn|1
 第696回|2026-09-25|ロト７|300|10,11,15,16,23,24,34|14,35|-|0|drawn|1
 第2140回|2026-09-24|ロト６|200|4,10,11,19,21,33|30|-|0|drawn|1
 第1405回|2026-09-22|ミニロト|200|5,17,24,27,30|6|-|0|drawn|1
@@ -1062,6 +1063,7 @@
         685: { date: '2026-07-10', main: '1,5,16,20,21,22,31'.split(',').map(Number), bonus: '23,36'.split(',').map(Number), prize1: '¥395.865.900 (1口)', prize2: '¥23.825.900 (2口)', prize6: '¥1.200 (114.400口)' }
       },
       'ロト６': {
+        2141: { date: '2026-09-28', main: [14, 15, 22, 32, 37, 41], bonus: [1], prize1: '1等: Apurado', prize5: '¥1.000' },
         2140: { date: '2026-09-24', main: [4, 10, 11, 19, 21, 33], bonus: [30], prize1: '0口 (Acumulou ¥191.016.277)', prize2: '¥11.461.300 (5口)', prize5: '¥1.000 (178.125口)' },
         2139: { date: '2026-09-21', main: [3, 6, 23, 34, 36, 43], bonus: [29], prize1: '¥451.342.500 (1口)', prize2: '¥13.208.500 (8口)', prize5: '¥1.000 (180.788口)' },
         2138: { date: '2026-09-17', main: '9,16,21,26,38,40'.split(',').map(Number), bonus: '12'.split(',').map(Number), prize1: '0口 (Acumulou ¥284M)', prize2: '¥14.398.700 (6口)', prize5: '¥1.000 (188.420口)' },
@@ -1133,11 +1135,14 @@
             item.winners = info.prize6 || info.prize5 || info.prize4 || info.winners || 'Apurado';
             if (info.date) item.date = info.date;
 
-            const userNumbers = item.betSource === 'specific' ? (item.userBet || []) : (FIXED_BETS_MAP[item.type] || []);
+            const userNumbers = (item.betSource === 'specific' || item.source === 'user') ? (item.userBet || []) : ((APP_STATE && APP_STATE.bets && APP_STATE.bets[item.type]) || FIXED_BETS_MAP[item.type] || []);
             const win = checkWinningTier(item.type, userNumbers, item.main, item.bonus);
-            if (win.amount > 0 && Number(item.amount || 0) === 0) {
+            if (win.amount > 0) {
               item.prize = win.prize;
               item.amount = win.amount;
+            } else {
+              item.prize = '-';
+              item.amount = 0;
             }
             count++;
           }
@@ -1224,19 +1229,25 @@
           return item.round === row.round && item.type === row.lottery_type &&
             !item.profileBetId && item.main && item.main.length;
         });
+        const numRound = parseInt((row.round || '').replace(/\D/g, ''), 10);
+        const builtinInfo = (typeof BUILTIN_LOOKUP_DB === 'object' && BUILTIN_LOOKUP_DB[row.lottery_type] && BUILTIN_LOOKUP_DB[row.lottery_type][numRound]) || null;
         const main = normalizeBetNumbers(row.main_numbers);
         const bonus = normalizeBetNumbers(row.bonus_numbers);
-        const resolvedMain = main.length ? main : (existing && existing.main && existing.main.length ? existing.main : (official ? official.main : []));
-        const resolvedBonus = bonus.length ? bonus : (existing && existing.bonus && existing.bonus.length ? existing.bonus : (official ? official.bonus : []));
-        const resolvedAmount = Number(row.amount || 0) || Number(existing && existing.amount || 0);
+        const resolvedMain = main.length ? main : (existing && existing.main && existing.main.length ? existing.main : (official && official.main && official.main.length ? official.main : (builtinInfo ? builtinInfo.main : [])));
+        const resolvedBonus = bonus.length ? bonus : (existing && existing.bonus && existing.bonus.length ? existing.bonus : (official && official.bonus && official.bonus.length ? official.bonus : (builtinInfo ? (builtinInfo.bonus || []) : [])));
+        
+        const win = (resolvedMain.length && numbers.length) ? checkWinningTier(row.lottery_type, numbers, resolvedMain, resolvedBonus) : { prize: '-', amount: 0 };
+        const resolvedAmount = win.amount > 0 ? win.amount : (Number(row.amount || 0) || Number(existing && existing.amount || 0));
+        const resolvedPrize = win.amount > 0 ? win.prize : (row.prize && row.prize !== '-' ? row.prize : (existing && existing.prize ? existing.prize : '-'));
+
         const normalized = {
-          round: row.round, date: row.draw_date || '', type: row.lottery_type, cost: Number(row.cost || 0),
+          round: row.round, date: row.draw_date || (builtinInfo ? builtinInfo.date : ''), type: row.lottery_type, cost: Number(row.cost || 0),
           userBet: numbers, main: resolvedMain, bonus: resolvedBonus,
-          prize: row.prize && row.prize !== '-' ? row.prize : (existing && existing.prize ? existing.prize : '-'),
+          prize: resolvedPrize,
           amount: resolvedAmount, status: resolvedMain.length ? 'drawn' : (row.status || 'pending'),
           hasBet: true, betSource: 'specific', source: 'user',
-          payout: resolvedAmount > 0 ? formatYen(resolvedAmount) : (existing && existing.payout ? existing.payout : 'Aguardando apuração'),
-          winners: resolvedMain.length ? (existing && existing.winners ? existing.winners : 'Apurado') : 'Pendente'
+          payout: resolvedAmount > 0 ? formatYen(resolvedAmount) : (builtinInfo ? (builtinInfo.prize1 || 'Apurado') : (existing && existing.payout ? existing.payout : 'Aguardando apuração')),
+          winners: resolvedMain.length ? (builtinInfo ? (builtinInfo.prize5 || builtinInfo.prize6 || 'Apurado') : (existing && existing.winners ? existing.winners : 'Apurado')) : 'Pendente'
         };
         normalized.profileBetId = row.id || null;
         if (existing) Object.assign(existing, normalized);
@@ -2818,9 +2829,59 @@
       const updatedRoundsList = [];
 
       try {
+        const unifiedDraws = [];
+        const seenDraws = new Set();
+        const JP_TYPE_MAP = { 'loto6': 'ロト６', 'loto7': 'ロト７', 'miniloto': 'ミニロト' };
+
+        function addUnifiedDraw(d) {
+          if (!d || !d.round || !d.type) return;
+          const key = d.round + '|' + d.type;
+          if (seenDraws.has(key)) return;
+          seenDraws.add(key);
+          unifiedDraws.push(d);
+        }
+
+        // ETAPA 0: Consulta direta ao banco de dados Supabase (Tabela oficial 'lottery_draws')
+        if (!isSilent) {
+          setProgress(25);
+          updateLog('&gt; Consultando banco de dados Supabase (lottery_draws)...', true);
+        }
+        try {
+          const sbController = new AbortController();
+          const sbTimeout = setTimeout(function(){ sbController.abort(); }, 4000);
+          const sbRes = await fetch('https://lpvisjgalthkopmddaff.supabase.co/rest/v1/lottery_draws?select=*', {
+            signal: sbController.signal,
+            headers: {
+              'apikey': 'sb_publishable_WGkPotLdsvD3ck_z-84sbA_aK2reqgA',
+              'Authorization': 'Bearer sb_publishable_WGkPotLdsvD3ck_z-84sbA_aK2reqgA'
+            }
+          });
+          clearTimeout(sbTimeout);
+          if (sbRes.ok) {
+            const sbRows = await sbRes.json();
+            if (Array.isArray(sbRows) && sbRows.length) {
+              sbRows.forEach(function(row) {
+                const jType = JP_TYPE_MAP[row.lottery_type] || row.lottery_type;
+                addUnifiedDraw({
+                  round: '第' + row.round + '回',
+                  type: jType,
+                  date: row.draw_date,
+                  main: row.numbers || [],
+                  bonus: row.bonus_numbers || [],
+                  payout: '1等: Apurado',
+                  winners: 'Apurado'
+                });
+              });
+              if (!isSilent) updateLog('&gt; <span class="text-emerald-400">✓ Supabase conectado (' + sbRows.length + ' sorteios mais recentes obtidos)!</span>', true);
+            }
+          }
+        } catch(eSb) {
+          console.warn('Supabase lottery_draws fetch note:', eSb);
+        }
+
         // ETAPA 1: Carregar atualizações de latest-draws.json (Mesma origem / GitHub CDN)
         if (!isSilent) {
-          setProgress(30);
+          setProgress(45);
           updateLog('&gt; Verificando latest-draws.json e espelho oficial...', true);
         }
 
@@ -2837,36 +2898,57 @@
           } catch(e2) {}
         }
 
-        if (drawsData && Array.isArray(drawsData.draws)) {
-          drawsData.draws.forEach(function(s) {
+        if (drawsData) {
+          if (Array.isArray(drawsData.draws)) {
+            drawsData.draws.forEach(function(d) { addUnifiedDraw(d); });
+          }
+          ['loto6', 'loto7', 'miniloto'].forEach(function(k) {
+            if (drawsData[k] && typeof drawsData[k] === 'object' && drawsData[k].round) {
+              const item = drawsData[k];
+              const jType = JP_TYPE_MAP[k] || k;
+              addUnifiedDraw({
+                round: '第' + item.round + '回',
+                type: jType,
+                date: item.draw_date,
+                main: item.numbers || [],
+                bonus: item.bonus_numbers || [],
+                payout: '1等: Apurado',
+                winners: 'Apurado'
+              });
+            }
+          });
+        }
+
+        if (unifiedDraws.length) {
+          unifiedDraws.forEach(function(s) {
             const numRound = parseInt(s.round.replace(/\D/g, ''), 10);
             if (BUILTIN_LOOKUP_DB[s.type]) {
               BUILTIN_LOOKUP_DB[s.type][numRound] = {
                 date: s.date,
                 main: s.main,
                 bonus: s.bonus,
-                prize1: s.payout,
-                prize5: s.winners,
-                prize6: s.winners
+                prize1: s.payout || '1等: Apurado',
+                prize5: s.winners || 'Apurado',
+                prize6: s.winners || 'Apurado'
               };
             }
             let items = APP_STATE.history.filter(function(i){ return i.round === s.round && i.type === s.type; });
             if (items.length) {
               items.forEach(function(item) {
                 const wasPending = item.status === 'pending' || !item.main || !item.main.length;
-                item.main = s.main;
-                item.bonus = s.bonus;
+                item.main = s.main.slice();
+                item.bonus = (s.bonus || []).slice();
                 item.status = 'drawn';
-                item.payout = s.payout;
-                item.winners = s.winners;
+                item.payout = s.payout || item.payout;
+                item.winners = s.winners || item.winners;
                 if (s.date) item.date = s.date;
 
-                const userNumbers = item.betSource === 'specific' ? (item.userBet || []) : (APP_STATE ? (APP_STATE.bets[item.type] || []) : []);
+                const userNumbers = (item.betSource === 'specific' || item.source === 'user') ? (item.userBet || []) : (APP_STATE ? (APP_STATE.bets[item.type] || []) : []);
                 const win = checkWinningTier(item.type, userNumbers, item.main, item.bonus);
                 if (win.amount > 0) {
                   item.prize = win.prize;
                   item.amount = win.amount;
-                } else if (wasPending) {
+                } else {
                   item.prize = '-';
                   item.amount = 0;
                 }
@@ -2881,7 +2963,7 @@
               const win = checkWinningTier(s.type, userNumbers, s.main, s.bonus);
               APP_STATE.history.unshift({
                 round: s.round, date: s.date, type: s.type, cost: s.type === 'ロト７' ? 300 : 200,
-                userBet: [], main: s.main, bonus: s.bonus, prize: win.prize, amount: win.amount, status: 'drawn',
+                userBet: [], main: s.main.slice(), bonus: (s.bonus || []).slice(), prize: win.prize, amount: win.amount, status: 'drawn',
                 hasBet: true, betSource: 'default', payout: s.payout, winners: s.winners, source: 'sync'
               });
               updatedCount++;
@@ -2916,11 +2998,14 @@
                       item.winners = s.winners || item.winners;
                       if (s.date) item.date = s.date;
 
-                      const userNumbers = item.betSource === 'specific' ? (item.userBet || []) : (APP_STATE ? (APP_STATE.bets[item.type] || []) : []);
+                      const userNumbers = (item.betSource === 'specific' || item.source === 'user') ? (item.userBet || []) : (APP_STATE ? (APP_STATE.bets[item.type] || []) : []);
                       const win = checkWinningTier(item.type, userNumbers, item.main, item.bonus);
                       if (win.amount > 0) {
                         item.prize = win.prize;
                         item.amount = win.amount;
+                      } else {
+                        item.prize = '-';
+                        item.amount = 0;
                       }
 
                       updatedCount++;
@@ -2955,7 +3040,7 @@
                 item.winners = info.prize5 || info.prize6 || info.prize4 || info.winners || 'Apurado';
                 if (info.date) item.date = info.date;
 
-                const userNumbers = item.betSource === 'specific' ? (item.userBet || []) : (APP_STATE ? (APP_STATE.bets[item.type] || []) : []);
+                const userNumbers = (item.betSource === 'specific' || item.source === 'user') ? (item.userBet || []) : (APP_STATE ? (APP_STATE.bets[item.type] || []) : []);
                 const win = checkWinningTier(item.type, userNumbers, item.main, item.bonus);
                 if (win.amount > 0) {
                   item.prize = win.prize;

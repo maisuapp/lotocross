@@ -1,10 +1,16 @@
 import os
+import sys
 import re
 import json
 from datetime import datetime, timezone
 import requests
 from bs4 import BeautifulSoup
 from supabase import create_client, Client
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # Configuração Poka-Yoke: ligação direta ao seu projeto do Supabase
 SUPABASE_URL = "https://lpvisjgalthkopmddaff.supabase.co"
@@ -122,6 +128,31 @@ def run_sync():
                 "bonus_numbers": data["bonus_numbers"],
                 "updated_at": data["updated_at"]
             }
+
+            # Mantém também a lista unificada "draws" no formato do index.html
+            JP_NAMES = {"miniloto": "ミニロト", "loto6": "ロト６", "loto7": "ロト７"}
+            jp_type = JP_NAMES.get(data["lottery_type"], data["lottery_type"])
+            round_str = f"第{data['round']}回"
+
+            if "draws" not in cached_data or not isinstance(cached_data["draws"], list):
+                cached_data["draws"] = []
+
+            existing_entry = next((d for d in cached_data["draws"] if d.get("round") == round_str and d.get("type") == jp_type), None)
+            if existing_entry:
+                existing_entry["date"] = data["draw_date"]
+                existing_entry["main"] = data["numbers"]
+                existing_entry["bonus"] = data["bonus_numbers"]
+            else:
+                cached_data["draws"].insert(0, {
+                    "round": round_str,
+                    "type": jp_type,
+                    "date": data["draw_date"],
+                    "main": data["numbers"],
+                    "bonus": data["bonus_numbers"],
+                    "payout": "1等: Apurado",
+                    "winners": "Apurado"
+                })
+            cached_data["updated_at"] = data["updated_at"]
 
         except Exception as err:
             print(f"   ✗ Falha em {lotto}: {err}")
