@@ -185,18 +185,108 @@
     renderAuthState();
   }
 
+  function parseNumArray(val) {
+    if (Array.isArray(val)) return val.map(Number).filter(function(n) { return Number.isFinite(n); });
+    if (typeof val === 'string') {
+      try {
+        var parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed.map(Number).filter(function(n) { return Number.isFinite(n); });
+      } catch (e) {}
+      return val.split(',').map(function(s){ return parseInt(s.trim(), 10); }).filter(function(n){ return !isNaN(n); });
+    }
+    return [];
+  }
+
   function renderMyBets(rows) {
     var list = document.getElementById('auth-user-bets-list');
     if (!list) return;
     if (!rows || !rows.length) {
-      list.innerHTML = '<div class="text-xs text-slate-500">Nenhuma aposta salva neste perfil ainda.</div>';
+      list.innerHTML = '<div class="text-xs text-slate-500 py-3 text-center">Nenhuma aposta salva neste perfil ainda.</div>';
       return;
     }
     list.innerHTML = rows.map(function(bet) {
-      var numbers = Array.isArray(bet.numbers) ? bet.numbers.join(', ') : (bet.numbers || '-');
-      var drawDate = bet.draw_date ? new Date(bet.draw_date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data não informada';
+      var rawNumbers = parseNumArray(bet.numbers);
+      var evalRes = (window.evaluateBetResult) 
+        ? window.evaluateBetResult(bet.lottery_type, bet.round, rawNumbers)
+        : { isDrawn: false, hitCount: 0, amount: 0, prize: '-', mainHits: [], bonusHits: [], main: [], bonus: [] };
+
+      // Se o sorteio já ocorreu mas no Supabase ainda constava 'pending', atualiza a linha no Supabase em segundo plano
+      if (evalRes.isDrawn && bet.status === 'pending' && supabaseClient && bet.id) {
+        supabaseClient.from('user_bets').update({
+          status: 'drawn',
+          main_numbers: evalRes.main,
+          bonus_numbers: evalRes.bonus,
+          prize: evalRes.amount > 0 ? evalRes.prize : '-',
+          amount: evalRes.amount,
+          updated_at: new Date().toISOString()
+        }).eq('id', bet.id).then(function(){}).catch(function(e){ console.warn('Sync user_bet err:', e); });
+        bet.status = 'drawn';
+        bet.main_numbers = evalRes.main;
+        bet.bonus_numbers = evalRes.bonus;
+        bet.prize = evalRes.prize;
+        bet.amount = evalRes.amount;
+      }
+
+      var rawDate = bet.draw_date || evalRes.drawDate || '';
+      var drawDate = 'Data agendada';
+      if (rawDate) {
+        var dp = String(rawDate).split('T')[0].split('-');
+        if (dp.length === 3) drawDate = dp[2] + '/' + dp[1] + '/' + dp[0];
+        else drawDate = String(rawDate);
+      }
+
       var id = escapeHtml(bet.id);
-      return '<div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800"><div class="flex items-center justify-between gap-2"><div class="text-xs text-white font-semibold">' + escapeHtml(bet.lottery_type) + ' · ' + escapeHtml(bet.round) + '</div><span class="text-[10px] text-emerald-300">' + escapeHtml(bet.status === 'pending' ? 'Aguardando apuração' : bet.status) + '</span></div><div class="text-[11px] text-slate-300 mt-1">Dezenas: ' + escapeHtml(numbers) + '</div><div class="text-[10px] text-slate-500 mt-1">Sorteio: ' + escapeHtml(drawDate) + ' · R$ ' + escapeHtml(Number(bet.cost || 0).toFixed(2).replace('.', ',')) + '</div><div class="flex gap-2 mt-2"><button type="button" class="text-[11px] text-blue-300 hover:text-white" onclick="window.editProfileBet(\'' + id + '\')"><i class="fa-solid fa-pen mr-1"></i>Editar</button><button type="button" class="text-[11px] text-rose-300 hover:text-rose-200" onclick="window.deleteProfileBet(\'' + id + '\')"><i class="fa-solid fa-trash mr-1"></i>Excluir</button></div></div>';
+      var costFormatted = '¥' + Number(bet.cost || (bet.lottery_type === 'ロト７' ? 300 : 200)).toLocaleString('ja-JP');
+
+      var statusBadge = '';
+      if (evalRes.isDrawn) {
+        if (evalRes.amount > 0) {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold animate-pulse"><i class="fa-solid fa-trophy mr-1"></i>Premiado: ' + escapeHtml(evalRes.prize) + ' (¥' + Number(evalRes.amount).toLocaleString('ja-JP') + ')</span>';
+        } else {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-mono"><i class="fa-solid fa-check text-emerald-400 mr-1"></i>Apurado (' + evalRes.hitCount + ' acerto' + (evalRes.hitCount === 1 ? '' : 's') + ')</span>';
+        }
+      } else {
+        statusBadge = '<span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold"><i class="fa-solid fa-hourglass-half mr-1"></i>Aguardando apuração</span>';
+      }
+
+      // Bolinhas com destaque de acerto
+      var ballsHtml = rawNumbers.map(function(num) {
+        var n = Number(num);
+        var isHit = evalRes.mainHits && evalRes.mainHits.includes(n);
+        var isBonus = evalRes.bonusHits && evalRes.bonusHits.includes(n);
+        var cls = isHit 
+          ? 'bg-emerald-500 text-white font-bold ring-2 ring-emerald-300 shadow-md shadow-emerald-500/30' 
+          : (isBonus 
+              ? 'bg-purple-600 text-white font-bold ring-2 ring-purple-300' 
+              : 'bg-slate-800 text-slate-400 border border-slate-700/60');
+        return '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] ' + cls + ' font-mono">' + String(n).padStart(2, '0') + '</span>';
+      }).join(' ');
+
+      var officialHtml = '';
+      if (evalRes.isDrawn && evalRes.main && evalRes.main.length) {
+        var mainStr = evalRes.main.map(function(n){ return String(n).padStart(2, '0'); }).join(' ');
+        var bonusStr = (evalRes.bonus && evalRes.bonus.length) ? ' <span class="text-purple-400 font-bold">+ (' + evalRes.bonus.map(function(n){ return String(n).padStart(2, '0'); }).join(', ') + ')</span>' : '';
+        officialHtml = '<div class="text-[10px] text-slate-400 mt-1.5 pt-1.5 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-1"><span>Sorteio oficial: <strong class="text-slate-200 font-mono">' + mainStr + '</strong>' + bonusStr + '</span></div>';
+      }
+
+      return '<div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 transition space-y-1.5">' +
+        '<div class="flex items-center justify-between gap-2">' +
+          '<div class="flex items-center gap-1.5">' +
+            '<span class="text-xs text-white font-bold">' + escapeHtml(bet.lottery_type) + '</span>' +
+            '<span class="text-xs text-slate-400 font-medium">· ' + escapeHtml(bet.round) + '</span>' +
+          '</div>' +
+          statusBadge +
+        '</div>' +
+        '<div class="flex flex-wrap gap-1 items-center mt-1">' + ballsHtml + '</div>' +
+        officialHtml +
+        '<div class="flex items-center justify-between text-[10px] text-slate-500 pt-1">' +
+          '<span>Sorteio: ' + escapeHtml(drawDate) + ' · ' + costFormatted + '</span>' +
+          '<div class="flex gap-3">' +
+            '<button type="button" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium" onclick="window.editProfileBet(\'' + id + '\')"><i class="fa-solid fa-pen mr-1"></i>Editar</button>' +
+            '<button type="button" class="text-[11px] text-rose-400 hover:text-rose-300 font-medium" onclick="window.deleteProfileBet(\'' + id + '\')"><i class="fa-solid fa-trash mr-1"></i>Excluir</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
@@ -405,7 +495,11 @@
           }
         });
       }, 0);
-      else { window.lotoCrossProfile = null; updateEntryButton(); }
+      else {
+        window.lotoCrossProfile = null;
+        updateEntryButton();
+        if (typeof window.clearSupabaseUserBets === 'function') window.clearSupabaseUserBets();
+      }
     });
   }
 

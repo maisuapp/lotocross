@@ -985,9 +985,9 @@
 
 
     const FIXED_BETS_MAP = {
-      'ロト７': getNumList('04,09,13,15,22,26,34'),
-      'ロト６': getNumList('02,06,21,24,31,38'),
-      'ミニロト': getNumList('02,11,19,21,28')
+      'ロト７': [],
+      'ロト６': [],
+      'ミニロト': []
     };
 
 
@@ -1117,6 +1117,67 @@
       }
       return { prize: '-', amount: 0 };
     }
+    window.checkWinningTier = checkWinningTier;
+
+    function evaluateBetResult(lotteryType, roundStr, userNumbers) {
+      const normUserNums = Array.isArray(userNumbers) ? userNumbers.map(Number).filter(Number.isFinite) : getNumList(userNumbers || '');
+      const numRound = parseInt(String(roundStr || '').replace(/\D/g, ''), 10);
+
+      let drawInfo = null;
+      if (typeof BUILTIN_LOOKUP_DB === 'object' && BUILTIN_LOOKUP_DB[lotteryType] && BUILTIN_LOOKUP_DB[lotteryType][numRound]) {
+        drawInfo = BUILTIN_LOOKUP_DB[lotteryType][numRound];
+      }
+
+      if (!drawInfo && typeof APP_STATE === 'object' && Array.isArray(APP_STATE.history)) {
+        const histItem = APP_STATE.history.find(function(h) {
+          return h.type === lotteryType && parseInt(String(h.round || '').replace(/\D/g, ''), 10) === numRound && h.main && h.main.length > 0;
+        });
+        if (histItem) {
+          drawInfo = {
+            date: histItem.date,
+            main: histItem.main,
+            bonus: histItem.bonus || [],
+            prize1: histItem.payout,
+            prize5: histItem.winners,
+            prize6: histItem.winners
+          };
+        }
+      }
+
+      if (!drawInfo || !drawInfo.main || !drawInfo.main.length) {
+        return {
+          isDrawn: false,
+          drawDate: drawInfo ? drawInfo.date : '',
+          main: [],
+          bonus: [],
+          mainHits: [],
+          bonusHits: [],
+          hitCount: 0,
+          prize: '-',
+          amount: 0
+        };
+      }
+
+      const mainSet = new Set(drawInfo.main);
+      const bonusSet = new Set(drawInfo.bonus || []);
+      const mainHits = normUserNums.filter(function(n) { return mainSet.has(n); });
+      const bonusHits = normUserNums.filter(function(n) { return bonusSet.has(n); });
+      const win = checkWinningTier(lotteryType, normUserNums, drawInfo.main, drawInfo.bonus || []);
+
+      return {
+        isDrawn: true,
+        drawDate: drawInfo.date,
+        main: drawInfo.main,
+        bonus: drawInfo.bonus || [],
+        mainHits: mainHits,
+        bonusHits: bonusHits,
+        hitCount: mainHits.length,
+        prize: win.prize || '-',
+        amount: win.amount || 0,
+        payout: drawInfo.prize1 || '-'
+      };
+    }
+    window.evaluateBetResult = evaluateBetResult;
 
     function upgradeHistoryWithKnownDraws(history) {
       if (!Array.isArray(history)) return 0;
@@ -1151,7 +1212,7 @@
       return count;
     }
 
-    const STORAGE_KEY = 'lotocross_state_v9_7';
+    const STORAGE_KEY = 'lotocross_state_v9_9';
 
     function saveState() {
       try {
@@ -1164,11 +1225,15 @@
     function loadState() {
       let state = null;
       try {
-        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('lotocross_state_v9_6');
+        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('lotocross_state_v9_8') || localStorage.getItem('lotocross_state_v9_7') || localStorage.getItem('lotocross_state_v9_6');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && parsed.bets && parsed.history && parsed.history.length) {
             parsed.history = normalizeHistory(parsed.history);
+            // Purga números de exemplo hardcoded legados para garantir que nada falso apareça
+            if (parsed.bets['ミニロト'] && parsed.bets['ミニロト'].join(',') === '2,11,19,21,28') {
+              parsed.bets['ミニロト'] = [];
+            }
             state = parsed;
           }
         }
@@ -1211,16 +1276,32 @@
 
 
     window.applySupabaseUserBets = function(rows) {
-      if (!Array.isArray(rows) || !rows.length) return;
-      const latestByType = {};
+      if (!Array.isArray(rows)) return;
+      const latestByType = { 'ロト７': null, 'ロト６': null, 'ミニロト': null };
+
       rows.forEach(function(row) {
         if (!row || !APP_STATE.bets.hasOwnProperty(row.lottery_type)) return;
         const numbers = normalizeBetNumbers(row.numbers);
         if (!numbers.length) return;
+
+        // Seleciona a aposta mais recente baseando-se prioritariamente no número do concurso e data
         const current = latestByType[row.lottery_type];
-        const currentDate = current ? new Date(current.updated_at || current.created_at || 0).getTime() : -1;
-        const rowDate = new Date(row.updated_at || row.created_at || 0).getTime();
-        if (!current || rowDate > currentDate) latestByType[row.lottery_type] = row;
+        if (!current) {
+          latestByType[row.lottery_type] = row;
+        } else {
+          const currRound = parseInt(String(current.round || '').replace(/\D/g, ''), 10) || 0;
+          const rowRound = parseInt(String(row.round || '').replace(/\D/g, ''), 10) || 0;
+          const currDate = String(current.draw_date || '').replace(/\D/g, '');
+          const rowDate = String(row.draw_date || '').replace(/\D/g, '');
+          const currTime = new Date(current.updated_at || current.created_at || 0).getTime();
+          const rowTime = new Date(row.updated_at || row.created_at || 0).getTime();
+
+          const isNewer = rowRound > currRound ||
+            (rowRound === currRound && rowDate > currDate) ||
+            (rowRound === currRound && rowDate === currDate && rowTime > currTime);
+
+          if (isNewer) latestByType[row.lottery_type] = row;
+        }
 
         const existing = APP_STATE.history.find(function(item) {
           return row.id && item.profileBetId === row.id;
@@ -1254,11 +1335,28 @@
         else APP_STATE.history.unshift(normalized);
       });
 
-      // The profile's latest registered ticket is the visible default for that lottery.
-      // Every profile ticket remains in history and is still evaluated individually.
-      Object.keys(latestByType).forEach(function(type) {
-        const numbers = normalizeBetNumbers(latestByType[type].numbers);
-        if (numbers.length) APP_STATE.bets[type] = numbers;
+      // Vincula diretamente as Cartelas Padrão às apostas do usuário conectado
+      // Se não houver aposta para o tipo de loteria no perfil, fica vazio (sem números de exemplo)
+      ['ロト７', 'ロト６', 'ミニロト'].forEach(function(type) {
+        if (latestByType[type]) {
+          const numbers = normalizeBetNumbers(latestByType[type].numbers);
+          APP_STATE.bets[type] = numbers.length ? numbers : [];
+        } else {
+          APP_STATE.bets[type] = [];
+        }
+      });
+
+      saveState();
+      renderFixedBetsPreview();
+      renderDraws();
+      updateKPICards();
+      renderCharts();
+    };
+
+    window.clearSupabaseUserBets = function() {
+      APP_STATE.bets = { 'ロト７': [], 'ロト６': [], 'ミニロト': [] };
+      APP_STATE.history = APP_STATE.history.filter(function(item) {
+        return !item.profileBetId && item.source !== 'user';
       });
       saveState();
       renderFixedBetsPreview();
@@ -1307,13 +1405,41 @@
       const l7 = APP_STATE.bets['ロト７'] || [];
       const l6 = APP_STATE.bets['ロト６'] || [];
       const ml = APP_STATE.bets['ミニロト'] || [];
-      document.getElementById('display-fixed-lotto7').innerHTML = l7.map(function(n){ return '<span class="ball ball-sm bg-emerald-600 text-white font-mono">' + String(n).padStart(2,'0') + '</span>'; }).join('');
-      document.getElementById('display-fixed-lotto6').innerHTML = l6.map(function(n){ return '<span class="ball ball-sm bg-blue-600 text-white font-mono">' + String(n).padStart(2,'0') + '</span>'; }).join('');
-      document.getElementById('display-fixed-miniloto').innerHTML = ml.map(function(n){ return '<span class="ball ball-sm bg-amber-600 text-white font-mono">' + String(n).padStart(2,'0') + '</span>'; }).join('');
-      document.getElementById('input-fixed-lotto7').value = l7.join(', ');
-      document.getElementById('input-fixed-lotto6').value = l6.join(', ');
-      document.getElementById('input-fixed-miniloto').value = ml.join(', ');
+
+      const elL7 = document.getElementById('display-fixed-lotto7');
+      const elL6 = document.getElementById('display-fixed-lotto6');
+      const elMl = document.getElementById('display-fixed-miniloto');
+
+      if (elL7) {
+        elL7.innerHTML = l7.length
+          ? l7.map(function(n){ return '<span class="ball ball-sm bg-emerald-600 text-white font-mono">' + String(n).padStart(2,'0') + '</span>'; }).join('')
+          : '<div class="py-1 text-xs text-slate-500 italic flex items-center justify-between w-full"><span>Nenhuma cartela no perfil</span><button type="button" onclick="window.openModalFixedBets()" class="text-xs text-emerald-400 hover:text-emerald-300 font-semibold ml-2">+ Definir</button></div>';
+      }
+
+      if (elL6) {
+        elL6.innerHTML = l6.length
+          ? l6.map(function(n){ return '<span class="ball ball-sm bg-blue-600 text-white font-mono">' + String(n).padStart(2,'0') + '</span>'; }).join('')
+          : '<div class="py-1 text-xs text-slate-500 italic flex items-center justify-between w-full"><span>Nenhuma cartela no perfil</span><button type="button" onclick="window.openModalFixedBets()" class="text-xs text-blue-400 hover:text-blue-300 font-semibold ml-2">+ Definir</button></div>';
+      }
+
+      if (elMl) {
+        elMl.innerHTML = ml.length
+          ? ml.map(function(n){ return '<span class="ball ball-sm bg-amber-600 text-white font-mono">' + String(n).padStart(2,'0') + '</span>'; }).join('')
+          : '<div class="py-1 text-xs text-slate-500 italic flex items-center justify-between w-full"><span>Nenhuma cartela no perfil</span><button type="button" onclick="window.openModalFixedBets()" class="text-xs text-amber-400 hover:text-amber-300 font-semibold ml-2">+ Definir</button></div>';
+      }
+
+      const inL7 = document.getElementById('input-fixed-lotto7');
+      const inL6 = document.getElementById('input-fixed-lotto6');
+      const inMl = document.getElementById('input-fixed-miniloto');
+      if (inL7) inL7.value = l7.join(', ');
+      if (inL6) inL6.value = l6.join(', ');
+      if (inMl) inMl.value = ml.join(', ');
     }
+
+    window.openModalFixedBets = function() {
+      const modalFixed = document.getElementById('modal-edit-bets');
+      if (modalFixed) modalFixed.classList.remove('hidden');
+    };
 
 
     function evaluateDraw(item) {
@@ -3080,6 +3206,10 @@
           renderFrequencyRanking();
           triggerSyncButtonAnimation(false);
 
+          if (typeof window.refreshMyBets === 'function') {
+            try { window.refreshMyBets(); } catch(e) {}
+          }
+
           setTimeout(function() {
             if (modalSync && !modalSync.classList.contains('hidden')) {
               closeSyncModal();
@@ -3089,6 +3219,9 @@
           renderDraws();
           updateKPICards();
           renderFrequencyRanking();
+          if (typeof window.refreshMyBets === 'function') {
+            try { window.refreshMyBets(); } catch(e) {}
+          }
         }
       } catch (err) {
         console.error('Erro na sincronização:', err);
@@ -3100,6 +3233,9 @@
           renderFrequencyRanking();
           triggerSyncButtonAnimation(false);
           if (syncActions) syncActions.style.display = 'flex';
+          if (typeof window.refreshMyBets === 'function') {
+            try { window.refreshMyBets(); } catch(e) {}
+          }
         }
       } finally {
         window.__isSyncing = false;
@@ -3623,6 +3759,6 @@
   <script src="strategy-engine.js"></script>
   <script src="pool-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-auth.js?v=20260923-1526"></script>
+  <script src="supabase-auth.js?v=20260929-0215"></script>
 </body>
 </html>
