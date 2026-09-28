@@ -889,6 +889,21 @@
       return getNumList(value);
     }
 
+    function isUniqueRoundConstraintError(err) {
+      if (!err) return false;
+      var str = (typeof err === 'string'
+        ? err
+        : ((err.message || '') + ' ' + (err.details || '') + ' ' + (err.hint || '') + ' ' + (err.code || ''))
+      ).toLowerCase();
+      var code = String((err && err.code) || '').toLowerCase();
+      return code === '23505' ||
+        str.indexOf('23505') !== -1 ||
+        str.indexOf('user_bets_user_id_lottery_type_round_key') !== -1 ||
+        (str.indexOf('duplicate key') !== -1 && (str.indexOf('round') !== -1 || str.indexOf('concurso') !== -1 || str.indexOf('user_bets') !== -1)) ||
+        (str.indexOf('user_id') !== -1 && str.indexOf('round') !== -1 && str.indexOf('lottery_type') !== -1);
+    }
+    window.isUniqueRoundConstraintError = isUniqueRoundConstraintError;
+
 
     const RAW_RECORDS = `第2141回|2026-09-28|ロト６|200|||-|0|pending|1
 第696回|2026-09-25|ロト７|300|||-|0|pending|1
@@ -2993,19 +3008,25 @@
             status: 'pending', main: [], bonus: [], prize: '-', amount: 0
           }) : remoteSave;
         } catch (error) {
-          var saveMessage = error.message || 'Erro de conexão.';
-          if (saveMessage.indexOf('user_bets_user_id_lottery_type_round_key') !== -1) {
-            saveMessage += '\n\nA migração 20260923_remove_user_bets_unique_round.sql ainda não foi aplicada no Supabase.';
+          if (isUniqueRoundConstraintError(error)) {
+            alert('Não foi possível salvar múltiplas apostas para o mesmo concurso no seu perfil.\n\n' +
+              'O banco de dados do Supabase ainda possui a restrição antiga ativa (código 23505: user_bets_user_id_lottery_type_round_key).\n\n' +
+              'Para permitir mais de uma cartela no mesmo concurso, execute a migração 20260923_remove_user_bets_unique_round.sql no SQL Editor do Supabase (consulte SUPABASE_SETUP.md).'
+            );
+            return;
           }
-          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + saveMessage);
+          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + (error.message || 'Erro de conexão.'));
           return;
         }
         if (remoteSave && remoteSave.error) {
-          var remoteMessage = remoteSave.error.message || 'Erro de conexão.';
-          if (remoteMessage.indexOf('user_bets_user_id_lottery_type_round_key') !== -1) {
-            remoteMessage += '\n\nA migração 20260923_remove_user_bets_unique_round.sql ainda não foi aplicada no Supabase.';
+          if (isUniqueRoundConstraintError(remoteSave.error)) {
+            alert('Não foi possível salvar múltiplas apostas para o mesmo concurso no seu perfil.\n\n' +
+              'O banco de dados do Supabase ainda possui a restrição antiga ativa (código 23505: user_bets_user_id_lottery_type_round_key).\n\n' +
+              'Para permitir mais de uma cartela no mesmo concurso, execute a migração 20260923_remove_user_bets_unique_round.sql no SQL Editor do Supabase (consulte SUPABASE_SETUP.md).'
+            );
+            return;
           }
-          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + remoteMessage);
+          alert('Não foi possível salvar a aposta no seu perfil. Tente novamente.\n\n' + (remoteSave.error.message || 'Erro de conexão.'));
           return;
         }
 
